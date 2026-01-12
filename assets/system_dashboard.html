@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>관리자 대시보드</title>
+
+<style>
+:root {
+    --bg-color: #f4f7f6;
+    --card-bg: #ffffff;
+    --primary-color: #4a90e2;
+    --secondary-color: #f39c12;
+    --accent-color: #e74c3c;
+    --text-main: #2c3e50;
+    --text-desc: #5d6d7e;
+}
+
+body {
+    background: var(--bg-color);
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 30px 0 120px;
+    margin: 0;
+}
+
+.container {
+    width: 360px;
+}
+
+/* 카드 공통 */
+.card {
+    background: var(--card-bg);
+    border-radius: 25px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid #ebedef;
+}
+
+h3 {
+    margin: 0;
+    color: var(--text-main);
+}
+
+.card-desc {
+    font-size: 0.85rem;
+    color: var(--text-desc);
+    margin-top: 6px;
+}
+
+/* 통계 */
+.stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.stat {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 18px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.stat strong {
+    font-size: 1.6rem;
+    color: var(--primary-color);
+}
+
+.stat span {
+    font-size: 0.75rem;
+    color: var(--text-desc);
+}
+
+/* 검색 */
+.search-area {
+    display: flex;
+    gap: 8px;
+    width: 85%;
+    margin: 15px auto 0;
+}
+
+.search-area input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid #dfe4ea;
+    font-size: 0.85rem;
+}
+
+.search-area button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 14px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* 사용자 리스트 */
+.user {
+    background: #f9fafb;
+    border-radius: 18px;
+    padding: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.user.low {
+    background: #fff1f0;
+    border-left: 5px solid var(--accent-color);
+}
+
+.user-info strong {
+    font-size: 0.9rem;
+}
+
+.user-info small {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-desc);
+}
+
+.user-actions button {
+    border: none;
+    border-radius: 10px;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.reset-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+.delete-btn {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* 일괄 알림 */
+.bulk-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 16px;
+    background: var(--secondary-color);
+    color: white;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+/* 공지 */
+.notice-card select,
+.notice-card input,
+.notice-card textarea {
+    width: 100%;
+    border-radius: 14px;
+    border: 1px solid #dfe4ea;
+    padding: 10px;
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+.notice-card textarea {
+    resize: none;
+}
+
+.send-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 16px;
+    border: none;
+    background: var(--primary-color);
+    color: white;
+    font-weight: 700;
+}
+
+/* 로그 */
+.log {
+    font-size: 0.8rem;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* 모달 */
+.modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal {
+    width: 300px;
+    background: white;
+    border-radius: 25px;
+    padding: 25px;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.2);
+}
+
+.modal h3 {
+    text-align: center;
+}
+
+.modal p {
+    font-size: 0.85rem;
+    color: var(--text-desc);
+    text-align: center;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    font-weight: 700;
+}
+
+.ok {
+    background: var(--primary-color);
+    color: white;
+}
+
+.cancel {
+    background: #ecf0f1;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- 통계 -->
+<div class="card">
+<h3>관리자 대시보드</h3>
+<div class="card-desc">전체 사용자 및 시스템 관리</div>
+<div class="stats">
+<div class="stat" onclick="loadList('all')"><strong>25</strong><span>전체</span></div>
+<div class="stat" onclick="loadList('student')"><strong>20</strong><span>학생</span></div>
+<div class="stat" onclick="loadList('teacher')"><strong>5</strong><span>선생님</span></div>
+<div class="stat" onclick="loadList('inactive')"><strong>8</strong><span>장기 미접속</span></div>
+</div>
+</div>
+
+<!-- 검색 -->
+<div class="card">
+<h3>사용자 검색</h3>
+<div class="search-area">
+<input id="searchInput" placeholder="이름 / 아이디">
+<button onclick="applySearch()">검색</button>
+</div>
+</div>
+
+<!-- 리스트 -->
+<div class="card" id="listCard" style="display:none;">
+<h3 id="listTitle"></h3>
+<button id="bulkBtn" class="bulk-btn" style="display:none" onclick="bulkAlert()">장기 미접속자 일괄 알림</button>
+<div id="userList"></div>
+</div>
+
+<!-- 공지 발송 -->
+<div class="card notice-card">
+<h3>전체 공지 발송</h3>
+<select id="noticeTarget">
+<option>전체 사용자</option>
+<option>학생</option>
+<option>선생님</option>
+<option>장기 미접속자</option>
+</select>
+
+<select id="sendType">
+<option value="now">즉시 발송</option>
+<option value="reserve">예약 발송</option>
+</select>
+
+<input type="datetime-local" id="reserveTime" style="display:none">
+<textarea id="noticeText" rows="3" placeholder="공지 내용을 입력하세요"></textarea>
+<button class="send-btn" onclick="handleNotice()">공지 발송</button>
+</div>
+
+<!-- 이력 -->
+<div class="card">
+<h3>공지 발송 이력</h3>
+<div id="noticeHistory"></div>
+</div>
+
+<!-- 로그 -->
+<div class="card">
+<h3>관리자 로그</h3>
+<div id="adminLog"></div>
+</div>
+
+</div>
+
+<!-- 모달 -->
+<div class="modal-bg" id="modalBg">
+<div class="modal" id="modal"></div>
+</div>
+
+<script>
+/*전체 사용자 리스트*/
+const users=[
+ {name:"John",id:"student01",role:"학생",last:2},
+ {name:"Emily",id:"student02",role:"학생",last:3},
+ {name:"Michael",id:"student03",role:"학생",last:5},
+ {name:"Sarah",id:"student04",role:"학생",last:15},
+ {name:"David",id:"student05",role:"학생",last:7},
+ {name:"Anna",id:"student06",role:"학생",last:14},
+ {name:"Luca",id:"student07",role:"학생",last:23},
+ {name:"Sophie",id:"student08",role:"학생",last:5},
+ {name:"Daniel",id:"student09",role:"학생",last:4},
+ {name:"Maria",id:"student10",role:"학생",last:1},
+ {name:"Yuki",id:"student11",role:"학생",last:20},
+ {name:"Mei",id:"student12",role:"학생",last:13},
+ {name:"Lin",id:"student13",role:"학생",last:4},
+ {name:"Arun",id:"student14",role:"학생",last:5},
+ {name:"Rina",id:"student15",role:"학생",last:21},
+ {name:"Ali",id:"student16",role:"학생",last:17},
+ {name:"Omar",id:"student17",role:"학생",last:20},
+ {name:"Carlos",id:"student18",role:"학생",last:6},
+ {name:"Rina",id:"student19",role:"학생",last:9},
+ {name:"Diego",id:"student02",role:"학생",last:11},
+ {name:"김민수",id:"teacher01",role:"선생님",last:2},
+ {name:"이지은",id:"teacher02",role:"선생님",last:3},
+ {name:"박서준",id:"teacher03",role:"선생님",last:10},
+ {name:"정현우",id:"teacher04",role:"선생님",last:5},
+ {name:"신수아",id:"teacher05",role:"선생님",last:19}
+];
+
+let keyword="",logs=[],notices=[],currentType="all";
+
+/* 🔍 검색 로직 개선 */
+function applySearch(){
+  keyword = searchInput.value.trim();
+  loadList("all");
+}
+
+/* Enter 키 검색 */
+searchInput.addEventListener("keydown",e=>{
+  if(e.key==="Enter") applySearch();
+});
+
+/* 검색어 삭제 시 자동 복구 */
+searchInput.addEventListener("input",()=>{
+  if(searchInput.value===""){
+    keyword="";
+    loadList("all");
+  }
+});
+
+/* 로그 */
+function log(msg){
+ logs.unshift(`${new Date().toLocaleString()} · ${msg}`);
+ adminLog.innerHTML=logs.map(l=>`<div class="log">${l}</div>`).join("");
+}
+
+/* 이력 */
+function renderNotices(){
+ noticeHistory.innerHTML=notices.map(n=>`
+ <div class="log">${n.time} · [${n.target}] (${n.status}) ${n.text}</div>`).join("");
+}
+/* 공지 */
+sendType.onchange=()=>reserveTime.style.display=sendType.value==="reserve"?"block":"none";
+
+function handleNotice(){
+ const text=noticeText.value.trim();
+ if(!text)return;
+ if(sendType.value==="now"){
+  notices.unshift({time:new Date().toLocaleString(),target:noticeTarget.value,text,status:"발송 완료"});
+  log("공지 즉시 발송");
+ }else{
+  notices.unshift({time:new Date().toLocaleString(),target:noticeTarget.value,text,status:"예약",reserve:reserveTime.value});
+  log("공지 예약 등록");
+ }
+ renderNotices(); noticeText.value="";
+ done("공지 처리 완료");
+}
+
+setInterval(()=>{
+ const now=new Date();
+ notices.forEach(n=>{
+  if(n.status==="예약" && new Date(n.reserve)<=now){
+   n.status="발송 완료"; renderNotices(); log("예약 공지 발송");
+  }
+ });
+},60000);
+
+/* 사용자 */
+function loadList(type){
+ currentType=type;
+ listCard.style.display="block";
+ listTitle.innerText=type==="inactive"?"장기 미접속(2주) 사용자":"사용자 리스트";
+ bulkBtn.style.display=type==="inactive"?"block":"none";
+ renderList();
+}
+function applySearch(){ keyword=searchInput.value; renderList(); }
+function renderList(){
+ userList.innerHTML="";
+ users.filter(u=>{
+  if(currentType==="inactive" && u.last<=14)return false;
+  if(currentType==="student" && u.role!=="학생")return false;
+  if(currentType==="teacher" && u.role!=="선생님")return false;
+  if(currentType!=="inactive" && keyword && !u.name.includes(keyword) && !u.id.includes(keyword))return false;
+  return true;
+ }).forEach(u=>{
+  userList.innerHTML+=`
+  <div class="user ${u.last>14?"low":""}">
+   <div class="user-info">
+    <strong>${u.name}</strong>
+    <small>${u.role} · ${u.last}일 미접속</small>
+   </div>
+   <div class="user-actions">
+    <button class="reset-btn" onclick="confirmAction('비밀번호 초기화','${u.id}')">초기화</button>
+    <button class="delete-btn" onclick="confirmAction('계정 삭제','${u.id}')">삭제</button>
+   </div>
+  </div>`;
+ });
+}
+
+/* 알림 */
+function bulkAlert(){ confirmAction("장기 미접속자 알림","전체"); }
+function confirmAction(type,target){
+ modal.innerHTML=`
+ <h3>${type}</h3><p>${target} 처리하시겠습니까?</p>
+ <div class="actions">
+  <button class="ok" onclick="done('${type} 완료','${type}')">확인</button>
+  <button class="cancel" onclick="closeModal()">취소</button>
+ </div>`;
+ showModal();
+}
+function done(msg,logMsg){
+ modal.innerHTML=`<h3>${msg}</h3><div class="actions"><button class="ok" onclick="closeModal()">확인</button></div>`;
+ if(logMsg)log(logMsg);
+ showModal();
+}
+function showModal(){modalBg.style.display="flex";}
+function closeModal(){modalBg.style.display="none";}
+</script>
+</body>
+</html>

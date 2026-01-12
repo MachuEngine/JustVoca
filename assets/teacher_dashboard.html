@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>선생님 대시보드</title>
+
+<style>
+:root{
+ --bg:#f4f7f6; --card:#fff; --primary:#4a90e2;
+ --accent:#e74c3c; --text:#2c3e50; --desc:#5d6d7e;
+}
+body{
+ margin:0; background:var(--bg);
+ font-family:'Pretendard',-apple-system,sans-serif;
+ display:flex; justify-content:center;
+}
+.container{width:360px;padding:20px 0 170px;}
+.card{
+ background:var(--card); border-radius:25px;
+ box-shadow:0 15px 40px rgba(0,0,0,.08);
+ padding:22px; margin-bottom:20px;
+ border:1px solid #ebedef;
+}
+h2{margin:0 0 10px;color:var(--text);}
+small{color:var(--desc);}
+
+/* 통계 */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stat{
+ background:#eef5ff; border-radius:18px;
+ padding:15px; cursor:pointer;
+}
+.stat.active{outline:2px solid var(--primary);}
+.stat strong{font-size:1.4rem;color:var(--primary);}
+
+/* 검색 */
+.search-area{
+ display:flex;
+ gap:8px;
+ margin-bottom:10px;
+}
+.search-area input{
+ flex:1;
+ padding:10px 12px;
+ border-radius:14px;
+ border:1px solid #dfe4ea;
+ font-size:.85rem;
+}
+.search-area button{
+ padding:10px 14px;
+ border:none;
+ border-radius:14px;
+ background:var(--primary);
+ color:white;
+ font-size:.8rem;
+ font-weight:600;
+ cursor:pointer;
+}
+
+/* 학생 */
+.student{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:12px 0; border-bottom:1px solid #eee;
+ cursor:pointer;
+}
+.student:last-child{border-bottom:none;}
+.student-info{flex:1; margin-right:10px;}
+.reset-btn{
+ padding:4px 8px;
+ border:none;
+ border-radius:8px;
+ background:var(--accent);
+ color:white;
+ font-size:.75rem;
+ cursor:pointer;
+}
+.warning{color:var(--accent);font-weight:700;}
+
+/* 타임라인 */
+.timeline{margin-top:12px;}
+.step{display:flex;align-items:center;margin-bottom:8px;}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--primary);margin-right:8px;}
+
+/* 공지 */
+.notice select,.notice input,.notice textarea{
+ width:100%;border-radius:14px;
+ border:1px solid #dfe4ea;
+ padding:10px;font-size:.85rem;
+ margin-top:10px;
+}
+.notice textarea{resize:none;}
+.notice button{
+ width:100%;margin-top:12px;
+ padding:12px;border:none;
+ border-radius:16px;
+ background:var(--primary);
+ color:white;font-weight:700;
+}
+
+/* 로그 */
+.log{
+ font-size:.8rem;
+ padding:6px 0;
+ border-bottom:1px solid #eee;
+}
+
+/* 모달 */
+.dim{
+ position:fixed;inset:0;
+ background:rgba(0,0,0,.45);
+ display:none;justify-content:center;
+ align-items:center;z-index:100;
+}
+.modal{
+ width:320px;background:#fff;
+ border-radius:25px;padding:25px;
+ text-align:center;
+ box-shadow:0 20px 50px rgba(0,0,0,.25);
+}
+.modal p{font-size:.9rem;color:var(--desc);line-height:1.6;}
+.modal button{
+ width:100%;margin-top:14px;
+ padding:12px;border:none;
+ border-radius:14px;
+ background:var(--primary);
+ color:white;font-weight:600;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- 통계 -->
+<div class="card">
+<h2>📊 학습 통계</h2>
+<div class="stats">
+<div class="stat active" onclick="selectStat('students',this)">
+<strong>3</strong><br><small>전체 학생</small>
+</div>
+<div class="stat" onclick="selectStat('progress',this)">
+<strong>68%</strong><br><small>진도 평균</small>
+</div>
+<div class="stat" onclick="selectStat('assignment',this)">
+<strong>2</strong><br><small>과제 제출</small>
+</div>
+<div class="stat" onclick="selectStat('exam',this)">
+<strong>82</strong><br><small>시험 평균</small>
+</div>
+</div>
+</div>
+
+<!-- 리스트 -->
+<div class="card">
+<h2 id="listTitle">👥 전체 학생</h2>
+
+<div class="search-area">
+<input id="searchInput" placeholder="이름 / 이메일 / 연락처 검색">
+<button onclick="applySearch()">검색</button>
+</div>
+
+<div id="list"></div>
+</div>
+
+<!-- 공지 -->
+<div class="card notice">
+<h2>📢 전체 공지 발송</h2>
+<select id="sendType">
+<option value="now">즉시 발송</option>
+<option value="reserve">예약 발송</option>
+</select>
+<input type="datetime-local" id="reserveTime" style="display:none">
+<textarea id="noticeText" rows="3" placeholder="공지 내용을 입력하세요"></textarea>
+<button onclick="sendNotice()">공지 발송</button>
+</div>
+
+<!-- 공지 로그 -->
+<div class="card">
+<h2>🗂 공지 발송 로그</h2>
+<div id="noticeLog"></div>
+</div>
+
+</div>
+
+<div class="dim" id="dim">
+<div class="modal" id="modal"></div>
+</div>
+
+<script>
+const students=[
+{
+ name:"Ali", email:"minji@example.com", phone:"010-1234-5678",
+ course:"초급1 A반", progress:65,
+ progressDetail:["학교생활"],
+ assignment:"제출", score:90
+},
+{
+ name:"Alex", email:"alex@mail.com", phone:"+82-10-2222-3333",
+ course:"", progress:60,
+ progressDetail:["현재 시제"],
+ assignment:"미제출", score:74
+},
+{
+ name:"Maria", email:"maria@mail.com", phone:"+82-10-9999-8888",
+ course:"초급1 A반", progress:70,
+ progressDetail:["음식점 메뉴 말하기"],
+ assignment:"제출", score:82
+}
+];
+
+const AVG_P=65, AVG_S=82;
+let currentType="students";
+let searchKeyword="";
+
+const list=document.getElementById("list");
+const dim=document.getElementById("dim");
+const modal=document.getElementById("modal");
+
+searchInput.addEventListener("keydown",e=>{
+ if(e.key==="Enter") applySearch();
+});
+
+function applySearch(){
+ searchKeyword=searchInput.value.trim().toLowerCase();
+ renderList();
+}
+
+function selectStat(type,el){
+ currentType=type;
+ document.querySelectorAll(".stat").forEach(s=>s.classList.remove("active"));
+ el.classList.add("active");
+ listTitle.innerText={
+  students:"👥 전체 학생",
+  progress:"📈 진도 평균",
+  assignment:"📄 과제 제출",
+  exam:"📝 시험 평균"
+ }[type];
+ renderList();
+}
+
+function renderList(){
+ list.innerHTML="";
+ students.filter(s=>{
+  if(!searchKeyword) return true;
+  return s.name.toLowerCase().includes(searchKeyword)
+   || s.email.toLowerCase().includes(searchKeyword)
+   || s.phone.includes(searchKeyword);
+ }).forEach((s,i)=>{
+  let text="",warn=false,handler="openBasicProfile";
+  if(currentType==="progress"){
+   text=`진도 ${s.progress}% (${s.progressDetail.join(" · ")})`;
+   warn=s.progress<AVG_P; handler="openProfile";
+  }
+  else if(currentType==="assignment"){
+   text=`과제 ${s.assignment}`;
+   warn=s.assignment==="미제출";
+   handler=warn?"openProfile":"openAssignment";
+  }
+  else if(currentType==="exam"){
+   text=`시험 ${s.score}점`;
+   warn=s.score<AVG_S; handler="openExam";
+  }
+  else text=s.course;
+
+  list.innerHTML+=`
+  <div class="student">
+   <div class="student-info" onclick="${handler}(${i})">
+    <strong class="${warn?'warning':''}">${s.name}</strong><br>
+    <small class="${warn?'warning':''}">${text}</small>
+   </div>
+   ${currentType==="students" ? `<button class="reset-btn" onclick="event.stopPropagation(); resetPassword(${i})">초기화</button>` : ''}
+  </div>`;
+ });
+}
+
+selectStat("students",document.querySelector(".stat"));
+
+function openBasicProfile(i){
+ const s=students[i];
+ modal.innerHTML=`
+ <h3>${s.name}</h3>
+ <p>📧 ${s.email}<br>📞 ${s.phone}</p>
+ <button onclick="closeModal()">확인</button>`;
+ showModal();
+}
+
+function openProfile(i){
+ const s=students[i];
+ modal.innerHTML=`
+ <h3>${s.name}</h3>
+ <p>수강: ${s.course}<br>진도: ${s.progress}%<br>시험: ${s.score}점<br>과제: ${s.assignment}</p>
+ <div class="timeline">
+ ${s.progressDetail.map(p=>`
+  <div class="step"><div class="dot"></div><small>${p} 완료</small></div>
+ `).join("")}
+ </div>
+ <button onclick="closeModal()">확인</button>`;
+ showModal();
+}
+
+function openAssignment(i){
+ modal.innerHTML=`
+ <h3>${students[i].name} 과제</h3>
+ <p>제출일: 2026-01-10<br>내용: 단어 예문 작성</p>
+ <button onclick="closeModal()">닫기</button>`;
+ showModal();
+}
+
+function openExam(i){
+ modal.innerHTML=`
+ <h3>${students[i].name} 시험 결과</h3>
+ <p>⭕ 맞음: 8문항<br>❌ 틀림: 2문항<br><br>🧠 AI 평가:<br>시제 오류가 반복됨</p>
+ <button onclick="closeModal()">닫기</button>`;
+ showModal();
+}
+
+function resetPassword(i){
+ const s=students[i];
+ modal.innerHTML=`
+ <h3>${s.name}</h3>
+ <p>비밀번호가 초기화되었습니다.</p>
+ <button onclick="closeModal()">확인</button>`;
+ showModal();
+}
+
+function showModal(){dim.style.display="flex";}
+function closeModal(){dim.style.display="none";}
+
+sendType.onchange=()=>reserveTime.style.display=
+ sendType.value==="reserve"?"block":"none";
+
+function sendNotice(){
+ const text=noticeText.value.trim();
+ if(!text) return;
+ noticeLog.innerHTML=
+ `<div class="log">${new Date().toLocaleString()} · 공지 발송 · ${text}</div>` 
+ + noticeLog.innerHTML;
+ noticeText.value="";
+ modal.innerHTML=`<h3>공지 발송 완료</h3><button onclick="closeModal()">확인</button>`;
+ showModal();
+}
+</script>
+
+</body>
+</html>

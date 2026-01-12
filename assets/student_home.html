@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국어 단계별 정밀 발음 분석</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary-color: #4a90e2;
+            --secondary-color: #f39c12;
+            --accent-color: #e74c3c;
+            --eval-color: #27ae60;
+            --text-main: #2c3e50;
+        }
+
+        body {
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; margin: 0; background-color: var(--bg-color);
+            font-family: 'Pretendard', sans-serif; overflow: hidden;
+        }
+
+        .app-view { position: relative; width: 360px; height: 620px; }
+
+        .overlay-screen {
+            position: absolute; inset: 0; background: white; border-radius: 25px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 200; padding: 30px; box-sizing: border-box; text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+
+        .level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; margin-top: 30px; }
+        .btn-level {
+            padding: 20px 10px; border: 2px solid #eee; border-radius: 15px;
+            background: white; cursor: pointer; font-weight: 700; transition: all 0.2s; flex-grow: 0;
+            color: var(--text-main); font-size: 1rem;
+        }
+        .btn-level:hover { border-color: var(--primary-color); color: var(--primary-color); background: #f0f7ff; }
+
+        #main-app { display: none; width: 100%; height: 100%; }
+        .flashcard-container { perspective: 1200px; width: 100%; height: 100%; position: relative; }
+        .flashcard { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .flashcard.flipped { transform: rotateY(-180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 25px; background: var(--card-bg); box-shadow: 0 15px 40px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; padding: 25px; box-sizing: border-box; border: 1px solid #eee; }
+        .card-back { transform: rotateY(-180deg); background: #fdfdfd; }
+
+        .card-header { width: 100%; display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .btn-home { flex: 0 0 auto; background: #f0f4f8; border: none; color: var(--primary-color); font-weight: 700; padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: 0.75rem; }
+        .info-group { text-align: right; }
+        .level-badge { font-size: 0.75rem; color: #999; font-weight: 700; display: block; }
+        .topik-guide { font-size: 0.6rem; color: var(--secondary-color); font-weight: 600; margin-top: 2px; display: block; }
+
+        #eval-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.2); border-radius: 25px; display: none; justify-content: center; align-items: center; z-index: 300; backdrop-filter: blur(5px); }
+        .eval-card { width: 330px; height: 550px; background: white; border-radius: 25px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .total-score-circle { width: 65px; height: 65px; border-radius: 50%; border: 4px solid var(--eval-color); display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 0 auto 12px auto; background: #fff; flex-shrink: 0; }
+        .score-container { width: 100%; flex: 1; overflow-y: auto; padding-right: 5px; margin-bottom: 10px; }
+        
+        .eval-item { background: #f8f9fa; border: 1px solid #eee; border-radius: 10px; margin-bottom: 6px; overflow: hidden; }
+        .item-main { display: flex; justify-content: space-between; padding: 8px 12px; cursor: pointer; align-items: center; }
+        .sub-list { background: #fff; display: none; padding: 0 10px 8px 15px; border-top: 1px dashed #eee; }
+        .sub-item { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f9f9f9; font-size: 0.8rem; cursor: pointer; align-items: center; }
+        .jaso-box { display: flex; flex-direction: row; flex-wrap: nowrap; gap: 8px; padding: 6px 0; justify-content: flex-start; }
+        .jaso-unit { font-size: 0.7rem; color: #555; background: #f0f2f5; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; }
+        .jaso-val { color: var(--accent-color); font-weight: bold; margin-left: 4px; font-size: 0.7rem; }
+
+        .btn-close { background: var(--text-main); color: white; width: 100%; padding: 15px; font-size: 0.95rem; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; line-height: 1; flex-grow: 0; flex-shrink: 0; }
+        .button-group { display: flex; gap: 8px; width: 100%; margin-top: auto; }
+        
+        button, .quiz-option { 
+            flex: 1; padding: 12px; border: none; border-radius: 12px; 
+            cursor: pointer; font-weight: 600; font-size: 0.95rem; 
+            box-sizing: border-box; transition: 0.2s;
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-record { background: var(--accent-color); color: white; }
+
+        .quiz-option { 
+            width: 100%; border: 2px solid #eee; background: white; 
+            margin-bottom: 6px; text-align: center; display: block;
+        }
+        .quiz-option.selected { border-color: var(--primary-color); background: #f0f7ff; }
+        .quiz-option.correct { border-color: var(--eval-color) !important; background: #eafff2 !important; color: var(--eval-color); border-width: 3px; }
+        .quiz-option.wrong { border-color: var(--accent-color); background: #fff0f0; color: var(--accent-color); }
+
+        .image-area { width: 100%; height: 130px; background: #f8f9fa; border-radius: 20px; display: flex; justify-content: center; align-items: center; font-size: 60px; margin-bottom: 5px; }
+        .word-container { text-align: center; margin: 5px 0; }
+        .word { font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin: 0; display: inline-block; }
+        .pronunciation { font-size: 1.1rem; color: var(--secondary-color); font-weight: 600; margin-left: 8px; vertical-align: middle; }
+        .tag { font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; background: #ddd; margin-right: 4px; vertical-align: middle; }
+        
+        .desc-box { width: 100%; background: #fff9f0; padding: 15px; border-radius: 12px; font-size: 0.85rem; margin-top: 10px; text-align: center; line-height: 1.6; }
+        .desc-ko { font-weight: 700; color: var(--text-main); display: block; margin-bottom: 10px; border-bottom: 1px solid rgba(243, 156, 18, 0.2); padding-bottom: 8px; }
+        .desc-en { color: #8a7e6a; font-size: 0.75rem; font-style: italic; display: block; }
+        
+        @keyframes slideOutLeft { 0% { transform: translateX(0) rotateY(-180deg) scale(1); opacity: 1; } 100% { transform: translateX(-150%) rotateY(-360deg) scale(0.5); opacity: 0; } }
+        @keyframes slideOutRight { 0% { transform: translateX(0) rotateY(-180deg) scale(1); opacity: 1; } 100% { transform: translateX(150%) rotateY(0deg) scale(0.5); opacity: 0; } }
+        @keyframes slideInFront { 0% { transform: translateX(0) rotateY(0deg) scale(0.8); opacity: 0; } 100% { transform: translateX(0) rotateY(0deg) scale(1); opacity: 1; } }
+        .slide-out-left { animation: slideOutLeft 0.5s forwards; }
+        .slide-out-right { animation: slideOutRight 0.5s forwards; }
+        .slide-in { animation: slideInFront 0.4s ease-out forwards; }
+    </style>
+</head>
+<body>
+
+    <div class="app-view">
+        <div id="intro-screen" class="overlay-screen">
+            <h2 style="margin:0; color:var(--primary-color);">Pronunciation Master</h2>
+            <p style="color:#666; font-size:0.9rem;">학습할 레벨을 선택해 주세요</p>
+            <div class="level-grid">
+                <button class="btn-level" onclick="startApp('초급1')">초급 1</button>
+                <button class="btn-level" onclick="startApp('초급2')">초급 2</button>
+                <button class="btn-level" onclick="startApp('중급1')">중급 1</button>
+                <button class="btn-level" onclick="startApp('중급2')">중급 2</button>
+                <button class="btn-level" onclick="startApp('고급1')">고급 1</button>
+                <button class="btn-level" onclick="startApp('고급2')">고급 2</button>
+            </div>
+        </div>
+
+        <div id="quiz-intro-screen" class="overlay-screen" style="display:none;">
+            <div style="font-size:60px;">📝</div>
+            <h2 style="color:var(--primary-color);">연습 문제</h2>
+            <p id="quiz-intro-msg" style="color:#666; line-height:1.5;">학습한 단어 중 3문제를<br>복습해 볼까요?</p>
+            <button class="btn-level" onclick="startQuiz()" style="margin-top:20px; width:100%; background:var(--primary-color); color:white;">문제 풀기 시작</button>
+        </div>
+
+        <div id="quiz-play-screen" class="overlay-screen" style="display:none; justify-content: flex-start; padding-top:50px;">
+            <div id="quiz-q-count" style="color:var(--primary-color); font-weight:800; margin-bottom:10px;">Question 1/3</div>
+            <div id="quiz-question" style="margin-bottom:20px; word-break:keep-all; font-size: 1rem; background:#f8f9fa; padding:15px; border-radius:15px; width:100%;"></div>
+            <div id="quiz-options" style="width:100%;"></div>
+            <div id="quiz-feedback" style="margin:10px 0; font-weight:700; min-height:40px;"></div>
+            <div class="button-group">
+                <button id="btn-quiz-confirm" class="btn-primary" onclick="checkQuizAnswer()">확인</button>
+                <button id="btn-quiz-next" class="btn-record" style="display:none;" onclick="nextQuiz()">다음 문제</button>
+            </div>
+        </div>
+
+        <div id="quiz-result-screen" class="overlay-screen" style="display:none;">
+            <div id="quiz-result-icon" style="font-size:70px;">🎉</div>
+            <h2 id="quiz-result-title">학습 결과</h2>
+            <p id="quiz-result-msg" style="color:#666; line-height:1.5;"></p>
+            <div class="level-grid" style="grid-template-columns:1fr; width:100%;" id="quiz-result-buttons"></div>
+        </div>
+
+        <div id="level-complete-screen" class="overlay-screen" style="display:none;">
+            <div style="font-size:80px; margin-bottom:10px;">🏆</div>
+            <h2 style="color:var(--secondary-color); margin:0;">축하합니다!</h2>
+            <p id="complete-msg" style="color:var(--text-main); font-weight:600; margin-top:10px; line-height:1.6;"></p>
+            <div style="width:100%; background:#f0f7ff; padding:15px; border-radius:15px; margin:20px 0; box-sizing:border-box;">
+                <span id="complete-stats" style="font-size:0.9rem; color:var(--primary-color); font-weight:700;"></span>
+            </div>
+            <div class="level-grid" style="grid-template-columns:1fr; width:100%;">
+                <button class="btn-level" onclick="startApp(currentLevelName)" style="background:var(--primary-color); color:white; border:none;">이 레벨 복습하기</button>
+                <button id="btn-next-level" class="btn-level" onclick="goToNextLevel()" style="background:var(--eval-color); color:white; border:none;">다음 단계 도전하기</button>
+                <button class="btn-level" onclick="goHome()" style="background:#eee; border:none;">홈으로 가기</button>
+            </div>
+        </div>
+
+        <div id="main-app">
+            <div class="flashcard-container">
+                <div id="eval-overlay">
+                    <div class="eval-card">
+                        <div class="total-score-circle"><span id="total-score-val" style="font-size: 1.3rem; font-weight: 800; color: var(--eval-color);">0</span><span style="font-size: 0.55rem; color: #888;">정확도</span></div>
+                        <div class="score-container" id="score-container"></div>
+                        <button class="btn-close" onclick="closeEval()">학습 계속하기</button>
+                    </div>
+                </div>
+                <div class="flashcard" id="card">
+                    <div class="card-face card-front" onclick="flipCard()">
+                        <div class="card-header">
+                            <button class="btn-home" onclick="goHome(event)">◀ 레벨 선택</button>
+                            <div class="info-group"><span id="level-indicator" class="level-badge"></span><span id="topik-guide" class="topik-guide"></span></div>
+                        </div>
+                        <div class="image-area" id="front-image"></div>
+                        <div class="word-container"><h1 class="word" id="front-word"></h1><span class="pronunciation" id="front-pron"></span></div>
+                        <div class="desc-box">
+                            <span id="desc-ko" class="desc-ko"></span>
+                            <span id="desc-en" class="desc-en"></span>
+                        </div>
+                        <div class="button-group"><button class="btn-primary" onclick="playWordAudio(event)">🔊 발음 듣기</button></div>
+                    </div>
+                    <div class="card-face card-back" onclick="flipCard()">
+                        <div style="text-align:center; margin-bottom:15px; width: 100%;"><span id="back-ko-word" style="font-size:1.6rem; font-weight:800;"></span></div>
+                        <div style="width:100%; background:#eef5ff; padding:15px; border-radius:15px; margin-bottom:15px; border-left:5px solid var(--primary-color); box-sizing: border-box;">
+                            <span style="font-size: 0.7rem; color: var(--primary-color); font-weight: 800; display: block; margin-bottom: 6px; text-align: left;">[Example]</span>
+                            <p id="back-example" style="font-size:0.95rem; line-height:1.5; color:var(--text-main); font-weight:600; margin:0; text-align:left;"></p>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn-primary" onclick="playExampleAudio(event)">▶️ 문장 듣기</button>
+                            <button id="recordBtn" class="btn-record" onclick="handleMicAction(event)">🎙️ 문장 녹음</button>
+                        </div>
+                        <div class="button-group" style="margin-top:10px;">
+                            <button style="background:#eee; font-size:0.8rem;" onclick="animateAndChange(-1, event)">이전</button>
+                            <button style="background:#eee; font-size:0.8rem;" onclick="animateAndChange(1, event)">다음</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const levelData = {
+            "초급1": [
+                { word: "안녕", pronunciation: "[안녕]", meaning: "Hello / Peace", image: "👋", description: "아무 탈 없이 편안함. 또는 만날 때 하는 인사.", descEn: "Peaceful status or a common greeting.", example: "친구를 만나서 밝게 안녕이라고 인사했어요." },
+                { word: "아침", pronunciation: "[아침]", meaning: "Morning", image: "🌅", description: "해가 떠서 낮이 되기 전까지의 시간.", descEn: "The period of time between sunrise and noon.", example: "저는 아침마다 시원한 물 한 잔을 마셔요." },
+                { word: "처음", pronunciation: "[처음]", meaning: "First time", image: "1️⃣", description: "어떤 일이 시작되는 단계나 시간.", descEn: "The beginning or earliest stage of something.", example: "한국에 처음 왔을 때 모든 것이 신기했어요." },
+                { word: "만나다", pronunciation: "[만나다]", meaning: "To meet", image: "🤝", description: "어떤 사람을 직접 대면하거나 관계를 맺다.", descEn: "To come into the presence of or connect with someone.", example: "내일 도서관 앞에서 친구를 만나기로 했어요." },
+                { word: "친구", pronunciation: "[친구]", meaning: "Friend", image: "🧑‍🤝‍🧑", description: "가깝게 오래 사귄 사람.", descEn: "A person whom one knows and has a bond of mutual affection.", example: "고향 친구들을 만나서 정말 즐거운 시간을 보냈어요." },
+                { word: "좋아하다", pronunciation: "[조아하다]", meaning: "To like", image: "❤️", description: "대상을 마음에 들어 하거나 즐겁게 여기다.", descEn: "To find something or someone pleasant or enjoyable.", example: "저는 한국 음식 중에서 비빔밥을 제일 좋아해요." },
+                { word: "선생님", pronunciation: "[선생님]", meaning: "Teacher", image: "🧑‍🏫", description: "학생을 가르치거나 존경할 만한 사람을 높여 부르는 말.", descEn: "An honorific term for a teacher or a person of respect.", example: "선생님 덕분에 한국어 실력이 많이 늘었습니다." },
+                { word: "축하하다", pronunciation: "[추카하다]", meaning: "To congratulate", image: "🎉", description: "기쁜 일을 즐거워하며 기림.", descEn: "To express praise or joy for a happy event.", example: "생일을 진심으로 축하합니다!" },            
+				{ word: "학교", pronunciation: "[학꾜]", meaning: "School", image: "🏫", description: "학생들이 일정한 교육을 받는 시설.", descEn: "A facility where students receive a certain level of education.", example: "저는 매일 아침 8시에 학교에 갑니다." },
+                { word: "공부", pronunciation: "[공부]", meaning: "Study", image: "📖", description: "학문이나 기술을 배우고 익힘.", descEn: "The act of learning and practicing a discipline or skill.", example: "도서관에서 시험 공부를 열심히 했어요." },
+				{ word: "많다", pronunciation: "[만타]", meaning: "Many / A lot", image: "🔢", description: "수효나 분량, 정도가 일정한 기준보다 넘다.", descEn: "To be many in number or large in quantity.", example: "우리 학교에는 외국인 학생이 아주 많아요." },
+                { word: "맞아요", pronunciation: "[마자요]", meaning: "That's right", image: "✅", description: "말이나 사실이 틀리지 않고 일치하다.", descEn: "Used to agree that something is correct or true.", example: "네, 맞아요. 제가 어제 전화했던 사람입니다." },
+                { word: "천천히", pronunciation: "[천천히]", meaning: "Slowly", image: "🐢", description: "동작이나 속도가 느리게.", descEn: "At a slow pace or without hurry.", example: "한국말이 서투르니 조금만 천천히 말씀해 주세요." },
+                { word: "말하다", pronunciation: "[말하다]", meaning: "To speak / talk", image: "🗣️", description: "생각이나 느낌을 입 밖으로 소리 내어 표현하다.", descEn: "To express thoughts or feelings through words.", example: "자기의 생각을 분명하게 말하는 것이 중요합니다." },
+                { word: "왔어요", pronunciation: "[와써요]", meaning: "Came / Arrived", image: "🚶", description: "어떤 곳에서 이곳으로 옮겨 오다.", descEn: "Past tense of 'to come'. Moved to this place.", example: "저는 이번 여름에 한국에 공부하러 왔어요." }
+			],
+            "초급2": [
+                { word: "식사하다", pronunciation: "[식사하다]", meaning: "To have a meal", image: "🍱", description: "음식을 먹는 일을 높여 이르는 말.", descEn: "A polite way to say the act of eating food.", example: "부모님과 함께 저녁 식사를 하러 식당에 갔어요." },
+                { word: "추천하다", pronunciation: "[추천하다]", meaning: "To recommend", image: "👍", description: "어떤 대상을 좋다고 소개하거나 권하다.", descEn: "To introduce or suggest something as being good.", example: "서울에서 구경할 만한 곳을 추천해 주시겠어요?" },
+                { word: "결제", pronunciation: "[결쩨]", meaning: "Payment", image: "💳", description: "물건값이나 비용을 지불하여 처리함.", descEn: "The action or process of paying a bill or price.", example: "카드 결제가 완료되었습니다. 영수증을 받으세요." },
+                { word: "도서관", pronunciation: "[도서관]", meaning: "Library", image: "🏛️", description: "많은 책을 모아 두고 사람들이 읽게 하는 곳.", descEn: "A building or room containing collections of books for reading.", example: "시험 공부를 하러 주말에 도서관에 갔습니다." },
+                { word: "따라가다", pronunciation: "[따라가다]", meaning: "To follow", image: "🚶", description: "앞서가는 사람의 뒤를 쫓아가거나 함께 가다.", descEn: "To go or come after someone or move with them.", example: "길을 잘 모르니 제가 당신을 따라가겠습니다." },
+                { word: "금방", pronunciation: "[금방]", meaning: "Soon / Shortly", image: "⏱️", description: "지금 막 또는 바로 곧.", descEn: "Just now or in a very short moment.", example: "잠시만 기다려 주세요. 금방 다녀오겠습니다." },
+                { word: "그래서", pronunciation: "[그래서]", meaning: "Therefore / So", image: "➡️", description: "앞의 내용이 뒤의 내용의 원인이나 근거가 됨을 나타냄.", descEn: "Indicating that the preceding part is the cause of the following.", example: "비가 많이 왔어요. 그래서 집에 있었습니다." },
+                { word: "이유", pronunciation: "[이유]", meaning: "Reason", image: "❓", description: "어떤 일이 일어나게 된 근거나 까닭.", descEn: "A cause, explanation, or justification for an action.", example: "한국어를 공부하기 시작한 특별한 이유가 있나요?" },
+				{ word: "왜냐하면", pronunciation: "[왜냐하면]", meaning: "Because", image: "❓", description: "앞의 내용에 대한 이유를 말할 때 쓰는 말.", descEn: "Used when providing a reason for the preceding statement.", example: "저는 우유를 못 마셔요. 왜냐하면 알레르기가 있거든요." },
+                { word: "편의점", pronunciation: "[펴니점]", meaning: "Convenience store", image: "🏪", description: "사람들이 이용하기 편리하도록 24시간 운영하는 가게.", descEn: "A 24-hour retail store designed for convenience.", example: "기숙사 바로 앞에 편의점이 있어서 아주 편해요." },
+                { word: "부탁하다", pronunciation: "[부타카다]", meaning: "To ask a favor", image: "🙏", description: "어떤 일을 해 달라고 청하거나 맡기다.", descEn: "To ask someone to do something for you.", example: "바쁘시겠지만 이 서류 확인 좀 부탁드립니다." },
+                { word: "맞은편", pronunciation: "[마즌편]", meaning: "Opposite side", image: "↔️", description: "서로 마주 보고 있는 쪽.", descEn: "The side or place directly across from someone or something.", example: "지하철역 맞은편에 큰 우체국이 있습니다." },
+                { word: "씻다", pronunciation: "[씻따]", meaning: "To wash", image: "🧼", description: "물 따위로 때나 지저분한 것을 없애다.", descEn: "To clean something, usually with water and soap.", example: "외출하고 돌아오면 제일 먼저 손을 씻어야 해요." },
+				{ word: "준비", pronunciation: "[준비]", meaning: "Preparation", image: "🎒", description: "미리 마련하거나 갖춤.", descEn: "The act of arranging or getting something ready in advance.", example: "내일 여행을 가기 위한 준비를 마쳤습니다." },
+                { word: "여행", pronunciation: "[여행]", meaning: "Travel", image: "✈️", description: "다른 고장이나 나라에 가는 일.", descEn: "The act of going to another region or country.", example: "이번 여름 휴가에는 제주도로 여행을 가요." }
+            
+			],
+            "중급1": [
+                { word: "오해", pronunciation: "[오해]", meaning: "Misunderstanding", image: "🤔", description: "뜻을 잘못 파악하거나 사실과 다르게 이해함.", descEn: "A failure to understand something correctly.", example: "말실수 때문에 친구 사이에 오해가 생겼습니다." },
+                { word: "도와주다", pronunciation: "[도와주다]", meaning: "To help", image: "🤝", description: "남이 하는 일이 잘되도록 힘을 보태다.", descEn: "To assist someone in doing something.", example: "무거운 짐을 드는 것을 제가 좀 도와드릴까요?" },
+                { word: "가능하다", pronunciation: "[가능하다]", meaning: "Possible", image: "⭕", description: "할 수 있거나 될 수 있는 상태에 있다.", descEn: "Able to be done or achieved.", example: "이번 주말까지 숙제를 끝내는 것이 가능합니까?" },
+                { word: "거절하다", pronunciation: "[거절하다]", meaning: "To refuse", image: "❌", description: "상대의 부탁이나 제안을 받아들이지 않다.", descEn: "To indicate that one is not willing to accept something.", example: "바쁜 일정 때문에 초대를 거절할 수밖에 없었습니다." },
+                { word: "업무", pronunciation: "[엄무]", meaning: "Work / Task", image: "💼", description: "직장에서 맡아서 하는 일.", descEn: "Work or tasks handled at a workplace.", example: "신입 사원은 아직 회사 업무에 익숙하지 않습니다." },
+                { word: "전공", pronunciation: "[전공]", meaning: "Major", image: "🎓", description: "어느 한 분야를 전문적으로 연구하거나 공부함.", descEn: "A subject that someone specializes in at college.", example: "대학교에서 제 전공은 경제학이었습니다." },
+                { word: "목표", pronunciation: "[목표]", meaning: "Goal", image: "🎯", description: "이루거나 도달하려고 하는 구체적인 지점.", descEn: "The object of a person's ambition or effort.", example: "올해의 목표는 한국어 능력 시험 4급을 따는 것입니다." },
+                { word: "노력하다", pronunciation: "[노력하다]", meaning: "To make an effort", image: "🔥", description: "목적을 이루기 위하여 애를 쓰다.", descEn: "To apply oneself with great energy to achieve a goal.", example: "꿈을 이루기 위해 매일 열심히 노력하고 있습니다." },
+				{ word: "말하자면", pronunciation: "[말하자면]", meaning: "So to speak", image: "🗨️", description: "어떤 사실을 설명하거나 요약해서 말할 때 씀.", descEn: "Used to summarize or explain a fact more clearly.", example: "그 친구는 저에게 말하자면 가족 같은 존재예요." },
+                { word: "요약하면", pronunciation: "[요야카면]", meaning: "In summary", image: "📝", description: "말이나 글의 핵심을 간략하게 줄여 말함.", descEn: "Summing up the main points of a speech or text.", example: "긴 내용을 요약하면 결국 시간이 부족하다는 뜻입니다." },
+                { word: "상당히", pronunciation: "[상당히]", meaning: "Considerably / Quite", image: "📈", description: "정도가 보통 이상으로 꽤 높게.", descEn: "To a degree that is significant or above average.", example: "오늘 날씨가 어제보다 상당히 춥네요." },
+                { word: "완전히", pronunciation: "[완전히]", meaning: "Completely", image: "💯", description: "모자람이나 흠이 없이 충분하게.", descEn: "To the full extent; entirely and without lack.", example: "고민하던 문제가 이제 완전히 해결되었습니다." },
+                { word: "적응하다", pronunciation: "[저긍하다]", meaning: "To adapt / adjust", image: "🦎", description: "어떤 조건이나 환경에 익숙해지다.", descEn: "To get used to new conditions or environment.", example: "이제는 한국 생활에 많이 적응해서 불편하지 않아요." },            
+				{ word: "환경", pronunciation: "[환경]", meaning: "Environment", image: "🌱", description: "생물을 둘러싸고 영향을 주는 주위 상황.", descEn: "The surrounding conditions that encompass and influence living things.", example: "우리는 후손을 위해 자연 환경을 보호해야 합니다." },
+                { word: "경험", pronunciation: "[경험]", meaning: "Experience", image: "🚵", description: "자신이 실제로 겪거나 본 일.", descEn: "Something that one has actually undergone, seen, or done themselves.", example: "다양한 아르바이트 경험은 사회 생활에 도움이 됩니다." }
+            	
+			],
+            "중급2": [
+                { word: "안건", pronunciation: "[안건]", meaning: "Item on the agenda", image: "📝", description: "토의하거나 조사해야 할 사실이나 주제.", descEn: "A matter or topic to be discussed or investigated.", example: "오늘 회의에서 다룰 주요 안건은 예산 절감입니다." },
+                { word: "논의하다", pronunciation: "[노의하다/노니하다]", meaning: "To discuss", image: "🗣️", description: "어떤 문제에 대하여 서로 의견을 주고받다.", descEn: "To exchange opinions or arguments about a subject.", example: "새 프로젝트의 방향에 대해 팀원들과 논의했습니다." },
+                { word: "회신", pronunciation: "[회신]", meaning: "Reply", image: "📧", description: "질문이나 통지에 대하여 답장을 보냄.", descEn: "Sending a response to an inquiry or notification.", example: "메일을 확인하시는 대로 빠른 회신 부탁드립니다." },
+                { word: "상황", pronunciation: "[상황]", meaning: "Situation", image: "🌍", description: "일이 되어 가는 과정이나 형편.", descEn: "A set of circumstances in which one finds oneself.", example: "갑작스러운 사고로 인해 상황이 매우 긴박해졌습니다." },
+                { word: "의미", pronunciation: "[의미]", meaning: "Meaning", image: "📖", description: "말이나 글이 나타내는 뜻.", descEn: "The sense or significance of a word or phrase.", example: "이 단어의 정확한 의미를 사전에서 찾아보세요." },
+                { word: "중요성", pronunciation: "[중요성]", meaning: "Importance", image: "⭐", description: "중요하고 소중한 정도나 성질.", descEn: "The quality of being important or significant.", example: "건강의 중요성은 아무리 강조해도 지나치지 않습니다." },
+                { word: "깨닫다", pronunciation: "[깨닫다]", meaning: "To realize", image: "💡", description: "모르던 사실을 알게 되거나 진리를 알다.", descEn: "To become fully aware of something as a fact.", example: "실수를 하고 나서야 비로소 규칙의 필요성을 깨달았습니다." },
+                { word: "가치", pronunciation: "[가치]", meaning: "Value", image: "💎", description: "사물이 지니고 있는 쓸모나 중요성.", descEn: "The regard that something is held to deserve.", example: "고전 문학은 시간이 흘러도 변하지 않는 가치가 있습니다." },
+				{ word: "가능성", pronunciation: "[가능썽]", meaning: "Possibility", image: "🎲", description: "앞으로 어떤 일이 일어날 수 있는 성질.", descEn: "The chance or likelihood that something will happen.", example: "비가 올 가능성이 높으니 우산을 꼭 챙기세요." },
+                { word: "대응하다", pronunciation: "[대응하다]", meaning: "To respond / react", image: "🛡️", description: "어떤 일이나 상황에 맞춰 적절하게 행동하다.", descEn: "To act appropriately in response to a situation.", example: "위기 상황에 발 빠르게 대응하는 능력이 필요합니다." },
+                { word: "고령화", pronunciation: "[고령화]", meaning: "Aging", image: "👵", description: "전체 인구에서 노인의 비율이 높아지는 현상.", descEn: "The process of a population becoming older.", example: "한국은 세계에서 가장 빠르게 고령화가 진행되고 있습니다." },
+                { word: "재활용", pronunciation: "[재활용]", meaning: "Recycling", image: "♻️", description: "헌 물건이나 자원을 다시 사용하는 일.", descEn: "The action of converting waste into reusable material.", example: "환경을 보호하기 위해 철저한 재활용이 필요합니다." },
+                { word: "원인", pronunciation: "[원인]", meaning: "Cause", image: "🔍", description: "어떤 결과를 일으키게 된 근본적인 까닭.", descEn: "The fundamental reason that results in something.", example: "경찰이 사고의 정확한 원인을 조사하고 있습니다." },           
+				{ word: "효과", pronunciation: "[효꽈]", meaning: "Effect", image: "✨", description: "어떤 원인에 의하여 나타나는 보람 있는 결과.", descEn: "A worthwhile result produced by a certain cause or action.", example: "이 약은 감기 증상을 완화하는 데 효과가 빠릅니다." },
+                { word: "표현", pronunciation: "[표현]", meaning: "Expression", image: "🎭", description: "생각이나 느낌을 언어나 몸짓으로 나타냄.", descEn: "Expressing thoughts or feelings through language, gestures, or art.", example: "자신의 생각을 명확하게 표현하는 연습이 필요합니다." }
+            
+			],
+            "고급1": [
+                { word: "본질", pronunciation: "[본질]", meaning: "Essence", image: "🧬", description: "사물의 근본적인 성질이나 모습.", descEn: "The fundamental nature or quality of a thing.", example: "문제의 본질을 파악해야 올바른 해결책을 찾을 수 있습니다." },
+                { word: "정의", pronunciation: "[정의]", meaning: "Definition", image: "📜", description: "어떤 말이나 사물의 뜻을 명확히 정함.", descEn: "A statement of the exact meaning of a word.", example: "민주주의에 대한 정의는 시대에 따라 조금씩 달라졌습니다." },
+                { word: "인식하다", pronunciation: "[인식하다]", meaning: "To perceive", image: "🧠", description: "사물을 분별하고 판단하여 알게 되다.", descEn: "To become aware of or realize something through senses.", example: "우리 사회는 이제 인권 문제에 대해 예민하게 인식하고 있습니다." },
+                { word: "평가하다", pronunciation: "[평가하다]", meaning: "To evaluate", image: "📊", description: "가치나 수준 등을 가늠하여 정하다.", descEn: "To assess or judge the value or quality of something.", example: "심사위원들은 학생들의 창의성을 높게 평가했습니다." },
+                { word: "규정하다", pronunciation: "[규정하다]", meaning: "To stipulate / define", image: "⚖️", description: "규칙으로 정하거나 성격을 규정지음.", descEn: "To state clearly a rule or define a character.", example: "법은 국민의 권리와 의무를 구체적으로 규정하고 있습니다." },
+                { word: "분류하다", pronunciation: "[분류하다]", meaning: "To classify", image: "📂", description: "종류에 따라 나누다.", descEn: "To arrange a group of people or things in classes.", example: "수집한 자료를 주제별로 분류하여 보관했습니다." },
+                { word: "견해", pronunciation: "[견해]", meaning: "Viewpoint", image: "👓", description: "어떤 사물이나 현상에 대한 생각이나 의견.", descEn: "A particular attitude or way of considering a matter.", example: "전문가들은 이번 경제 현상에 대해 서로 다른 견해를 보였습니다." },
+                { word: "전개", pronunciation: "[전개]", meaning: "Development / Unfolding", image: "🎬", description: "내용이 진행되거나 일이 펼쳐짐.", descEn: "The unfolding or progress of events or story.", example: "소설의 이야기 전개가 매우 빠르고 흥미진진합니다." },
+				{ word: "해석", pronunciation: "[해석]", meaning: "Interpretation", image: "🧐", description: "말이나 글의 의미를 설명하거나 이해함.", descEn: "Explaining or understanding the meaning of something.", example: "이 문장은 문맥에 따라 여러 가지로 해석될 수 있습니다." },
+                { word: "본질", pronunciation: "[본질]", meaning: "Essence", image: "🧬", description: "사물의 근본적인 성질이나 모습.", descEn: "The fundamental nature or quality of a thing.", example: "문제의 본질을 파악해야 올바른 해결책을 찾을 수 있습니다." },
+                { word: "관점", pronunciation: "[관점]", meaning: "Perspective / Viewpoint", image: "🔭", description: "사물이나 현상을 관찰하고 판단하는 태도.", descEn: "A particular attitude or way of considering something.", example: "서로 다른 관점에서 대화를 나누면 이해의 폭이 넓어집니다." },
+                { word: "고려하다", pronunciation: "[고려하다]", meaning: "To consider", image: "💭", description: "여러 가지 상황을 충분히 생각하다.", descEn: "To think carefully about various circumstances.", example: "주변 환경과 비용을 모두 고려하여 결정했습니다." },
+                { word: "초래하다", pronunciation: "[초래하다]", meaning: "To bring about / cause", image: "🌪️", description: "어떤 결과나 현상을 생기게 하다 (주로 부정적).", descEn: "To cause or lead to a certain (usually bad) result.", example: "지나친 욕심은 때로 큰 화를 초래하기도 합니다." },           
+				{ word: "기여하다", pronunciation: "[기여하다]", meaning: "Contribute", image: "🎁", description: "도움이 되도록 이바지하다.", descEn: "To serve or help so as to be beneficial to something.", example: "그는 한국 IT 산업 발전에 크게 기여한 인물입니다." },
+                { word: "보장하다", pronunciation: "[보장하다]", meaning: "Guarantee", image: "🛡️", description: "어떤 일이 틀림없이 행해지도록 보호함.", descEn: "To protect or ensure that something is carried out without fail.", example: "헌법은 모든 국민의 기본권을 보장하고 있습니다." }
+            
+			],
+            "고급2": [
+                { word: "나아가", pronunciation: "[나아가]", meaning: "Furthermore", image: "🚀", description: "앞의 상태에서 더 나아간 단계로.", descEn: "Moving forward to a further stage or degree.", example: "이 기술은 효율적일 뿐만 아니라 나아가 친환경적입니다." },
+                { word: "결국", pronunciation: "[결국]", meaning: "Eventually", image: "🔚", description: "일의 마지막이나 최종적인 결과.", descEn: "In the end, especially after a long delay.", example: "수많은 시행착오 끝에 결국 실험에 성공했습니다." },
+                { word: "아울러", pronunciation: "[아울러]", meaning: "In addition / Along with", image: "➕", description: "동시에 또는 함께.", descEn: "At the same time or in addition to.", example: "성실한 태도와 아울러 실력까지 갖춘 인재를 찾습니다." },
+                { word: "결과적으로", pronunciation: "[결과적으로]", meaning: "As a result", image: "📍", description: "일어난 일의 끝에 나타난 상태로 보아.", descEn: "Resulting in a certain state or outcome.", example: "그의 과감한 결정은 결과적으로 회사에 큰 이익을 주었습니다." },
+                { word: "격언", pronunciation: "[격언]", meaning: "Maxim / Proverb", image: "📜", description: "삶의 교훈을 담은 짧은 말.", descEn: "A short statement expressing a general truth.", example: "‘실패는 성공의 어머니’라는 격언을 가슴에 새기고 삽니다." },
+                { word: "적절하다", pronunciation: "[적쩔하다]", meaning: "Appropriate", image: "👌", description: "상황에 딱 들어맞고 알맞다.", descEn: "Suitable or proper in the circumstances.", example: "비판을 할 때는 적절한 용어를 선택하는 것이 중요합니다." },
+                { word: "어조", pronunciation: "[어조]", meaning: "Tone of voice", image: "🔊", description: "말의 가락이나 느낌.", descEn: "A particular way of speaking or writing.", example: "그는 단호한 어조로 자신의 입장을 분명히 밝혔습니다." },
+                { word: "체계적", pronunciation: "[체계적]", meaning: "Systematic", image: "🧱", description: "일정한 원리에 따라 잘 짜여진 것.", descEn: "Done or acting according to a fixed plan or system.", example: "복잡한 업무일수록 체계적인 관리가 필요합니다." },
+				{ word: "설득하다", pronunciation: "[설뜨카다]", meaning: "To persuade", image: "📢", description: "상대방이 내 뜻을 따르도록 잘 설명하여 이해시키다.", descEn: "To convince someone to do or believe something.", example: "그를 설득하여 이번 프로젝트에 참여하게 했습니다." },
+                { word: "청중", pronunciation: "[청중]", meaning: "Audience", image: "👥", description: "강연이나 공연 등을 듣기 위해 모인 사람들.", descEn: "A group of people gathered to hear a speech or performance.", example: "강연자는 청중의 반응을 살피며 천천히 말을 이어갔습니다." },
+                { word: "문단", pronunciation: "[문단]", meaning: "Paragraph", image: "📄", description: "글에서 하나의 중심 생각이 담긴 토막.", descEn: "A distinct section of a piece of writing.", example: "이 글은 모두 네 개의 문단으로 구성되어 있습니다." },
+                { word: "중립적", pronunciation: "[중닙쩍]", meaning: "Neutral", image: "⚖️", description: "어느 한쪽으로 치우치지 않는 공정한 태도.", descEn: "Taking a position that does not favor any side.", example: "기자는 사건에 대해 중립적인 입장에서 보도해야 합니다." },
+                { word: "설명문", pronunciation: "[설명문]", meaning: "Explanatory text", image: "ℹ️", description: "정보나 지식을 전달하기 위해 알기 쉽게 쓴 글.", descEn: "A text written to provide information or knowledge clearly.", example: "박물관 입구에 있는 안내 설명문을 꼼꼼히 읽어보세요." },            
+				{ word: "불가피하다", pronunciation: "[불가피하다]", meaning: "unavoidable", image: "⚠️", description: "피할 수 없다.", descEn: "Being impossible to avoid or evade.", example: "천재지변으로 인한 일정 취소는 불가피한 결정이었습니다." },
+                { word: "지향하다", pronunciation: "[지향하다]", meaning: "Pursue", image: "🏹", description: "어떤 목표를 향하여 나아가다.", descEn: "To move forward toward a certain goal or direction.", example: "우리 기업은 지속 가능한 발전을 지향하고 있습니다." }
+            
+			]
+        };
+
+        const levelsOrder = ["초급1", "초급2", "중급1", "중급2", "고급1", "고급2"];
+        const topikMap = { "초급1": "TOPIK 1단계", "초급2": "TOPIK 2단계", "중급1": "TOPIK 3단계", "중급2": "TOPIK 4단계", "고급1": "TOPIK 5단계", "고급2": "TOPIK 6단계" };
+        let currentLevelName = ""; let wordList = []; let currentIndex = 0; let isRecording = false; let hasRecorded = false;
+        let quizList = []; let quizCurrentIdx = 0; let quizScore = 0; let selectedOptionIdx = null;
+        let seenIndices = new Set();
+        let quizShown = false; 
+
+        function startApp(level) {
+            currentLevelName = level; 
+            wordList = levelData[level] || levelData["초급1"]; 
+            currentIndex = 0;
+            seenIndices.clear();
+            seenIndices.add(0);
+            quizShown = false;
+
+            const card = document.getElementById('card'); card.classList.remove('flipped');
+            hideAllScreens(); document.getElementById('main-app').style.display = 'block';
+            updateUI();
+        }
+
+        function hideAllScreens() { ['intro-screen', 'quiz-intro-screen', 'quiz-play-screen', 'quiz-result-screen', 'main-app', 'level-complete-screen'].forEach(s => {
+            const el = document.getElementById(s);
+            if(el) el.style.display = 'none';
+        }); }
+
+        function updateUI() {
+            const data = wordList[currentIndex];
+            document.getElementById('level-indicator').innerText = `${currentLevelName} (${currentIndex + 1}/${wordList.length})`;
+            document.getElementById('topik-guide').innerText = topikMap[currentLevelName];
+            document.getElementById('front-image').innerText = data.image;
+            document.getElementById('front-word').innerText = data.word;
+            document.getElementById('front-pron').innerText = data.pronunciation;
+            document.getElementById('desc-ko').innerText = data.description;
+            document.getElementById('desc-en').innerText = data.descEn;
+            document.getElementById('back-ko-word').innerText = data.word;
+            document.getElementById('back-example').innerText = data.example;
+        }
+
+        function animateAndChange(dir, e) {
+            if(e) e.stopPropagation();
+            const nextIdx = currentIndex + dir;
+
+            // 퀴즈 진입 조건: 아직 퀴즈를 안 봤고 + (10개를 채웠거나 or 마지막 단어이거나)
+            if (dir === 1 && !quizShown && (seenIndices.size >= 10 || nextIdx >= wordList.length)) { 
+                showQuizIntro(); 
+                return; 
+            }
+            
+            // 모든 단어를 다 배운 상태에서 '다음' 클릭 시 완료 화면
+            if (dir === 1 && nextIdx >= wordList.length) {
+                showLevelComplete();
+                return;
+            }
+            if (dir === -1 && nextIdx < 0) return;
+
+            const card = document.getElementById('card');
+            const animationClass = dir === 1 ? 'slide-out-left' : 'slide-out-right';
+            card.classList.add(animationClass);
+            
+            setTimeout(() => {
+                currentIndex = nextIdx;
+                seenIndices.add(currentIndex);
+                updateUI(); 
+                closeEval();
+                card.classList.remove('flipped', animationClass);
+                card.classList.add('slide-in');
+                setTimeout(() => card.classList.remove('slide-in'), 400);
+            }, 300);
+        }
+
+        function showQuizIntro() { 
+            hideAllScreens(); 
+            document.getElementById('quiz-intro-screen').style.display = 'flex'; 
+        }
+
+        function startQuiz() {
+            const learnedWords = Array.from(seenIndices).map(idx => wordList[idx]);
+            // 학습한 단어들 중 랜덤하게 섞고 딱 3개만 추출
+            quizList = learnedWords.sort(() => 0.5 - Math.random()).slice(0, 3);
+            
+            quizCurrentIdx = 0; 
+            quizScore = 0;
+            hideAllScreens(); 
+            document.getElementById('quiz-play-screen').style.display = 'flex';
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            const data = quizList[quizCurrentIdx];
+            document.getElementById('quiz-q-count').innerText = `문제 ${quizCurrentIdx + 1}/${quizList.length}`;
+            document.getElementById('quiz-question').innerText = `"${data.description}"\n\n이 설명에 알맞은 단어는 무엇일까요?`;
+            
+            const optionsDiv = document.getElementById('quiz-options');
+            optionsDiv.innerHTML = ""; 
+            selectedOptionIdx = null;
+            document.getElementById('quiz-feedback').innerText = "";
+            document.getElementById('btn-quiz-confirm').style.display = 'block';
+            document.getElementById('btn-quiz-next').style.display = 'none';
+
+            let options = [data.word];
+            let pool = []; 
+            Object.values(levelData).forEach(l => l.forEach(w => pool.push(w.word)));
+            let uniquePool = [...new Set(pool)].filter(w => w !== data.word);
+            options.push(...uniquePool.sort(() => 0.5 - Math.random()).slice(0, 3));
+            options.sort(() => 0.5 - Math.random());
+
+            options.forEach((opt, idx) => {
+                const btn = document.createElement('div');
+                btn.className = 'quiz-option'; btn.innerText = opt;
+                btn.onclick = () => {
+                    document.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+                    btn.classList.add('selected'); selectedOptionIdx = idx;
+                };
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkQuizAnswer() {
+            if (selectedOptionIdx === null) return;
+            const opts = document.querySelectorAll('.quiz-option');
+            const correct = quizList[quizCurrentIdx].word;
+
+            opts.forEach(opt => {
+                if(opt.innerText === correct) opt.classList.add('correct');
+            });
+
+            if (opts[selectedOptionIdx].innerText === correct) {
+                quizScore++;
+                document.getElementById('quiz-feedback').innerHTML = "<span style='color:var(--eval-color)'>✨ 정답입니다!</span>";
+            } else {
+                opts[selectedOptionIdx].classList.add('wrong');
+                document.getElementById('quiz-feedback').innerHTML = `<span style='color:var(--accent-color)'>오답입니다. 정답은 '${correct}'입니다.</span>`;
+            }
+            document.getElementById('btn-quiz-confirm').style.display = 'none';
+            document.getElementById('btn-quiz-next').style.display = 'block';
+        }
+
+        function nextQuiz() { 
+            if (quizCurrentIdx < quizList.length - 1) { 
+                quizCurrentIdx++; 
+                renderQuiz(); 
+            } else { 
+                showQuizResult(); 
+            } 
+        }
+
+        function showQuizResult() {
+            hideAllScreens(); document.getElementById('quiz-result-screen').style.display = 'flex';
+            document.getElementById('quiz-result-msg').innerText = `총 ${quizList.length}문제 중 ${quizScore}문제를 맞혔습니다.`;
+            const container = document.getElementById('quiz-result-buttons');
+            container.innerHTML = "";
+
+            // 0개 또는 1개만 맞췄을 경우 (3가지 버튼)
+            if (quizScore <= 1) {
+                addResBtn(container, "이어서 학습하기", () => continueLearning(), "var(--primary-color)", "white");
+                addResBtn(container, "다시 풀기", () => startQuiz(), "var(--secondary-color)", "white");
+            } else {
+                addResBtn(container, "이어서 학습하기", () => continueLearning(), "var(--eval-color)", "white");
+            }
+
+		    addResBtn(
+		        container,
+		        "오늘 학습 완료",
+		        () => { window.location.href = "study_complete.html"; },
+		        "var(--eval-color)",
+		        "white"
+		    );
+
+        }
+
+        function continueLearning() {
+            quizShown = true; 
+            
+            // 만약 현재 인덱스가 마지막이었다면 축하 화면으로, 아니라면 다음 단어로
+            if (currentIndex < wordList.length - 1) {
+                hideAllScreens();
+                document.getElementById('main-app').style.display = 'block';
+                animateAndChange(1); 
+            } else {
+                showLevelComplete();
+            }
+        }
+
+        // --- 레벨 완료 처리 (추가됨) ---
+        function showLevelComplete() {
+            hideAllScreens();
+            const screen = document.getElementById('level-complete-screen');
+            screen.style.display = 'flex';
+            
+            document.getElementById('complete-msg').innerText = `${currentLevelName} 과정을 성공적으로 마쳤습니다!`;
+            document.getElementById('complete-stats').innerText = `총 ${wordList.length}개의 단어를 마스터했습니다.`;
+            
+            // 다음 레벨 존재 여부 확인
+            const nextIdx = levelsOrder.indexOf(currentLevelName) + 1;
+            const btnNext = document.getElementById('btn-next-level');
+            if (nextIdx < levelsOrder.length && levelData[levelsOrder[nextIdx]]) {
+                btnNext.style.display = 'block';
+                btnNext.onclick = () => startApp(levelsOrder[nextIdx]);
+            } else {
+                btnNext.style.display = 'none';
+            }
+        }
+
+        function goToNextLevel() {
+            const nextIdx = levelsOrder.indexOf(currentLevelName) + 1;
+            if (nextIdx < levelsOrder.length) startApp(levelsOrder[nextIdx]);
+        }
+
+        function addResBtn(c, t, o, b, f) {
+            const btn = document.createElement('button'); btn.className = "btn-level";
+            btn.innerText = t; btn.onclick = o; btn.style.background = b; btn.style.color = f; btn.style.border = "none";
+            btn.style.marginTop = "10px"; btn.style.width = "100%";
+            c.appendChild(btn);
+        }
+
+        // --- 유틸리티 및 오디오 로직 ---
+        function decomposeHangeul(char) {
+            const code = char.charCodeAt(0) - 44032; if (code < 0 || code > 11171) return [char];
+            const cho = Math.floor(code / 588), jung = Math.floor((code % 588) / 28), jong = code % 28;
+            const choList = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"], 
+                  jungList = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"], 
+                  jongList = ["", "ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+            const result = [choList[cho], jungList[jung]]; if (jongList[jong]) result.push(jongList[jong]); return result;
+        }
+
+        function showDetailedEvaluation() {
+            const container = document.getElementById('score-container'); container.innerHTML = "";
+            const sentence = wordList[currentIndex].example;
+            sentence.split(" ").forEach(eojeol => {
+                const score = Math.floor(Math.random() * 15) + 85;
+                const div = document.createElement('div'); div.className = 'eval-item';
+                div.innerHTML = `<div class="item-main" onclick="toggleSub(this)"><span><span class="tag">어절</span>${eojeol}</span><span style="color:var(--eval-color); font-weight:700; font-size:0.8rem;">${score}점 ▼</span></div><div class="sub-list"></div>`;
+                const sub = div.querySelector('.sub-list');
+                eojeol.split("").forEach(syl => {
+                    const sylDiv = document.createElement('div');
+                    sylDiv.innerHTML = `<div class="sub-item" onclick="toggleSub(this, event)"><span><span class="tag" style="background:#eef5ff;">음절</span>${syl}</span><span>상세 ▼</span></div><div class="sub-list" style="padding-left:10px; border:none; background:#fafafa;"><div class="jaso-box">${decomposeHangeul(syl).map(j => `<div class="jaso-unit">${j}<span class="jaso-val">${Math.floor(Math.random()*10)+90}</span></div>`).join('')}</div></div>`;
+                    sub.appendChild(sylDiv);
+                });
+                container.appendChild(div);
+            });
+            document.getElementById('total-score-val').innerText = Math.floor(Math.random()*10 + 85);
+            document.getElementById('eval-overlay').style.display = 'flex';
+        }
+
+        function toggleSub(el, e) { if(e) e.stopPropagation(); const s = el.nextElementSibling; s.style.display = (s.style.display === 'block') ? 'none' : 'block'; }
+        function closeEval() { document.getElementById('eval-overlay').style.display = 'none'; hasRecorded = false; const b = document.getElementById('recordBtn'); b.textContent = '🎙️ 문장 녹음'; b.style.background = "var(--accent-color)"; }
+        function flipCard() { if(!isRecording) document.getElementById('card').classList.toggle('flipped'); }
+        function goHome(e) { if(e) e.stopPropagation(); hideAllScreens(); document.getElementById('intro-screen').style.display = 'flex'; }
+        function playWordAudio(e) { e.stopPropagation(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(wordList[currentIndex].word)); }
+        function playExampleAudio(e) { e.stopPropagation(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(wordList[currentIndex].example)); }
+        async function handleMicAction(e) { e.stopPropagation(); const btn = document.getElementById('recordBtn'); if (!hasRecorded) { if (!isRecording) { isRecording = true; btn.textContent = '⏹️ 중지'; } else { isRecording = false; hasRecorded = true; btn.textContent = '⭐ 결과 보기'; btn.style.background = "var(--eval-color)"; } } else { showDetailedEvaluation(); } }
+    </script>
+</body>
+</html>

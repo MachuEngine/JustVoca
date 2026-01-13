@@ -1,5 +1,4 @@
 import flet as ft
-import flet_audio as fta
 import pandas as pd
 import random
 import os
@@ -135,18 +134,23 @@ def main(page: ft.Page):
     # 세션 (로그인 정보 및 학습 상태)
     session = {"user": None, "level": "", "study_words": [], "quiz_score": 0, "wrong_list": []}
     
-    # 오디오 (에러 방지 처리)
-    try:
-        audio = fta.Audio(autoplay=True)
-        page.overlay.append(audio)
-    except: pass
-
-    def play_tts(text):
-        """TTS 재생"""
+    def play_tts(text: str):
         try:
-            audio.src = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q={text}&tl=ko"
-            audio.update()
-        except: pass
+            t = json.dumps(text)  # JS 안전 문자열
+            page.run_javascript(f"""
+            try {{
+                if (!window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance({t});
+                u.lang = "ko-KR";
+                u.rate = 1.0;
+                u.pitch = 1.0;
+                u.volume = 1.0;
+                window.speechSynthesis.speak(u);
+            }} catch(e) {{}}
+            """)
+        except:
+            pass
 
     def show_snack(msg):
         """하단 메시지 표시"""
@@ -158,6 +162,7 @@ def main(page: ft.Page):
         """페이지 이동 헬퍼"""
         print(f"👉 이동 요청: {page.route} -> {route}") 
         page.go(route)
+        page.update()   # ✅ 라우팅 직후 강제 업데이트
 
     # -------------------------------------------------------------------------
     # [View] 로그인 화면
@@ -176,6 +181,7 @@ def main(page: ft.Page):
             else: show_snack("로그인 실패")
 
         def on_signup_click(e):
+            show_snack("회원가입 화면으로 이동합니다")  # ✅ 클릭 이벤트 들어오는지 즉시 확인
             print("👇 회원가입 버튼 클릭됨!")
             go_to("/signup")
 
@@ -202,19 +208,47 @@ def main(page: ft.Page):
     # [View] 회원가입 화면
     # -------------------------------------------------------------------------
     def view_signup():
-        new_id = ft.TextField(label="아이디", width=280, bgcolor="white")
-        new_pw = ft.TextField(label="비밀번호", password=True, width=280, bgcolor="white")
-        new_name = ft.TextField(label="이름", width=280, bgcolor="white")
+        print("📌 회원가입 화면 진입")
+
+        # 1. 컨트롤(입력창)을 먼저 생성합니다.
         role_grp = ft.RadioGroup(content=ft.Row([
             ft.Radio(value="student", label="학생"),
             ft.Radio(value="teacher", label="선생님")
         ]), value="student")
 
+        new_id = ft.TextField(label="아이디", width=280, bgcolor="white")
+        new_pw = ft.TextField(label="비밀번호", password=True, width=280, bgcolor="white")
+        new_name = ft.TextField(label="이름", width=280, bgcolor="white")
+
+        # 2. 핸들러 함수를 그 다음에 정의합니다. (이제 컨트롤들이 확실히 존재함)
         def on_regist(e):
-            if not (new_id.value and new_pw.value and new_name.value): return show_snack("모두 입력해주세요.")
+            print(f"📝 가입 시도: ID={new_id.value}, Name={new_name.value}") # 터미널 로그 확인용
+            
+            if not (new_id.value and new_pw.value and new_name.value): 
+                return show_snack("모두 입력해주세요.")
+            
+            # 사용자 등록 시도
             ok, msg = register_user(new_id.value, new_pw.value, new_name.value, role_grp.value)
+            print(f"👉 결과: {ok}, 메시지: {msg}")
+            
             show_snack(msg)
-            if ok: go_to("/login")
+            
+            if ok: 
+                print("🚀 회원가입 성공! 로그인 페이지로 이동합니다.")
+                go_to("/login")
+
+        # 3. 마지막으로 이벤트를 연결합니다.
+        new_id.on_submit = on_regist
+        new_pw.on_submit = on_regist
+        new_name.on_submit = on_regist
+        
+        # 버튼 생성
+        btn_regist = ft.ElevatedButton(
+            "가입 완료", 
+            on_click=on_regist, 
+            width=280, height=50, 
+            style=ft.ButtonStyle(bgcolor="#2ecc71", color="white")
+        )
 
         return ft.View("/signup", [
             ft.AppBar(title=ft.Text("회원가입"), leading=ft.IconButton(ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login"))),
@@ -224,8 +258,7 @@ def main(page: ft.Page):
                     ft.Container(height=20),
                     role_grp, new_id, new_pw, new_name,
                     ft.Container(height=20),
-                    ft.ElevatedButton("가입 완료", on_click=on_regist, width=280, height=50, 
-                                      style=ft.ButtonStyle(bgcolor="#2ecc71", color="white"))
+                    btn_regist
                 ], horizontal_alignment="center"),
                 padding=20, expand=True, bgcolor="white", alignment=ft.alignment.center
             )
@@ -396,22 +429,37 @@ def main(page: ft.Page):
     # -------------------------------------------------------------------------
     # 라우팅 핸들러
     # -------------------------------------------------------------------------
-    def route_change(route):
-        print(f"🔄 URL 변경됨: {page.route}")
+    def route_change(e: ft.RouteChangeEvent):
+        route = e.route  # ✅ 이벤트에서 route를 꺼내는 방식이 안전
+        print(f"🔄 URL 변경됨: {route}")
+
         page.views.clear()
-        
-        if page.route == "/login" or page.route == "/": page.views.append(view_login())
-        elif page.route == "/signup": page.views.append(view_signup())
-        elif page.route == "/student_home": page.views.append(view_student_home())
-        elif page.route == "/study": page.views.append(view_study())
-        elif page.route == "/quiz": page.views.append(view_quiz())
-        elif page.route == "/result": page.views.append(view_result())
-        elif page.route == "/teacher_dash": page.views.append(view_teacher_dash())
-        
+
+        if route == "/login" or route == "/":
+            page.views.append(view_login())
+        elif route == "/signup":
+            page.views.append(view_signup())
+        elif route == "/student_home":
+            page.views.append(view_student_home())
+        elif route == "/study":
+            page.views.append(view_study())
+        elif route == "/quiz":
+            page.views.append(view_quiz())
+        elif route == "/result":
+            page.views.append(view_result())
+        elif route == "/teacher_dash":
+            page.views.append(view_teacher_dash())
+
         page.update()
 
+    def view_pop(e: ft.ViewPopEvent):
+        page.views.pop()
+        top = page.views[-1]
+        page.go(top.route)
+
     page.on_route_change = route_change
-    page.go("/login")
+    page.on_view_pop = view_pop
+    page.go("/")
 
 # =============================================================================
 # [중요] WSL 환경 설정: 외부 접속 허용 (host='0.0.0.0')
@@ -427,9 +475,9 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("🚀 앱 서버가 실행되었습니다!")
     print(f"👉 윈도우에서 접속이 안되면 아래 주소들을 차례로 시도해보세요:")
-    print(f"1. http://localhost:8080")
-    print(f"2. http://{ip_addr}:8080")
+    print(f"1. http://localhost:8090")
+    print(f"2. http://{ip_addr}:8090")
     print("="*60 + "\n")
     
     # host='0.0.0.0'을 추가하여 모든 네트워크 인터페이스에서 접속 허용
-    ft.app(target=main, port=8080, view=ft.AppView.WEB_BROWSER, host="0.0.0.0")
+    ft.app(target=main, port=8090, view=ft.AppView.WEB_BROWSER, host="0.0.0.0")

@@ -1,0 +1,17 @@
+{
+    "admin": {
+        "pw": "1111",
+        "name": "관리자",
+        "role": "admin"
+    },
+    "machu": {
+        "pw": "ann1026",
+        "name": "안종민",
+        "role": "student"
+    },
+    "machu1": {
+        "pw": "1234",
+        "name": "안종민",
+        "role": "student"
+    }
+}

@@ -1,0 +1,8 @@
+{
+  "default_goal": 10,
+  "review_threshold": 85,
+  "api": {
+    "openai_api_key": "",
+    "stt_provider": "none"
+  }
+}

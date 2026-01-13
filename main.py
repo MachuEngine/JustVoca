@@ -80,6 +80,20 @@ def save_users(users_data):
     except Exception as e:
         print(f"❌ 저장 실패: {e}")
 
+def save_user_progress(user_id, level_name, last_index):
+    """사용자의 특정 레벨 진도율을 파일에 저장"""
+    users = load_users()
+    if user_id in users:
+        if "progress" not in users[user_id]:
+            users[user_id]["progress"] = {}
+        
+        # 진도 업데이트 (더 많이 공부했을 때만 업데이트)
+        current_prog = users[user_id]["progress"].get(level_name, 0)
+        if last_index > current_prog:
+            users[user_id]["progress"][level_name] = last_index
+            save_users(users) # 파일 쓰기
+            print(f"💾 진도 저장 완료: {user_id} - {level_name} : {last_index}")
+
 def register_user(uid, pw, name, role):
     users = load_users()
     if uid in users: return False, "이미 존재하는 아이디입니다."
@@ -87,11 +101,20 @@ def register_user(uid, pw, name, role):
     save_users(users)
     return True, "회원가입 완료! 로그인해주세요."
 
+# 기존 authenticate_user 함수를 이걸로 교체하세요.
 def authenticate_user(uid, pw):
     users = load_users()
     if uid in users and users[uid]["pw"] == pw:
         u = users[uid]
         u["id"] = uid
+        
+        # [추가된 부분] 진도 데이터가 없으면 0으로 초기화해서 생성
+        if "progress" not in u:
+            u["progress"] = {}
+            # 변경사항 저장 (파일에 바로 반영)
+            users[uid] = u
+            save_users(users)
+            
         return True, u
     return False, None
 
@@ -255,7 +278,44 @@ def main(page: ft.Page):
         grid_items = []
         for lv in VOCAB_DB:
             def make_click_handler(level_name):
-                return lambda e: [session.update({"level": level_name, "study_words": VOCAB_DB[level_name]}), go_to("/study")]
+                def handler(e):
+                    # 1. 현재 사용자 ID와 진도 데이터 가져오기
+                    user_id = session["user"]["id"]
+                    # 로그인 시점에 로드된 데이터 대신, 최신 데이터를 다시 읽을 수도 있음
+                    # 여기서는 session 정보를 사용 (로그인 시 로드됨)
+                    user_prog = session["user"].get("progress", {}).get(level_name, 0)
+                    
+                    all_words = VOCAB_DB[level_name]
+                    total_len = len(all_words)
+
+                    # 2. 이미 다 공부했는지 확인
+                    if user_prog >= total_len:
+                         # 다시 처음부터 복습할지 물어보는 로직이 있으면 좋지만, 일단 알림만
+                        show_snack("🎉 이미 이 단계의 모든 단어를 학습했습니다! (복습 모드)")
+                        # 복습을 위해 0부터 다시 10개 가져오기 (선택사항)
+                        start_idx = 0
+                    else:
+                        start_idx = user_prog
+
+                    # 3. 10개 슬라이싱 (예: 20번부터 30번까지)
+                    end_idx = min(start_idx + 10, total_len)
+                    batch_words = all_words[start_idx : end_idx]
+                    
+                    if not batch_words:
+                        show_snack("학습할 단어가 없습니다.")
+                        return
+
+                    # 4. 세션에 저장 (학습 화면에서 쓸 데이터)
+                    session.update({
+                        "level": level_name,
+                        "study_words": batch_words,
+                        "current_start_idx": start_idx, # 시작 위치 기억
+                        "current_end_idx": end_idx      # 끝 위치 기억
+                    })
+                    
+                    print(f"🚀 학습 시작: {level_name} ({start_idx} ~ {end_idx})")
+                    go_to("/study")
+                return handler
 
             grid_items.append(ft.Container(
                 content=ft.Column([
@@ -302,88 +362,167 @@ def main(page: ft.Page):
             ]
         )
 
-    # -------------------------------------------------------------------------
-    # [View 4] 학습 화면 (아이콘 수정됨)
+# -------------------------------------------------------------------------
+    # [View 4] 학습 화면 (수정됨: 초기 렌더링 에러 해결)
     # -------------------------------------------------------------------------
     def view_study():
         words = session.get("study_words", [])
-        if not words: 
-            return ft.View(route="/study", controls=[ft.Text("데이터가 없습니다.")])
+        if not words: return ft.View(route="/study", controls=[ft.Text("데이터가 없습니다.")])
 
-        total = min(10, len(words))
-        current_idx = [0] 
-        is_front = [True]
+        total = len(words)
+        state = {
+            "idx": 0,
+            "is_front": True,
+            "recording": False
+        }
 
-        card_content = ft.Column(alignment=ft.MainAxisAlignment.CENTER)
+        # UI 컴포넌트 정의
+        card_content = ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER, 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+        )
+        
+        record_status = ft.Text("", color="red", weight="bold")
+        score_text = ft.Text("", size=20, weight="bold", color="green")
+
         card = ft.Container(
-            width=320, height=450, bgcolor="white", border_radius=25, padding=20,
-            shadow=ft.BoxShadow(blur_radius=10, color="#1A000000"),
+            width=340, height=520, bgcolor="white", border_radius=25, padding=20,
+            shadow=ft.BoxShadow(blur_radius=15, color="#1A000000"),
             alignment=ft.Alignment(0, 0),
             content=card_content
         )
-        prog = ft.ProgressBar(width=300, value=0, color="#4a90e2")
+        
+        prog_bar = ft.ProgressBar(width=300, value=0, color="#4a90e2", bgcolor="#ebedef")
+        prog_text = ft.Text(f"1 / {total}", size=12, color="grey")
 
-        def render_card():
-            idx = current_idx[0]
+        # 녹음 시뮬레이션
+        def toggle_record(e):
+            if not state["recording"]:
+                state["recording"] = True
+                record_status.value = "🎤 녹음 중... (3초)"
+                score_text.value = ""
+                e.control.icon = "stop_circle"
+                e.control.icon_color = "grey"
+                card.update()
+                
+                def finish_record():
+                    time.sleep(2.0)
+                    state["recording"] = False
+                    record_status.value = ""
+                    score = random.randint(85, 100)
+                    score_text.value = f"점수: {score}점 (Excellent!)"
+                    e.control.icon = "mic"
+                    e.control.icon_color = "red"
+                    page.update()
+                
+                threading.Thread(target=finish_record, daemon=True).start()
+
+        # [수정 포인트 1] is_update 파라미터 추가 (기본값 True)
+        def render_card(is_update=True):
+            idx = state["idx"]
             if idx >= total: 
                 go_to("/quiz")
                 return
 
             w = words[idx]
-            prog.value = (idx + 1) / total
-            
+            prog_bar.value = (idx + 1) / total
+            prog_text.value = f"{idx + 1} / {total}"
+
             card_content.controls.clear()
-            if is_front[0]:
+            record_status.value = ""
+            score_text.value = ""
+            state["recording"] = False
+
+            if state["is_front"]:
+                # 앞면
                 card.bgcolor = "white"
+                img_char = w.get("image") if w.get("image") and w.get("image") != "nan" else "📖"
+                
                 card_content.controls = [
-                    ft.Text(w["word"], size=48, weight="bold"),
-                    # [수정] "volume_up" 문자열 사용
-                    ft.IconButton(icon="volume_up", icon_size=40, on_click=lambda e: play_tts(w["word"])),
-                    ft.Text("터치하여 뜻 확인", color="grey")
+                    ft.Text(img_char, size=60),
+                    ft.Text(w["word"], size=40, weight="bold", color="#2c3e50"),
+                    ft.Text(f"[{w.get('pronunciation', w['word'])}]", size=16, color="#e74c3c"),
+                    ft.Container(height=10),
+                    ft.IconButton(icon="volume_up", icon_size=30, icon_color="#4a90e2", on_click=lambda e: play_tts(w["word"])),
+                    ft.Divider(height=20, color="transparent"),
+                    ft.Text(w["mean"], size=18, color="#2c3e50", weight="bold"),
+                    ft.Container(height=20),
+                    ft.Text("터치하여 뒷면 보기 👆", size=12, color="#bdc3c7")
                 ]
             else:
-                card.bgcolor = "#fdfdfd"
+                # 뒷면
+                card.bgcolor = "#f8f9fa"
                 card_content.controls = [
-                    # [수정] "volume_up" 문자열 사용
-                    ft.Row([ft.Text(w["word"], size=32), ft.IconButton(icon="volume_up", on_click=lambda e: play_tts(w["word"]))], alignment=ft.MainAxisAlignment.CENTER),
-                    ft.Divider(),
-                    ft.Text(w["mean"], size=20, color="#4a90e2"),
-                    ft.Text(f"\"{w['ex']}\"", italic=True)
+                    ft.Text("예문 학습", size=14, color="#4a90e2", weight="bold"),
+                    ft.Container(
+                        content=ft.Text(f"\"{w['ex']}\"", size=18, text_align="center"),
+                        padding=20, border=ft.border.all(1, "#dfe4ea"), border_radius=10, bgcolor="white"
+                    ),
+                    ft.Container(height=10),
+                    ft.Row([
+                        ft.Column([
+                            ft.IconButton(icon="volume_up", icon_size=30, tooltip="예문 듣기", on_click=lambda e: play_tts(w['ex'])),
+                            ft.Text("듣기", size=10)
+                        ], horizontal_alignment="center"),
+                        ft.Container(width=20),
+                        ft.Column([
+                            ft.IconButton(icon="mic", icon_size=30, icon_color="red", tooltip="녹음 하기", on_click=toggle_record),
+                            ft.Text("녹음", size=10)
+                        ], horizontal_alignment="center"),
+                    ], alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Container(height=10),
+                    record_status,
+                    score_text
                 ]
-            card.update()
-            prog.update()
+            
+            # [수정 포인트 2] 화면에 붙은 이후에만 update() 호출
+            if is_update:
+                card.update()
+                prog_bar.update()
+                prog_text.update()
 
         def flip_card(e):
-            is_front[0] = not is_front[0]
+            state["is_front"] = not state["is_front"]
             render_card()
 
-        def next_word(e):
-            current_idx[0] += 1
-            is_front[0] = True
+        def next_step(e):
+            state["idx"] += 1
+            state["is_front"] = True
             render_card()
+            
+        def prev_step(e):
+            if state["idx"] > 0:
+                state["idx"] -= 1
+                state["is_front"] = True
+                render_card()
 
         card.on_click = flip_card
         
-        w_init = words[0]
-        card_content.controls = [
-             ft.Text(w_init["word"], size=48, weight="bold"),
-             # [수정] "volume_up" 문자열 사용
-             ft.IconButton(icon="volume_up", icon_size=40, on_click=lambda e: play_tts(w_init["word"])),
-             ft.Text("터치하여 뜻 확인", color="grey")
-        ]
-        prog.value = 1/total
+        # [수정 포인트 3] 초기 렌더링 시에는 update 하지 않음 (False 전달)
+        render_card(is_update=False)
 
         return ft.View(
-            route="/study", 
+            route="/study",
             controls=[
-                # [수정] "arrow_back" 문자열 사용
-                ft.AppBar(title=ft.Text("학습"), bgcolor="white", color="black", 
-                          leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home"))),
-                ft.Column([
-                    ft.Container(height=10), prog, 
-                    ft.Container(height=20), card, 
-                    ft.Container(height=30), ft.ElevatedButton("다음 ▶", on_click=next_word, width=300, height=50)
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, expand=True)
+                ft.AppBar(
+                    title=ft.Text(f"학습: {session.get('level', '단어장')}"), 
+                    leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+                    bgcolor="white", color="black", elevation=0
+                ),
+                ft.Container(
+                    content=ft.Column([
+                        prog_bar,
+                        prog_text,
+                        ft.Container(height=20),
+                        card,
+                        ft.Container(height=30),
+                        ft.Row([
+                            ft.ElevatedButton("이전", on_click=prev_step, width=100, style=ft.ButtonStyle(bgcolor="#ecf0f1", color="black")),
+                            ft.ElevatedButton("다음 ▶", on_click=next_step, width=200, style=ft.ButtonStyle(bgcolor="#4a90e2", color="white"))
+                        ], alignment=ft.MainAxisAlignment.CENTER)
+                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                    padding=20, expand=True, bgcolor="#f4f7f6"
+                )
             ]
         )
 
@@ -391,11 +530,12 @@ def main(page: ft.Page):
     # [View 5] 퀴즈
     # -------------------------------------------------------------------------
     def view_quiz():
-        study_list = session["study_words"][:10]
-        if len(study_list) < 4:
-            quiz_list = study_list
-        else:
-            quiz_list = random.sample(study_list, min(3, len(study_list)))
+        # 방금 학습한 10개 단어 가져오기
+        study_list = session.get("study_words", [])
+        
+        # [수정] 3문제만 랜덤 추출 (데이터가 적으면 전체)
+        quiz_count = min(3, len(study_list))
+        quiz_list = random.sample(study_list, quiz_count)
             
         q_state = {"idx": 0, "score": 0, "wrong": []}
         

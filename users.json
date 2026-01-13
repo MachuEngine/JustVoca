@@ -12,6 +12,8 @@
     "machu1": {
         "pw": "1234",
         "name": "안종민",
-        "role": "student"
+        "role": "student",
+        "id": "machu1",
+        "progress": {}
     }
 }

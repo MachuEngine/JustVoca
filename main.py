@@ -8,6 +8,9 @@ import warnings
 import socket
 from datetime import datetime
 
+# [수정] 불필요한 import 제거 (오류 원인 가능성 차단)
+# from websockets import route 
+
 # 불필요한 경고 숨기기
 warnings.filterwarnings("ignore")
 
@@ -125,9 +128,7 @@ VOCAB_DB = load_vocab_data()
 def main(page: ft.Page):
     # 앱 설정
     page.title = "JustVoca"
-    page.window_width = 390
-    page.window_height = 844
-    page.bgcolor = "#f4f7f6"
+    page.bgcolor = "#f4f7f6" 
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 0
 
@@ -159,13 +160,10 @@ def main(page: ft.Page):
         page.update()
 
     def go_to(route):
-        """페이지 이동 헬퍼"""
-        print(f"👉 이동 요청: {page.route} -> {route}") 
         page.go(route)
-        page.update()   # ✅ 라우팅 직후 강제 업데이트
 
     # -------------------------------------------------------------------------
-    # [View] 로그인 화면
+    # [View] 로그인 화면 (최종 수정: Keyword Argument 사용)
     # -------------------------------------------------------------------------
     def view_login():
         id_f = ft.TextField(label="아이디", width=280, bgcolor="white")
@@ -181,28 +179,40 @@ def main(page: ft.Page):
             else: show_snack("로그인 실패")
 
         def on_signup_click(e):
-            show_snack("회원가입 화면으로 이동합니다")  # ✅ 클릭 이벤트 들어오는지 즉시 확인
-            print("👇 회원가입 버튼 클릭됨!")
+            show_snack("회원가입 화면으로 이동합니다")
             go_to("/signup")
 
-        return ft.View("/login", [
-            ft.Container(
-                content=ft.Column([
-                    ft.Text("JustVoca", size=32, weight="bold", color="#2c3e50"),
-                    ft.Container(height=30),
-                    id_f, pw_f,
-                    ft.Container(height=20),
-                    ft.ElevatedButton("로그인", on_click=on_login, width=280, height=50, 
-                                      style=ft.ButtonStyle(bgcolor="#4a90e2", color="white")),
-                    ft.Container(height=10),
-                    ft.OutlinedButton("회원가입 하기", 
-                                      on_click=on_signup_click, 
-                                      width=280, height=50,
-                                      style=ft.ButtonStyle(bgcolor="white", color="black"))
-                ], alignment="center", horizontal_alignment="center"),
-                padding=20, expand=True, bgcolor="white", alignment=ft.alignment.center
-            )
-        ])
+        # [수정] 
+        # 1. route="/login" 명시 (positional argument 오류 방지)
+        # 2. alignment=ft.Alignment(0, 0) 사용 (AttributeError 방지)
+        return ft.View(
+            route="/login", 
+            controls=[
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Text("JustVoca", size=32, weight="bold", color="#2c3e50"),
+                            ft.Container(height=30),
+                            id_f, pw_f,
+                            ft.Container(height=20),
+                            ft.ElevatedButton("로그인", on_click=on_login, width=280, height=50, 
+                                              style=ft.ButtonStyle(bgcolor="#4a90e2", color="white")),
+                            ft.Container(height=10),
+                            ft.OutlinedButton("회원가입 하기", 
+                                              on_click=on_signup_click, 
+                                              width=280, height=50,
+                                              style=ft.ButtonStyle(bgcolor="white", color="black"))
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    alignment=ft.Alignment(0, 0), # [수정됨] 안전한 정렬 방식
+                    expand=True 
+                )
+            ],
+            bgcolor="white",
+            padding=20
+        )
 
     # -------------------------------------------------------------------------
     # [View] 회원가입 화면
@@ -210,7 +220,6 @@ def main(page: ft.Page):
     def view_signup():
         print("📌 회원가입 화면 진입")
 
-        # 1. 컨트롤(입력창)을 먼저 생성합니다.
         role_grp = ft.RadioGroup(content=ft.Row([
             ft.Radio(value="student", label="학생"),
             ft.Radio(value="teacher", label="선생님")
@@ -220,29 +229,23 @@ def main(page: ft.Page):
         new_pw = ft.TextField(label="비밀번호", password=True, width=280, bgcolor="white")
         new_name = ft.TextField(label="이름", width=280, bgcolor="white")
 
-        # 2. 핸들러 함수를 그 다음에 정의합니다. (이제 컨트롤들이 확실히 존재함)
         def on_regist(e):
-            print(f"📝 가입 시도: ID={new_id.value}, Name={new_name.value}") # 터미널 로그 확인용
+            print(f"📝 가입 시도: ID={new_id.value}, Name={new_name.value}")
             
             if not (new_id.value and new_pw.value and new_name.value): 
                 return show_snack("모두 입력해주세요.")
             
-            # 사용자 등록 시도
             ok, msg = register_user(new_id.value, new_pw.value, new_name.value, role_grp.value)
-            print(f"👉 결과: {ok}, 메시지: {msg}")
-            
             show_snack(msg)
             
             if ok: 
                 print("🚀 회원가입 성공! 로그인 페이지로 이동합니다.")
                 go_to("/login")
 
-        # 3. 마지막으로 이벤트를 연결합니다.
         new_id.on_submit = on_regist
         new_pw.on_submit = on_regist
         new_name.on_submit = on_regist
         
-        # 버튼 생성
         btn_regist = ft.ElevatedButton(
             "가입 완료", 
             on_click=on_regist, 
@@ -259,8 +262,8 @@ def main(page: ft.Page):
                     role_grp, new_id, new_pw, new_name,
                     ft.Container(height=20),
                     btn_regist
-                ], horizontal_alignment="center"),
-                padding=20, expand=True, bgcolor="white", alignment=ft.alignment.center
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                padding=20, expand=True, bgcolor="white", alignment=ft.Alignment(0, 0)
             )
         ])
 
@@ -274,7 +277,7 @@ def main(page: ft.Page):
                 content=ft.Column([
                     ft.Text(lv, size=18, weight="bold", color="#4a90e2"), 
                     ft.Text(f"{len(VOCAB_DB[lv])} 단어", size=12, color="grey")
-                ], alignment="center"),
+                ], alignment=ft.MainAxisAlignment.CENTER),
                 bgcolor="white", border_radius=15, border=ft.border.all(1, "#eee"),
                 on_click=lambda e, l=lv: [session.update({"level":l, "study_words":VOCAB_DB[l]}), go_to("/study")]
             ))
@@ -288,7 +291,7 @@ def main(page: ft.Page):
                     ft.Text(f"반가워요, {session['user']['name']}님!", size=20, weight="bold"),
                     ft.Container(height=20),
                     grid
-                ], horizontal_alignment="center"),
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=20, expand=True, bgcolor="#f4f7f6"
             )
         ])
@@ -305,7 +308,7 @@ def main(page: ft.Page):
         card = ft.Container(
             width=320, height=450, bgcolor="white", border_radius=25, padding=20,
             shadow=ft.BoxShadow(blur_radius=10, color=ft.colors.with_opacity(0.1, "black")),
-            alignment=ft.alignment.center, on_click=lambda e: flip()
+            alignment=ft.Alignment(0, 0), on_click=lambda e: flip()
         )
         prog = ft.ProgressBar(width=300, value=0, color="#4a90e2")
         
@@ -322,15 +325,15 @@ def main(page: ft.Page):
                     ft.Text(w["word"], size=48, weight="bold"),
                     ft.IconButton(ft.icons.VOLUME_UP, icon_size=40, on_click=lambda e: play_tts(w["word"])),
                     ft.Text("터치하여 뜻 확인", color="grey")
-                ], alignment="center")
+                ], alignment=ft.MainAxisAlignment.CENTER)
                 card.bgcolor = "white"
             else:
                 card.content = ft.Column([
-                    ft.Row([ft.Text(w["word"], size=32), ft.IconButton(ft.icons.VOLUME_UP, on_click=lambda e: play_tts(w["word"]))], alignment="center"),
+                    ft.Row([ft.Text(w["word"], size=32), ft.IconButton(ft.icons.VOLUME_UP, on_click=lambda e: play_tts(w["word"]))], alignment=ft.MainAxisAlignment.CENTER),
                     ft.Divider(),
                     ft.Text(w["mean"], size=20, color="#4a90e2"),
                     ft.Text(f"\"{w['ex']}\"", italic=True)
-                ], alignment="center")
+                ], alignment=ft.MainAxisAlignment.CENTER)
                 card.bgcolor = "#fdfdfd"
             card.update()
             prog.update()
@@ -342,7 +345,7 @@ def main(page: ft.Page):
                 ft.Container(height=10), prog, 
                 ft.Container(height=20), card, 
                 ft.Container(height=30), ft.ElevatedButton("다음 ▶", on_click=next_w, width=300, height=50)
-            ], horizontal_alignment="center", expand=True)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, expand=True)
         ])
 
     # -------------------------------------------------------------------------
@@ -381,15 +384,20 @@ def main(page: ft.Page):
 
         def check(ok, w):
             nonlocal score, q_idx
-            if ok: score += 1; play_tts("정답"); show_snack("정답! ⭕")
-            else: wrong_words.append(w); play_tts("오답"); show_snack("오답! ❌")
+            if ok: 
+                score += 1; play_tts("정답"); show_snack("정답! ⭕")
+            else: 
+                wrong_words.append(w) 
+                play_tts("오답"); show_snack("오답! ❌")
+            
             q_idx += 1
             next_q()
-
+        
         next_q()
+        
         return ft.View("/quiz", [
             ft.AppBar(title=ft.Text("퀴즈"), bgcolor="white", color="black", automatically_imply_leading=False),
-            ft.Container(content=ft.Column([q_text, ft.Container(height=30), opts], horizontal_alignment="center"), padding=20, expand=True)
+            ft.Container(content=ft.Column([q_text, ft.Container(height=30), opts], horizontal_alignment=ft.CrossAxisAlignment.CENTER), padding=20, expand=True)
         ])
 
     # -------------------------------------------------------------------------
@@ -404,7 +412,7 @@ def main(page: ft.Page):
                 ft.Text(f"오답: {', '.join(wrongs)}" if wrongs else "완벽해요!", color="red" if wrongs else "green"),
                 ft.Container(height=50),
                 ft.ElevatedButton("홈으로", on_click=lambda _: go_to("/student_home"), width=280)
-            ], alignment="center", horizontal_alignment="center"), expand=True, bgcolor="white", alignment=ft.alignment.center)
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER), expand=True, bgcolor="white", alignment=ft.Alignment(0, 0))
         ])
     
     def view_teacher_dash():
@@ -430,12 +438,12 @@ def main(page: ft.Page):
     # 라우팅 핸들러
     # -------------------------------------------------------------------------
     def route_change(e: ft.RouteChangeEvent):
-        route = e.route  # ✅ 이벤트에서 route를 꺼내는 방식이 안전
+        route = e.route
         print(f"🔄 URL 변경됨: {route}")
-
+        
         page.views.clear()
-
-        if route == "/login" or route == "/":
+        
+        if route in ["/", "", "/login"]:
             page.views.append(view_login())
         elif route == "/signup":
             page.views.append(view_signup())
@@ -449,17 +457,23 @@ def main(page: ft.Page):
             page.views.append(view_result())
         elif route == "/teacher_dash":
             page.views.append(view_teacher_dash())
-
-        page.update()
+        
+        print(f"뷰 추가 완료: {len(page.views)}") 
+        page.update() 
 
     def view_pop(e: ft.ViewPopEvent):
-        page.views.pop()
-        top = page.views[-1]
-        page.go(top.route)
+        if len(page.views) > 1:
+            page.views.pop()
+            top = page.views[-1]
+            go_to(top.route)
 
     page.on_route_change = route_change
     page.on_view_pop = view_pop
-    page.go("/")
+    
+    # 초기 화면 로딩
+    print("🚀 앱 시작: 초기 화면 로드 시도")
+    if page.route in ["/", ""]:
+        go_to("/login") 
 
 # =============================================================================
 # [중요] WSL 환경 설정: 외부 접속 허용 (host='0.0.0.0')
@@ -474,10 +488,10 @@ if __name__ == "__main__":
         
     print("\n" + "="*60)
     print("🚀 앱 서버가 실행되었습니다!")
-    print(f"👉 윈도우에서 접속이 안되면 아래 주소들을 차례로 시도해보세요:")
-    print(f"1. http://localhost:8090")
-    print(f"2. http://{ip_addr}:8090")
+    print(f"👉 아래 주소로 접속하세요 (포트 변경됨: 8099):")
+    print(f"1. http://localhost:8099")
+    print(f"2. http://{ip_addr}:8099")
     print("="*60 + "\n")
     
-    # host='0.0.0.0'을 추가하여 모든 네트워크 인터페이스에서 접속 허용
-    ft.app(target=main, port=8090, view=ft.AppView.WEB_BROWSER, host="0.0.0.0")
+    # 포트 충돌 방지를 위해 8099로 변경
+    ft.app(target=main, port=8099, view=ft.AppView.WEB_BROWSER, host="0.0.0.0")

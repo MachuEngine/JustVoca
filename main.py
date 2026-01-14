@@ -21,6 +21,7 @@ import hashlib
 import secrets
 from datetime import datetime
 import math
+import asyncio
 
 warnings.filterwarnings("ignore")
 
@@ -497,6 +498,7 @@ def main(page: ft.Page):
         },
         # 오늘 학습 단어 목록
         "today_words": [],
+        "nav_token": 0,
     }
 
     # =============================================================================
@@ -608,6 +610,53 @@ def main(page: ft.Page):
 
     def go_to(route):
         page.go(route)
+
+    def go_home():
+        u = session.get("user")
+        if not u:
+            go_to("/login")
+            return
+
+        role = u.get("role", "student")
+        if role == "student":
+            go_to("/student_home")
+        elif role == "teacher":
+            go_to("/teacher_dash")
+        else:
+            go_to("/system_dash")
+
+    def bump_nav_token() -> int:
+        session["nav_token"] = int(session.get("nav_token", 0) or 0) + 1
+        return session["nav_token"]
+
+    def schedule_go(delay_sec: float, route: str, *, only_if_route: str | None = None, before_go=None):
+        """
+        delay_sec 후 route로 이동.
+        - only_if_route: 현재 page.route가 이 값일 때만 이동(사용자가 이미 다른 화면으로 갔으면 취소)
+        - before_go: 이동 직전 실행(예: session 세팅)
+        """
+        token = bump_nav_token()
+
+        async def _job():
+            try:
+                await asyncio.sleep(max(0.0, float(delay_sec)))
+                # 토큰이 바뀌었으면(다른 스케줄/이동이 발생) 취소
+                if token != session.get("nav_token"):
+                    return
+                if only_if_route and ((page.route or "").split("?", 1)[0] != only_if_route):
+                    return
+                if before_go:
+                    before_go()
+                page.go(route)
+            except Exception as ex:
+                log_write(f"schedule_go error: {repr(ex)}")
+
+        try:
+            page.run_task(_job)
+        except Exception:
+            # 구버전 대비: run_task가 없으면 그냥 무시(자동전환만 빠짐)
+            pass
+
 
     # =============================================================================
     # Signup helpers (중복확인 / 전화 인증: 더미)
@@ -934,7 +983,7 @@ def main(page: ft.Page):
 
                     show_snack(f"환영합니다, {user['name']}님!", COLOR_PRIMARY)
                     if user["role"] == "student":
-                        go_to("/student_home")
+                        go_home()
                     elif user["role"] == "teacher":
                         go_to("/teacher_dash")
                     else:
@@ -1278,7 +1327,7 @@ def main(page: ft.Page):
             "/profile",
             body,
             title="프로필",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
         )
 
     # =============================================================================
@@ -1352,7 +1401,7 @@ def main(page: ft.Page):
             "/settings",
             shell_body,
             title="설정",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
         )
 
     # =============================================================================
@@ -1484,7 +1533,7 @@ def main(page: ft.Page):
             "/stats",
             shell_body,
             title="통계",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
         )
 
     # =============================================================================
@@ -1720,7 +1769,7 @@ def main(page: ft.Page):
             "/level_select",
             body,
             title="레벨 선택",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
         )
 
     # =============================================================================
@@ -1759,6 +1808,9 @@ def main(page: ft.Page):
                 student_bottom_nav(active="home"),
             ],
         )
+        # 격려 화면: 0.8초 뒤 자동으로 학습 화면 복귀(사양)
+        schedule_go(0.8, "/study", only_if_route="/motivate")
+
         return mobile_shell(
             "/motivate",
             body,
@@ -1779,12 +1831,12 @@ def main(page: ft.Page):
                     [
                         ft.Text("학습할 데이터가 없습니다.", size=14, color=COLOR_TEXT_DESC),
                         ft.Container(height=10),
-                        ft.ElevatedButton("홈으로", on_click=lambda _: go_to("/student_home"), bgcolor=COLOR_PRIMARY, color="white"),
+                        ft.ElevatedButton("홈으로", on_click=lambda _: go_home(), bgcolor=COLOR_PRIMARY, color="white"),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             )
-            return mobile_shell("/study", body, title="학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")))
+            return mobile_shell("/study", body, title="학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
 
         class StudyState:
             idx = session.get("idx", 0)
@@ -2316,34 +2368,89 @@ def main(page: ft.Page):
 
         low_cnt = len(low_items)
 
-        def start_review_today(e=None):
-            if low_cnt == 0:
-                show_snack("복습 대상이 없습니다.", COLOR_PRIMARY)
+        auto_text = ft.Text("", size=12, color=COLOR_TEXT_DESC)
+        auto_bar = ft.ProgressBar(width=320, value=0.0, visible=False)
+
+        def start_auto_countdown_if_needed():
+            if low_cnt <= 0:
+                auto_text.value = "복습 대상이 없습니다."
+                auto_bar.visible = False
                 return
+
+            # UI 초기화
+            auto_bar.visible = True
+            auto_bar.value = 0.0
+
+            total_sec = 3.0
+            tick = 0.1
+
+            # 이전 예약/카운트다운 취소용 토큰
+            token = bump_nav_token()
+
+            async def _countdown():
+                try:
+                    remain = total_sec
+                    while remain > 0:
+                        # 다른 화면으로 이동/다른 예약 발생하면 취소
+                        if token != session.get("nav_token"):
+                            return
+                        # route가 review_start가 아니면 취소
+                        if ((page.route or "").split("?", 1)[0] != "/review_start"):
+                            return
+
+                        auto_text.value = f"{int(remain + 0.999)}초 후 복습이 자동 시작됩니다…"
+                        auto_bar.value = 1.0 - (remain / total_sec)
+                        page.update()
+
+                        await asyncio.sleep(tick)
+                        remain -= tick
+
+                    # 마지막 0초 처리
+                    if token != session.get("nav_token"):
+                        return
+                    if ((page.route or "").split("?", 1)[0] != "/review_start"):
+                        return
+
+                    auto_text.value = "복습을 시작합니다…"
+                    auto_bar.value = 1.0
+                    page.update()
+
+                    _prepare_review_words()
+                    page.go("/study")
+
+                except Exception as ex:
+                    log_write(f"auto countdown error: {repr(ex)}")
+
+            try:
+                page.run_task(_countdown)
+            except Exception:
+                # run_task가 없는 환경이면 자동 카운트다운만 빠짐(버튼은 여전히 동작)
+                pass
+
+
+        def _prepare_review_words():
             session.update({"study_words": low_items, "idx": 0})
             session["is_review"] = True
+
             user2 = get_user(user["id"]) or user
             user2 = ensure_progress(user2)
             user2["progress"]["last_session"] = {"topic": topic, "idx": 0}
             update_user(user2["id"], user2)
             session["user"] = user2
+
+        def start_review_today(e=None, *, silent=False):
+            if low_cnt == 0:
+                if not silent:
+                    show_snack("복습 대상이 없습니다.", COLOR_PRIMARY)
+                return
+            _prepare_review_words()
             go_to("/study")
 
         def start_test(e=None):
-            topic = session.get("topic", "")
-            today_words = (session.get("today_words", []) or [])
-            
-            # 랜덤으로 3개 단어로 문제 생성
-            random.shuffle(today_words)
-            today_words = today_words[:3] 
+            bump_nav_token()  # 카운트다운 취소
+            go_to("/test_intro")
 
-            qlist = make_test_queue(topic, today_words, n_choices=4)
-
-            session["test_queue"] = qlist
-            session["test_idx"] = 0
-            session["test_score"] = 0
-            session["is_review"] = False
-            go_to("/test?i=0")
+        start_auto_countdown_if_needed()
 
         body = ft.Column(
             spacing=0,
@@ -2380,8 +2487,11 @@ def main(page: ft.Page):
                                 ],
                                 spacing=10,
                             ),
+                            auto_text,
+                            ft.Container(height=6),
+                            auto_bar,
                             ft.Container(height=10),
-                            ft.OutlinedButton("홈으로", on_click=lambda _: go_to("/student_home"), width=320),
+                            ft.OutlinedButton("홈으로", on_click=lambda _: go_home(), width=320),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     ),
@@ -2396,6 +2506,112 @@ def main(page: ft.Page):
             title="복습 안내",
             leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")),
         )
+    
+    def view_test_intro():
+        topic = session.get("topic", "")
+        today_words = session.get("today_words", []) or []
+        user = get_user(session["user"]["id"]) or session["user"]
+        user = ensure_progress(user)
+        thr = int(load_system().get("review_threshold", 85))
+
+        # 복습 단어 섞기(사양: 오늘+복습)
+        tpdata = user["progress"]["topics"].get(topic, {})
+        learned = tpdata.get("learned", {})
+        low_items = []
+        for it in today_words:
+            w = it.get("word", "")
+            sc = learned.get(w, {}).get("last_score", 999)
+            if sc < thr:
+                low_items.append(it)
+
+        def start_test_now(e=None):
+            # 오늘단어 + 복습단어(중복 제거)
+            combined = []
+            seen = set()
+            for it in (today_words + low_items):
+                w = (it.get("word", "") or "").strip()
+                if not w or w in seen:
+                    continue
+                seen.add(w)
+                combined.append(it)
+
+            qlist = make_test_queue(topic, combined, n_choices=4)
+            session["test_queue"] = qlist
+            session["test_idx"] = 0
+            session["test_score"] = 0
+            session["is_review"] = False
+            go_to("/test?i=0")
+
+        def stamp_widget():
+            # assets_dir="assets" 기준: assets/stamps/stamp_ok.png
+            stamp_path = "stamps/stamp_ok.png"
+            abs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", stamp_path)
+
+            if os.path.exists(abs_path):
+                kwargs = dict(src=stamp_path, width=120, height=120)
+
+                # Flet 버전별 호환: ImageFit이 있으면 사용
+                try:
+                    kwargs["fit"] = ft.ImageFit.CONTAIN
+                except Exception:
+                    # 구버전은 fit을 문자열로 받는 경우도 있음(또는 아예 없음)
+                    try:
+                        kwargs["fit"] = "contain"
+                    except Exception:
+                        pass
+
+                return ft.Image(**kwargs)
+
+            # 파일 없으면 fallback
+            return ft.Text("💮", size=70)
+
+        body = ft.Column(
+            spacing=0,
+            controls=[
+                student_info_bar(),
+                ft.Container(
+                    expand=True,
+                    padding=24,
+                    content=ft.Column(
+                        [
+                            ft.Container(height=10),
+                            ft.Text("오늘 학습 완료!", size=22, weight="bold", color=COLOR_PRIMARY),
+                            ft.Container(height=10),
+                            ft.Text("✅ 연습문제를 풀어볼까요?", size=13, color=COLOR_TEXT_DESC),
+                            ft.Container(height=18),
+                            ft.Container(
+                                width=140,
+                                height=140,
+                                border_radius=26,
+                                bgcolor="#f8f9fa",
+                                alignment=ft.Alignment(0, 0),
+                                content=stamp_widget(),
+                            ),
+                            ft.Container(height=18),
+                            ft.ElevatedButton(
+                                "시작하기",
+                                on_click=start_test_now,
+                                bgcolor=COLOR_TEXT_MAIN,
+                                color="white",
+                                width=320,
+                                height=48,
+                            ),
+                            ft.Container(height=10),
+                            ft.OutlinedButton("나중에", on_click=lambda _: go_home(), width=320),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                ),
+                student_bottom_nav(active="home"),
+            ],
+        )
+        return mobile_shell(
+            "/test_intro",
+            body,
+            title="연습문제",
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/review_start")),
+        )
 
     # =============================================================================
     # View: Test
@@ -2409,14 +2625,14 @@ def main(page: ft.Page):
                     [
                         ft.Text("테스트 데이터가 없습니다.", size=13, color=COLOR_TEXT_DESC),
                         ft.Container(height=10),
-                        ft.ElevatedButton("홈", on_click=lambda _: go_to("/student_home"), bgcolor=COLOR_PRIMARY, color="white"),
+                        ft.ElevatedButton("홈", on_click=lambda _: go_home(), bgcolor=COLOR_PRIMARY, color="white"),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             )
             return mobile_shell(
                 "/test", body, title="연습문제",
-                leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home"))
+                leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home())
             )
 
         idx = int(session.get("test_idx", 0) or 0)
@@ -2637,7 +2853,7 @@ def main(page: ft.Page):
             "/test",
             body,
             title="연습문제",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
         )
 
     # =============================================================================
@@ -2718,7 +2934,7 @@ def main(page: ft.Page):
             "/study_complete",
             body,
             title="학습 결과",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
         )
 
     # =============================================================================
@@ -3418,6 +3634,8 @@ def main(page: ft.Page):
         elif r == "/review_start":
             page.views.append(view_review_start())
 
+        elif r == "/test_intro":
+            page.views.append(view_test_intro())
         elif r == "/test":
             page.views.append(view_test())
         elif r == "/study_complete":
@@ -3483,4 +3701,4 @@ if __name__ == "__main__":
     except Exception:
         view_mode = "web_server"
 
-    ft.app(target=main, port=8100, view=view_mode)
+    ft.app(target=main, port=8100, view=view_mode, assets_dir="assets")

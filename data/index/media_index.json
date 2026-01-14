@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "base_dir": "data",
+  "voca": {
+    "안녕하세요":       {"image": "media/images/Level1_1.jpg"},
+    "안녕":            {"image": "media/images/Level1_2.jpg"},
+    "감사합니다":       {"image": "media/images/Level1_3.jpg"},
+    "죄송합니다":       {"image": "media/images/Level1_4.jpg"},
+    "처음 뵙겠습니다":   {"image": "media/images/Level1_5.jpg"}
+  }
+}

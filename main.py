@@ -179,8 +179,10 @@ def save_system(sysdata):
 def load_vocab_data():
     """엑셀 파일 로드: sheet_name == 토픽/레벨로 취급"""
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    excel_path = os.path.join(current_dir, "data", "vocabulary.xlsx")
-    os.makedirs(os.path.join(current_dir, "data"), exist_ok=True)
+    data_dir = os.path.join(current_dir, "data", "vocab")
+    os.makedirs(data_dir, exist_ok=True)
+
+    excel_path = os.path.join(data_dir, "vocabulary.xlsx")
 
     if not os.path.exists(excel_path):
         dummy_data = []

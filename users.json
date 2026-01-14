@@ -18,10 +18,13 @@
       "today_flags": {
         "motivate_shown": false
       }
-    }
+    },
+    "email": "",
+    "phone": "",
+    "phone_verified": false
   },
   "teacher": {
-    "pw": "1111",
+    "pw": "pbkdf2$120000$dfa8500bdfb9cb635a1506195c9da1c1$43bb71e790c089f3e74af6919eb842683e304b5470f4ba8e24a5dde55a8092cd",
     "name": "선생님",
     "role": "teacher",
     "id": "teacher",
@@ -37,12 +40,16 @@
         "idx": 0
       },
       "today_flags": {
-        "motivate_shown": false
+        "motivate_shown": false,
+        "motivate_shown_date": ""
       }
-    }
+    },
+    "email": "",
+    "phone": "",
+    "phone_verified": false
   },
   "student": {
-    "pw": "1111",
+    "pw": "pbkdf2$120000$9c7147ea1e4985e39d85881cd59d73d9$e0f1483a29acf67e3cc822e547b77cf4d7e210ad817eafcc7a36d8de3058be2a",
     "name": "학습자",
     "role": "student",
     "id": "student",
@@ -58,52 +65,263 @@
             "일상": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:16"
+              "last_seen": "2026-01-14 15:56:32"
             },
             "보통": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:17"
+              "last_seen": "2026-01-14 15:56:32"
             },
             "아침마다": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:17"
+              "last_seen": "2026-01-14 15:56:32"
             },
             "퇴근하다": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:17"
+              "last_seen": "2026-01-14 15:56:32"
             },
             "하루": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:21"
+              "last_seen": "2026-01-14 15:56:33"
             },
             "습관": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:21"
+              "last_seen": "2026-01-14 15:56:33"
             },
             "자주": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:21"
+              "last_seen": "2026-01-14 15:56:33"
             },
             "항상": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:21"
+              "last_seen": "2026-01-14 15:56:33"
             },
             "가끔": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:22"
+              "last_seen": "2026-01-14 15:56:33"
             },
             "거의": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-14 11:27:22"
+              "last_seen": "2026-01-14 15:56:34"
+            }
+          },
+          "stats": {
+            "studied_count": 10,
+            "avg_score": 90.0
+          },
+          "wrong_notes": [
+            {
+              "q": "보통",
+              "a": "",
+              "user": "보통",
+              "ts": "2026-01-14 12:36:13"
+            },
+            {
+              "q": "보통",
+              "a": "",
+              "user": "보통",
+              "ts": "2026-01-14 12:36:15"
+            },
+            {
+              "q": "습관 말하기",
+              "a": "거의",
+              "user": "느끼다",
+              "ts": "2026-01-14 15:56:46"
+            },
+            {
+              "q": "습관 말하기",
+              "a": "거의",
+              "user": "관계",
+              "ts": "2026-01-14 15:56:47"
+            },
+            {
+              "q": "습관 말하기",
+              "a": "거의",
+              "user": "실력",
+              "ts": "2026-01-14 15:56:48"
+            },
+            {
+              "q": "하루 일과 설명",
+              "a": "보통",
+              "user": "피곤하다",
+              "ts": "2026-01-14 15:56:56"
+            }
+          ]
+        },
+        "고급": {
+          "learned": {
+            "개념": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:20"
+            },
+            "의미": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "본질": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "정의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "해석": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "가치": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "중요성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "필요성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:21"
+            },
+            "정당성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:22"
+            },
+            "의의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:51:25"
+            }
+          },
+          "stats": {
+            "studied_count": 10,
+            "avg_score": 90.0
+          },
+          "wrong_notes": [
+            {
+              "q": "가치 판단",
+              "a": "중요성",
+              "user": "강조하다",
+              "ts": "2026-01-14 15:45:03"
+            }
+          ]
+        },
+        "초급2": {
+          "learned": {
+            "잘 지내요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:53"
+            },
+            "어때요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:40"
+            },
+            "괜찮아요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:54"
+            },
+            "바빠요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:53"
+            },
+            "피곤해요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:53"
+            },
+            "좀 바빠요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:54"
+            },
+            "별로예요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:55"
+            },
+            "좋아요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 13:18:55"
+            }
+          },
+          "stats": {
+            "studied_count": 8,
+            "avg_score": 90.0
+          },
+          "wrong_notes": []
+        },
+        "중급2": {
+          "learned": {
+            "의견": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:52"
+            },
+            "입장": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:53"
+            },
+            "관점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:57"
+            },
+            "제시하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:58"
+            },
+            "주장하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:58"
+            },
+            "근거": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:58"
+            },
+            "이유": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:34:59"
+            },
+            "사례": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:35:00"
+            },
+            "예시": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:35:00"
+            },
+            "증명하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:35:01"
             }
           },
           "stats": {
@@ -118,12 +336,16 @@
         "idx": 9
       },
       "today_flags": {
-        "motivate_shown": true
+        "motivate_shown": true,
+        "motivate_shown_date": "2026-01-14"
       }
-    }
+    },
+    "email": "",
+    "phone": "",
+    "phone_verified": false
   },
   "student2": {
-    "pw": "1111",
+    "pw": "pbkdf2$120000$2733487f5904055ec8ebedc0677fb988$19a6501e2730b23cfd629c42baf8ef99d30e7998570e91c5c6815909411209c7",
     "name": "학습자2",
     "role": "student",
     "id": "student2",
@@ -141,7 +363,10 @@
       "today_flags": {
         "motivate_shown": false
       }
-    }
+    },
+    "email": "",
+    "phone": "",
+    "phone_verified": false
   },
   "student3": {
     "pw": "1111",
@@ -162,6 +387,189 @@
       "today_flags": {
         "motivate_shown": false
       }
-    }
+    },
+    "email": "",
+    "phone": "",
+    "phone_verified": false
+  },
+  "student4": {
+    "pw": "pbkdf2$120000$ce80ec63ae086576593c93928cd26ec1$0ab39a0591c70f84d19a72e5130d3365a7bc858d8e8b9ec74d257fd695cee7b1",
+    "name": "학습자4",
+    "email": "student4@voca.com",
+    "phone": "01023232323",
+    "phone_verified": true,
+    "role": "student",
+    "country": "CN",
+    "progress": {
+      "settings": {
+        "goal": 10,
+        "ui_lang": "ko"
+      },
+      "topics": {
+        "고급": {
+          "learned": {
+            "개념": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:23"
+            },
+            "의미": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:23"
+            },
+            "본질": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:24"
+            },
+            "정의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:24"
+            },
+            "해석": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:24"
+            },
+            "가치": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:24"
+            },
+            "중요성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:24"
+            },
+            "필요성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:25"
+            },
+            "정당성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:25"
+            },
+            "의의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:25"
+            }
+          },
+          "stats": {
+            "studied_count": 10,
+            "avg_score": 90.0
+          },
+          "wrong_notes": [
+            {
+              "q": "중요성",
+              "a": "",
+              "user": "중요함의 정도를 말하는 단어 입니다.",
+              "ts": "2026-01-14 14:26:46"
+            },
+            {
+              "q": "중요성",
+              "a": "",
+              "user": "중요함의 정도를 말하는 단어 입니다.",
+              "ts": "2026-01-14 14:26:48"
+            },
+            {
+              "q": "중요성",
+              "a": "",
+              "user": "중요함의 정도를 말하는 단어 입니다.",
+              "ts": "2026-01-14 14:26:49"
+            },
+            {
+              "q": "중요성",
+              "a": "",
+              "user": "중요함의 정도를 말하는 단어 입니다.",
+              "ts": "2026-01-14 14:26:49"
+            },
+            {
+              "q": "중요성",
+              "a": "",
+              "user": "중요함의 정도를 말하는 단어 입니다.",
+              "ts": "2026-01-14 14:26:49"
+            },
+            {
+              "q": "중요성",
+              "a": "",
+              "user": "중요함의 정도를 말하는 단어 입니다.",
+              "ts": "2026-01-14 14:26:49"
+            }
+          ]
+        },
+        "중급2": {
+          "learned": {
+            "의견": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:12"
+            },
+            "입장": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:12"
+            },
+            "관점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:13"
+            },
+            "제시하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:13"
+            },
+            "주장하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:13"
+            },
+            "근거": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:13"
+            },
+            "이유": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:14"
+            },
+            "사례": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:14"
+            },
+            "예시": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:14"
+            },
+            "증명하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 15:06:14"
+            }
+          },
+          "stats": {
+            "studied_count": 10,
+            "avg_score": 90.0
+          },
+          "wrong_notes": []
+        }
+      },
+      "last_session": {
+        "topic": "고급",
+        "idx": 9
+      },
+      "today_flags": {
+        "motivate_shown_date": "2026-01-14"
+      }
+    },
+    "id": "student4"
   }
 }

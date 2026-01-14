@@ -1,4 +1,15 @@
 import flet as ft
+
+# =============================================================================
+# ✅ Flet 0.80+ 호환: 구버전 ft.icons.* 를 계속 쓰기 위한 alias
+# - 0.80.1에서는 아이콘 상수가 ft.Icons 로 이동한 케이스가 많아서,
+#   ft.icons 가 비어있으면 ft.Icons 를 ft.icons 로 붙여줌
+# =============================================================================
+try:
+    _ = ft.icons.ABC  # 존재하면 그대로 사용
+except Exception:
+    ft.icons = ft.Icons  # 없으면 ft.Icons를 old-style alias로 연결
+
 import pandas as pd
 import random
 import os
@@ -647,7 +658,7 @@ def main(page: ft.Page):
             "/signup",
             body,
             title="회원가입",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/login")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
         )
 
     # =============================================================================
@@ -820,7 +831,7 @@ def main(page: ft.Page):
             "/student_home",
             body,
             title="학습 홈",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/login")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
             actions=[],
         )
 
@@ -842,7 +853,7 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             )
-            return mobile_shell("/study", body, title="학습", leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")))
+            return mobile_shell("/study", body, title="학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")))
 
         class StudyState:
             idx = session.get("idx", 0)
@@ -1096,7 +1107,7 @@ def main(page: ft.Page):
             "/study",
             body,
             title="단어 학습",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
         )
 
     # =============================================================================
@@ -1116,7 +1127,7 @@ def main(page: ft.Page):
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 ),
             )
-            return mobile_shell("/test", body, title="테스트", leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")))
+            return mobile_shell("/test", body, title="테스트", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")))
 
         idx = session.get("test_idx", 0)
         idx = max(0, min(idx, len(qlist) - 1))
@@ -1183,7 +1194,7 @@ def main(page: ft.Page):
             "/test",
             body,
             title="테스트",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
         )
 
     # =============================================================================
@@ -1234,7 +1245,7 @@ def main(page: ft.Page):
             "/study_complete",
             body,
             title="완료",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
         )
 
     # =============================================================================
@@ -1330,7 +1341,7 @@ def main(page: ft.Page):
             "/cumulative",
             body,
             title="누적 학습",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
         )
 
     # =============================================================================
@@ -1399,7 +1410,7 @@ def main(page: ft.Page):
             "/wrong_notes",
             body,
             title="오답노트",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
         )
 
     # =============================================================================
@@ -1497,7 +1508,7 @@ def main(page: ft.Page):
             "/review",
             body,
             title="복습",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/student_home")),
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/student_home")),
         )
 
     # =============================================================================
@@ -1604,8 +1615,8 @@ def main(page: ft.Page):
             "/teacher_dash",
             body,
             title="선생님 대시보드",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/login")),
-            actions=[ft.IconButton(icon="logout", on_click=lambda _: go_to("/login"))],
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
+            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: go_to("/login"))],
         )
 
     # =============================================================================
@@ -1742,8 +1753,8 @@ def main(page: ft.Page):
             "/system_dash",
             body,
             title="시스템 대시보드",
-            leading=ft.IconButton(icon="arrow_back", on_click=lambda _: go_to("/login")),
-            actions=[ft.IconButton(icon="logout", on_click=lambda _: go_to("/login"))],
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
+            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: go_to("/login"))],
         )
 
     # =============================================================================

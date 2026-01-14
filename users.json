@@ -3,225 +3,164 @@
     "pw": "1111",
     "name": "관리자",
     "role": "admin",
+    "id": "admin",
+    "country": "KR",
     "progress": {
       "settings": {
-        "goal": 10
+        "goal": 10,
+        "ui_lang": "ko"
       },
-      "topics": {}
-    },
-    "id": "admin"
+      "topics": {},
+      "last_session": {
+        "topic": "",
+        "idx": 0
+      },
+      "today_flags": {
+        "motivate_shown": false
+      }
+    }
   },
-  "machu": {
-    "pw": "ann1026",
-    "name": "안종민",
-    "role": "student",
-    "progress": {}
-  },
-  "machu1": {
-    "pw": "1234",
-    "name": "안종민",
-    "role": "student",
-    "id": "machu1",
+  "teacher": {
+    "pw": "1111",
+    "name": "선생님",
+    "role": "teacher",
+    "id": "teacher",
+    "country": "KR",
     "progress": {
       "settings": {
-        "goal": 10
+        "goal": 10,
+        "ui_lang": "ko"
+      },
+      "topics": {},
+      "last_session": {
+        "topic": "",
+        "idx": 0
+      },
+      "today_flags": {
+        "motivate_shown": false
+      }
+    }
+  },
+  "student": {
+    "pw": "1111",
+    "name": "학습자",
+    "role": "student",
+    "id": "student",
+    "country": "KR",
+    "progress": {
+      "settings": {
+        "goal": 10,
+        "ui_lang": "ko"
       },
       "topics": {
-        "초급1": {
-          "learned": {},
-          "stats": {
-            "studied_count": 0,
-            "avg_score": 0.0
-          },
-          "wrong_notes": [
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "",
-              "ts": "2026-01-13 17:52:47"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "",
-              "ts": "2026-01-13 17:52:48"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:54"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:55"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:56"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:56"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:56"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:56"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:57"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:57"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:57"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:57"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:57"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:52:57"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:53:06"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:53:06"
-            },
-            {
-              "q": "안녕",
-              "a": "",
-              "user": "안녕",
-              "ts": "2026-01-13 17:53:06"
-            }
-          ]
-        },
         "중급1": {
-          "learned": {},
-          "stats": {
-            "studied_count": 0,
-            "avg_score": 0.0
-          },
-          "wrong_notes": [
-            {
-              "q": "아침마다",
-              "a": "",
-              "user": "매일 아침",
-              "ts": "2026-01-14 08:16:23"
+          "learned": {
+            "일상": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:16"
             },
-            {
-              "q": "아침마다",
-              "a": "",
-              "user": "매일 아침",
-              "ts": "2026-01-14 08:16:24"
+            "보통": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:17"
             },
-            {
-              "q": "아침마다",
-              "a": "",
-              "user": "매일 아침",
-              "ts": "2026-01-14 08:16:24"
+            "아침마다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:17"
             },
-            {
-              "q": "아침마다",
-              "a": "",
-              "user": "매일 아침",
-              "ts": "2026-01-14 08:16:24"
+            "퇴근하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:17"
             },
-            {
-              "q": "아침마다",
-              "a": "",
-              "user": "매일 아침",
-              "ts": "2026-01-14 08:16:24"
+            "하루": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:21"
+            },
+            "습관": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:21"
+            },
+            "자주": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:21"
+            },
+            "항상": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:21"
+            },
+            "가끔": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:22"
+            },
+            "거의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-14 11:27:22"
             }
-          ]
-        },
-        "고급": {
-          "learned": {},
-          "stats": {
-            "studied_count": 0,
-            "avg_score": 0.0
           },
-          "wrong_notes": [
-            {
-              "q": "정당성",
-              "a": "",
-              "user": "정당성",
-              "ts": "2026-01-14 09:27:11"
-            },
-            {
-              "q": "정당성",
-              "a": "",
-              "user": "정당성",
-              "ts": "2026-01-14 09:27:12"
-            },
-            {
-              "q": "정당성",
-              "a": "",
-              "user": "정당성",
-              "ts": "2026-01-14 09:27:12"
-            },
-            {
-              "q": "정당성",
-              "a": "",
-              "user": "정당성",
-              "ts": "2026-01-14 09:27:12"
-            },
-            {
-              "q": "정당성",
-              "a": "",
-              "user": "정당성",
-              "ts": "2026-01-14 09:27:12"
-            },
-            {
-              "q": "정당성",
-              "a": "",
-              "user": "정당성",
-              "ts": "2026-01-14 09:27:12"
-            }
-          ]
+          "stats": {
+            "studied_count": 10,
+            "avg_score": 90.0
+          },
+          "wrong_notes": []
         }
+      },
+      "last_session": {
+        "topic": "중급1",
+        "idx": 9
+      },
+      "today_flags": {
+        "motivate_shown": true
+      }
+    }
+  },
+  "student2": {
+    "pw": "1111",
+    "name": "학습자2",
+    "role": "student",
+    "id": "student2",
+    "country": "US",
+    "progress": {
+      "settings": {
+        "goal": 5,
+        "ui_lang": "ko"
+      },
+      "topics": {},
+      "last_session": {
+        "topic": "",
+        "idx": 0
+      },
+      "today_flags": {
+        "motivate_shown": false
+      }
+    }
+  },
+  "student3": {
+    "pw": "1111",
+    "name": "학습자3",
+    "role": "student",
+    "id": "student3",
+    "country": "US",
+    "progress": {
+      "settings": {
+        "goal": 15,
+        "ui_lang": "ko"
+      },
+      "topics": {},
+      "last_session": {
+        "topic": "",
+        "idx": 0
+      },
+      "today_flags": {
+        "motivate_shown": false
       }
     }
   }

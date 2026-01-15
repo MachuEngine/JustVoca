@@ -22,6 +22,7 @@ import secrets
 from datetime import datetime
 import math
 import asyncio
+import re
 
 warnings.filterwarnings("ignore")
 
@@ -77,6 +78,48 @@ UI_LANG_OPTIONS = [
     ("en", "English"),
     # 추후 확장
 ]
+
+# =========================
+# 임시 광고(더미) 데이터
+# =========================
+
+DUMMY_ADS = [
+    {
+        "title": "📌 광고: 오누이 한국어",
+        "desc": "한국에 거주를 원하는 외국인들을 위한 한국어 교육 솔루션",
+        "cta": "자세히 보기",
+    }
+]
+def build_ad_zone(on_click=None) -> ft.Control:
+    """
+    홈 화면용 광고 영역(임시 더미).
+    - 랜덤 1개 선택
+    - 눌렀을 때 동작은 on_click으로 주입 가능
+    """
+    ad = random.choice(DUMMY_ADS)
+
+    return ft.Container(
+        padding=14,
+        border_radius=18,
+        bgcolor="#ffffff",
+        border=ft.border.all(1, "#dfe6ee"),
+        content=ft.Column(
+            spacing=6,
+            controls=[
+                ft.Text(ad["title"], size=14, weight="w700"),
+                ft.Text(ad["desc"], size=12, color="#56606a"),
+                ft.Container(height=6),
+                ft.Container(
+                    padding=ft.padding.symmetric(horizontal=10, vertical=6),
+                    border_radius=999,
+                    bgcolor="#f2f4f7",
+                    content=ft.Text(ad["cta"], size=12),
+                ),
+            ],
+        ),
+        on_click=on_click,
+    )
+
 
 # =============================================================================
 # 유틸: 로깅/원자적 JSON 저장/비밀번호 해시
@@ -485,6 +528,9 @@ def main(page: ft.Page):
         "test_score": 0,
         "is_review": False,  # 복습 플로우 표시용
         "selected_student_id": None,  # teacher 상세 보기용
+        "motivate_shown": False, # 오늘 격려 화면 표시 여부
+        "motivate_msg": "",
+        "motivate_emoji": "",
 
         # 발음(녹음/결과) 더미 상태
         "pron_state": {
@@ -500,6 +546,22 @@ def main(page: ft.Page):
         "today_words": [],
         "nav_token": 0,
     }
+
+    # ============================================================================
+    # 격려 화면 데이터
+    # ============================================================================
+    MOTIVATE_MESSAGES = [
+        "지금처럼만 하면 충분해요 ☺️",
+        "충분히 잘하고 있어요! 지금처럼만 해요.",
+        "여기까지 잘 왔어요! 계속 가볼까요?",
+        "지금 흐름 좋아요. 이대로 이어가요.",
+        "오늘도 잘하고 있어요.",
+        "아주 안정적인 속도예요. 차근차근 가요.",
+        "좋아요! 조금만 더 힘내면 목표 달성이에요!",
+    ]
+
+    MOTIVATE_EMOJIS = ["🙂", "🙌", "💪", "🌟", "✨", "👍", "💯"]
+
 
     # =============================================================================
     # (기초) UI 언어팩 구조
@@ -611,6 +673,43 @@ def main(page: ft.Page):
     def go_to(route):
         page.go(route)
 
+    def reset_pron_state():
+        session["pron_state"] = {
+            "recording": False,
+            "recorded": False,
+            "target_word": "",
+            "target_example": "",
+            "result_score": None,
+            "result_comment": "",
+            "detail": [],
+        }
+
+    def reset_today_session(keep_user: bool = True):
+        # 예약된 자동이동/카운트다운 취소
+        bump_nav_token()
+
+        if not keep_user:
+            session["user"] = None
+
+        session["topic"] = ""
+        session["study_words"] = []
+        session["idx"] = 0
+
+        session["today_words"] = []
+
+        session["mask_mode"] = "none"
+
+        session["test_queue"] = []
+        session["test_idx"] = 0
+        session["test_score"] = 0
+
+        session["is_review"] = False
+        session["selected_student_id"] = None
+
+        session["motivate_shown"] = False
+
+        reset_pron_state()
+
     def go_home():
         u = session.get("user")
         if not u:
@@ -624,6 +723,11 @@ def main(page: ft.Page):
             go_to("/teacher_dash")
         else:
             go_to("/system_dash")
+
+    def do_logout():
+        reset_today_session(keep_user=False)
+        page.go("/login")
+
 
     def bump_nav_token() -> int:
         session["nav_token"] = int(session.get("nav_token", 0) or 0) + 1
@@ -976,6 +1080,7 @@ def main(page: ft.Page):
                 ok, user = authenticate_user(id_field.value.strip(), pw_field.value)
                 if ok:
                     user = ensure_progress(user)
+                    reset_today_session(keep_user=True)
                     session["user"] = user
                     session["goal"] = int(user["progress"]["settings"].get("goal", sysdata.get("default_goal", 10)))
                     session["is_review"] = False
@@ -1068,6 +1173,12 @@ def main(page: ft.Page):
     # View: Signup (국적 필수)
     # =============================================================================
     def view_signup():
+        # 회원가입 화면 진입 시 상태 리셋
+        signup_state["id_checked"] = False
+        signup_state["id_ok"] = False
+        signup_state["sent_code"] = None
+        signup_state["phone_verified"] = False
+
         # 입력 필드
         teacher_ck = ft.Checkbox(label="선생님", value=False)
 
@@ -1284,12 +1395,6 @@ def main(page: ft.Page):
             session["user"] = u
             show_snack("프로필이 저장되었습니다.", COLOR_PRIMARY)
 
-        def logout(e=None):
-            session["user"] = None
-            session["is_review"] = False
-            show_snack("로그아웃 되었습니다.", COLOR_TEXT_MAIN)
-            go_to("/login")
-
         body = ft.Container(
             padding=20,
             content=ft.Column(
@@ -1315,9 +1420,18 @@ def main(page: ft.Page):
                     ft.Container(height=10),
                     ui_lang_dd,
                     ft.Container(height=14),
-                    ft.ElevatedButton("저장", on_click=save_profile, bgcolor=COLOR_PRIMARY, color="white", width=320),
+                    ft.ElevatedButton(
+                        "저장",
+                        on_click=save_profile,
+                        width=320,
+                        style=ft.ButtonStyle(
+                            bgcolor=COLOR_PRIMARY,
+                            color="white",
+                            shape=ft.RoundedRectangleBorder(radius=14),
+                        ),
+                    ),
                     ft.Container(height=6),
-                    ft.OutlinedButton("로그아웃", on_click=logout, width=320),
+                    ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
@@ -1365,12 +1479,6 @@ def main(page: ft.Page):
             session["user"] = u
             show_snack("설정이 저장되었습니다.", COLOR_PRIMARY)
 
-        def logout(e=None):
-            session["user"] = None
-            session["is_review"] = False
-            show_snack("로그아웃 되었습니다.", COLOR_TEXT_MAIN)
-            go_to("/login")
-
         body = ft.Container(
             padding=20,
             content=ft.Column(
@@ -1381,9 +1489,18 @@ def main(page: ft.Page):
                     ft.Container(height=8),
                     info,
                     ft.Container(height=14),
-                    ft.ElevatedButton("저장", on_click=save_settings, bgcolor=COLOR_PRIMARY, color="white", width=320),
+                    ft.ElevatedButton(
+                        "저장",
+                        on_click=save_settings,
+                        width=320,
+                        style=ft.ButtonStyle(
+                            bgcolor=COLOR_PRIMARY,
+                            color="white",
+                            shape=ft.RoundedRectangleBorder(radius=14),
+                        ),
+                    ),
                     ft.Container(height=8),
-                    ft.OutlinedButton("로그아웃", on_click=logout, width=320),
+                    ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320),
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             ),
@@ -1540,33 +1657,54 @@ def main(page: ft.Page):
     # View: Student Home
     # =============================================================================
     def view_student_home():
-        user = session["user"]
-        user = ensure_progress(user)
+        if not session.get("user"):
+            return mobile_shell("/student_home", ft.Text("로그인이 필요합니다."), title="학습 홈")
 
+        # 최신 사용자 상태 로드/보정
+        user = get_user(session["user"]["id"]) or session["user"]
+        user = ensure_progress(user)
+        session["user"] = user
+
+        # 마지막 학습 정보
         last = user["progress"].get("last_session", {"topic": "", "idx": 0})
-        last_topic = last.get("topic") or ""
+        last_topic = (last.get("topic") or "").strip()
         last_idx = int(last.get("idx", 0) or 0)
 
-        def continue_last(e=None):
-            if not last_topic or last_topic not in VOCAB_DB:
-                show_snack("이어서 학습할 기록이 없습니다.", COLOR_ACCENT)
-                return
-            start_study(last_topic, resume=True)
-
+        # 토픽(=레벨) 목록
         topics = sorted(list(VOCAB_DB.keys()))
 
-        def start_study(topic_name, resume=False):
+        def on_ad_click(e):
+            page.snack_bar = ft.SnackBar(ft.Text("광고 클릭(임시)"))
+            page.snack_bar.open = True
+            page.update()
+
+        def start_study(topic_name: str, resume: bool = False):
             if topic_name not in VOCAB_DB:
                 show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
                 return
 
-            all_words = VOCAB_DB[topic_name]
+            all_words = VOCAB_DB[topic_name] or []
+            if not all_words:
+                show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
+                return
+
             goal = int(user["progress"]["settings"].get("goal", session["goal"]))
             pick = all_words[:goal] if len(all_words) >= goal else all_words[:]
 
             session["today_words"] = pick[:]
-            session["is_review"] = False
 
+            # 혹시 남아있는 자동이동/카운트다운 취소 + 상태 초기화
+            bump_nav_token()
+            session["motivate_shown"] = False
+            session["motivate_msg"] = ""
+            session["motivate_emoji"] = ""
+            session["is_review"] = False
+            session["test_queue"] = []
+            session["test_idx"] = 0
+            session["test_score"] = 0
+            reset_pron_state()
+
+            # 이어서 학습이면 last_idx 반영
             if resume:
                 idx = max(0, min(last_idx, max(0, len(pick) - 1)))
             else:
@@ -1574,6 +1712,7 @@ def main(page: ft.Page):
 
             session.update({"topic": topic_name, "study_words": pick, "idx": idx})
 
+            # last_session 저장
             user2 = get_user(user["id"]) or user
             user2 = ensure_progress(user2)
             user2["progress"]["last_session"] = {"topic": topic_name, "idx": idx}
@@ -1582,37 +1721,28 @@ def main(page: ft.Page):
 
             go_to("/study")
 
+        def continue_last(e=None):
+            if not last_topic or last_topic not in VOCAB_DB:
+                show_snack("이어서 학습할 기록이 없습니다.", COLOR_ACCENT)
+                return
+            start_study(last_topic, resume=True)
+
+        # 홈에서 “오늘 학습 시작” 버튼: 토픽이 있으면 첫 토픽으로 시작
+        def start_today(e=None):
+            if not topics:
+                show_snack("학습할 토픽(레벨)이 없습니다.", COLOR_ACCENT)
+                return
+            start_study(topics[0], resume=False)
+
+        # 통계 카드 계산
         user2 = get_user(user["id"]) or user
         user2 = ensure_progress(user2)
         topics_prog = user2["progress"]["topics"]
+
         total_learned = sum(len(t.get("learned", {})) for t in topics_prog.values())
         wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics_prog.values())
 
-        level_cards = []
-        for tp in topics:
-            tpdata = topics_prog.get(tp, {})
-            studied = len(tpdata.get("learned", {}))
-            avg = tpdata.get("stats", {}).get("avg_score", 0.0)
-            level_cards.append(
-                level_button(
-                    tp,
-                    f"누적 {studied}개 · 평균 {avg}",
-                    on_click=lambda e, tpn=tp: start_study(tpn, resume=False),
-                )
-            )
-        if not level_cards:
-            level_cards = [ft.Text("엑셀 데이터가 없습니다.", color=COLOR_TEXT_DESC)]
-
-        grid = ft.GridView(
-            expand=True,
-            runs_count=2,
-            max_extent=175,
-            child_aspect_ratio=1.10,
-            spacing=12,
-            run_spacing=12,
-            controls=level_cards,
-        )
-
+        # “이어서 학습하기” 카드 (있을 때만 노출)
         continue_btn = ft.Container(height=0)
         if last_topic and last_topic in VOCAB_DB:
             continue_btn = ft.Container(
@@ -1625,7 +1755,7 @@ def main(page: ft.Page):
                         ft.Column(
                             [
                                 ft.Text("이어서 학습하기", size=12, weight="bold", color=COLOR_PRIMARY),
-                                ft.Text(f"{last_topic} · {last_idx+1}번째 단어부터", size=11, color=COLOR_TEXT_DESC),
+                                ft.Text(f"{last_topic} · {last_idx + 1}번째 단어부터", size=11, color=COLOR_TEXT_DESC),
                             ],
                             spacing=2,
                             expand=True,
@@ -1636,17 +1766,23 @@ def main(page: ft.Page):
                 ),
             )
 
+        # 광고 영역(홈에서 레벨 버튼 제거했으니 대체 영역으로 사용)
+        ad_zone = build_ad_zone(on_click=on_ad_click)
+
         body = ft.Column(
             spacing=0,
             controls=[
                 student_info_bar(),
+
+                # 상단 요약 + 시작 버튼
                 ft.Container(
                     padding=ft.padding.only(left=20, right=20, top=14, bottom=12),
                     content=ft.Column(
                         [
-                            ft.Text(f"안녕하세요, {user['name']}님", size=18, weight="bold", color=COLOR_TEXT_MAIN),
-                            ft.Text("오늘 공부할 레벨(토픽)을 선택하세요.", size=12, color=COLOR_TEXT_DESC),
+                            ft.Text(f"안녕하세요, {user.get('name','')}님", size=18, weight="bold", color=COLOR_TEXT_MAIN),
+                            ft.Text("오늘 학습을 시작해볼까요?", size=12, color=COLOR_TEXT_DESC),
                             ft.Container(height=12),
+
                             ft.Row(
                                 [
                                     ft.Container(
@@ -1680,17 +1816,38 @@ def main(page: ft.Page):
                                 ],
                                 spacing=10,
                             ),
+
+                            ft.Container(height=12),
+
+                            ft.ElevatedButton(
+                                "오늘의 단어 학습 시작",
+                                on_click=start_today,
+                                bgcolor=COLOR_PRIMARY,
+                                color="white",
+                                height=44,
+                            ),
+
                             ft.Container(height=12),
                             continue_btn,
                         ],
                         spacing=0,
                     ),
                 ),
+
+                # 홈 하단: 광고(임시)
                 ft.Container(
                     expand=True,
                     padding=ft.padding.only(left=20, right=20, top=6, bottom=6),
-                    content=grid,
+                    content=ft.Column(
+                        [
+                            ad_zone,
+                            ft.Container(height=8),
+                            ft.Text("※ 광고 영역(임시) — 추후 광고 연동 예정", size=10, color=COLOR_TEXT_DESC),
+                        ],
+                        spacing=0,
+                    ),
                 ),
+
                 student_bottom_nav(active="home"),
             ],
         )
@@ -1707,6 +1864,8 @@ def main(page: ft.Page):
     # View: Level Select
     # =============================================================================
     def view_level_select():
+        if not session.get("user"):
+            return mobile_shell("/level_select", ft.Text("로그인이 필요합니다."), title="레벨 선택")
         user = session["user"]
         user = ensure_progress(user)
 
@@ -1720,7 +1879,16 @@ def main(page: ft.Page):
             goal = int(user["progress"]["settings"].get("goal", session["goal"]))
             pick = all_words[:goal] if len(all_words) >= goal else all_words[:]
             session["today_words"] = pick[:]
+            bump_nav_token()          # 혹시 남아있는 자동이동 취소
+            session["motivate_shown"] = False
+            session["motivate_msg"] = ""
+            session["motivate_emoji"] = ""
             session["is_review"] = False
+            session["test_queue"] = []
+            session["test_idx"] = 0
+            session["test_score"] = 0
+            reset_pron_state()
+
             session.update({"topic": topic_name, "study_words": pick, "idx": 0})
 
             user2 = get_user(user["id"]) or user
@@ -1776,8 +1944,13 @@ def main(page: ft.Page):
     # View: Motivate (절반 지점 격려 화면)
     # =============================================================================
     def view_motivate():
-        user = session.get("user")
-        name = user.get("name", "") if user else ""
+        if not session.get("user"):
+            return mobile_shell("/motivate", ft.Text("로그인이 필요합니다."), title="레벨 선택")
+
+        # 랜덤 문구(세션 저장값 사용)
+        msg = (session.get("motivate_msg") or "").strip() or "지금처럼만 하면 충분해요 ☺️"
+        emo = (session.get("motivate_emoji") or "").strip() or "🙂"
+
         body = ft.Column(
             spacing=0,
             controls=[
@@ -1787,19 +1960,30 @@ def main(page: ft.Page):
                     padding=24,
                     content=ft.Column(
                         [
-                            ft.Container(height=10),
-                            ft.Text("잘하고 있어요 🙌", size=22, weight="bold", color=COLOR_PRIMARY),
-                            ft.Container(height=10),
-                            ft.Text(f"{name}님, 오늘 목표의 절반을 채웠어요.\n조금만 더 힘내서 마무리해봐요!", size=13, color=COLOR_TEXT_DESC, text_align="center"),
                             ft.Container(height=18),
-                            ft.ElevatedButton(
-                                "이어서 학습하기",
-                                on_click=lambda _: go_to("/study"),
-                                bgcolor=COLOR_PRIMARY,
-                                color="white",
-                                width=320,
-                                height=46,
+
+                            # 상단 응원 문구 (랜덤 고정)
+                            ft.Text(
+                                msg,
+                                size=14,
+                                color=COLOR_TEXT_MAIN,
+                                text_align="center",
                             ),
+
+                            ft.Container(height=22),
+
+                            # "이모티콘/그림" 영역(스크린샷의 박스)
+                            ft.Container(
+                                width=300,
+                                height=180,
+                                border_radius=26,
+                                bgcolor="#ffffff",
+                                border=ft.border.all(1, "#dfe6ee"),
+                                alignment=ft.Alignment(0, 0),
+                                content=ft.Text(emo, size=64),
+                            ),
+
+                            ft.Container(expand=True),
                         ],
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -1808,20 +1992,24 @@ def main(page: ft.Page):
                 student_bottom_nav(active="home"),
             ],
         )
-        # 격려 화면: 0.8초 뒤 자동으로 학습 화면 복귀(사양)
+
+        # 0.5~1초 노출 후 자동 복귀 (원하면 0.8 유지)
         schedule_go(0.8, "/study", only_if_route="/motivate")
 
         return mobile_shell(
             "/motivate",
             body,
-            title="격려",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")),
+            title="학습 격려",
+            # 버튼/확인 제거: leading도 없애서 "자동 화면"처럼
+            leading=None,
         )
 
     # =============================================================================
     # View: Study
     # =============================================================================
     def view_study():
+        if not session.get("user"):
+            return mobile_shell("/study", ft.Text("로그인이 필요합니다."), title="단어 학습")
         words = session.get("study_words", [])
         topic = session.get("topic", "")
         if not words:
@@ -1874,18 +2062,25 @@ def main(page: ft.Page):
             session["pron_state"]["recorded"] = False
             status_text.value = ""
 
-        def maybe_motivate(new_idx):
-            user = get_user(session["user"]["id"]) or session["user"]
-            user = ensure_progress(user)
+        def maybe_motivate(new_idx: int):
+            if session.get("motivate_shown", False):
+                return
 
-            today = datetime.now().strftime("%Y-%m-%d")
-            shown_date = user["progress"]["today_flags"].get("motivate_shown_date", "")
+            total = len(session.get("study_words", []) or [])
+            if total < 2:
+                return
 
-            half_idx = max(0, (total // 2) - 1)
-            if (shown_date != today) and new_idx >= half_idx:
-                user["progress"]["today_flags"]["motivate_shown_date"] = today
-                update_user(user["id"], user)
-                session["user"] = user
+            half_reach_idx = math.ceil(total / 2) - 1
+
+            if new_idx == half_reach_idx:
+                session["motivate_shown"] = True
+
+                # 랜덤 문구/이모지: "세션당 1회"로 고정 저장
+                if not session.get("motivate_msg"):
+                    session["motivate_msg"] = random.choice(MOTIVATE_MESSAGES)
+                if not session.get("motivate_emoji"):
+                    session["motivate_emoji"] = random.choice(MOTIVATE_EMOJIS)
+
                 go_to("/motivate")
 
         def change_card(delta):
@@ -2133,6 +2328,8 @@ def main(page: ft.Page):
     # View: Pronunciation Result
     # =============================================================================
     def view_pron_result():
+        if not session.get("user"):
+            return mobile_shell("/pron_result", ft.Text("로그인이 필요합니다."), title="발음 결과")
         ps = session.get("pron_state", {})
         word = ps.get("target_word", "")
         ex = ps.get("target_example", "")
@@ -2350,6 +2547,8 @@ def main(page: ft.Page):
     # View: Review Start
     # =============================================================================
     def view_review_start():
+        if not session.get("user"):
+            return mobile_shell("/review_start", ft.Text("로그인이 필요합니다."), title="복습 안내")
         topic = session.get("topic", "")
         user = get_user(session["user"]["id"]) or session["user"]
         user = ensure_progress(user)
@@ -2508,6 +2707,8 @@ def main(page: ft.Page):
         )
     
     def view_test_intro():
+        if not session.get("user"):
+            return mobile_shell("/test_intro", ft.Text("로그인이 필요합니다."), title="연습문제")
         topic = session.get("topic", "")
         today_words = session.get("today_words", []) or []
         user = get_user(session["user"]["id"]) or session["user"]
@@ -2617,6 +2818,8 @@ def main(page: ft.Page):
     # View: Test
     # =============================================================================
     def view_test():
+        if not session.get("user"):
+            return mobile_shell("/test", ft.Text("로그인이 필요합니다."), title="연습문제")
         qlist = session.get("test_queue", [])
         if not qlist:
             body = ft.Container(
@@ -2860,6 +3063,9 @@ def main(page: ft.Page):
     # View: Study Complete
     # =============================================================================
     def view_study_complete():
+        if not session.get("user"):
+            return mobile_shell("/study_complete", ft.Text("로그인이 필요합니다."), title="학습 결과")
+
         qlist = session.get("test_queue", [])
         total = len(qlist) if qlist else 0
         score = int(session.get("test_score", 0) or 0)
@@ -2941,6 +3147,8 @@ def main(page: ft.Page):
     # View: Cumulative
     # =============================================================================
     def view_cumulative():
+        if not session.get("user"):
+            return mobile_shell("/cumulative", ft.Text("로그인이 필요합니다."), title="누적 학습")
         user = get_user(session["user"]["id"]) or session["user"]
         user = ensure_progress(user)
 
@@ -3045,6 +3253,8 @@ def main(page: ft.Page):
     # View: Wrong Notes
     # =============================================================================
     def view_wrong_notes():
+        if not session.get("user"):
+            return mobile_shell("/wrong_notes", ft.Text("로그인이 필요합니다."), title="오답노트")
         user = get_user(session["user"]["id"]) or session["user"]
         user = ensure_progress(user)
 
@@ -3122,6 +3332,8 @@ def main(page: ft.Page):
     # View: Review
     # =============================================================================
     def view_review():
+        if not session.get("user"):
+            return mobile_shell("/review", ft.Text("로그인이 필요합니다."), title="복습")
         user = get_user(session["user"]["id"]) or session["user"]
         user = ensure_progress(user)
 
@@ -3229,6 +3441,11 @@ def main(page: ft.Page):
     # View: Teacher Dashboard stop_propagation 제거/우회(구조 개선)
     # =============================================================================
     def view_teacher_dash():
+        u = session.get("user")
+        if not u:
+            return mobile_shell("/teacher_dash", ft.Text("로그인이 필요합니다."), title="선생님 대시보드")
+        if u.get("role") != "teacher":
+            return mobile_shell("/teacher_dash", ft.Text("접근 권한이 없습니다."), title="선생님 대시보드")
         users = load_users()
         rows = []
         for uid, u in users.items():
@@ -3360,11 +3577,18 @@ def main(page: ft.Page):
             "/teacher_dash",
             body,
             title="선생님 대시보드",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
-            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: go_to("/login"))],
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()),
+            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())],
         )
 
     def view_teacher_student():
+        me = session.get("user")
+        if not me:
+            return mobile_shell("/teacher_student", ft.Text("로그인이 필요합니다."), title="학생 상세")
+
+        if me.get("role") not in ("teacher", "admin"):
+            return mobile_shell("/teacher_student", ft.Text("접근 권한이 없습니다."), title="학생 상세")
+
         uid = session.get("selected_student_id")
         if not uid:
             return mobile_shell("/teacher_student", ft.Text("학생 선택이 필요합니다."), title="학생 상세")
@@ -3462,6 +3686,11 @@ def main(page: ft.Page):
     # View: System Dashboard (admin)
     # =============================================================================
     def view_system_dash():
+        u = session.get("user")
+        if not u:
+            return mobile_shell("/system_dash", ft.Text("로그인이 필요합니다."), title="시스템 대시보드")
+        if u.get("role") != "admin":
+            return mobile_shell("/system_dash", ft.Text("접근 권한이 없습니다."), title="시스템 대시보드")
         sysdata_local = load_system()
 
         default_goal_field = ft.TextField(
@@ -3592,8 +3821,8 @@ def main(page: ft.Page):
             "/system_dash",
             body,
             title="시스템 대시보드",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
-            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: go_to("/login"))],
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()),
+            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())],
         )
 
     # =============================================================================
@@ -3605,6 +3834,21 @@ def main(page: ft.Page):
 
         r_full = page.route
         r = (r_full or "").split("?", 1)[0] 
+
+        def _get_query_param(route: str, key: str) -> str | None:
+            try:
+                if "?" not in route:
+                    return None
+                q = route.split("?", 1)[1]
+                for part in q.split("&"):
+                    if "=" in part:
+                        k, v = part.split("=", 1)
+                        if k == key:
+                            return v
+            except:
+                pass
+            return None
+
 
 
         if r == "/":
@@ -3637,6 +3881,12 @@ def main(page: ft.Page):
         elif r == "/test_intro":
             page.views.append(view_test_intro())
         elif r == "/test":
+            qi = _get_query_param(r_full or "", "i")
+            if qi is not None:
+                try:
+                    session["test_idx"] = max(0, int(qi))
+                except:
+                    pass
             page.views.append(view_test())
         elif r == "/study_complete":
             page.views.append(view_study_complete())

@@ -732,11 +732,23 @@ def main(page: ft.Page):
             all_words = VOCAB_DB[topic_name] or []
             if not all_words: return show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
             
+            # [추가됨] 이미 학습한 단어는 제외하고 안 배운 단어만 필터링
+            learned_set = set(user["progress"]["topics"].get(topic_name, {}).get("learned", {}).keys())
+            unlearned = [w for w in all_words if w["word"] not in learned_set]
+            
+            # 안 배운 단어가 있으면 그것부터, 다 배웠으면 전체 중에서 선택
+            target_source = unlearned if unlearned else all_words
+            pick = target_source[:goal]
+
             bump_nav_token()
             reset_pron_state()
-            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "today_words": all_words[:goal]})
-            idx = max(0, min(last_idx, len(all_words) - 1)) if resume else 0
-            session.update({"topic": topic_name, "study_words": all_words[:goal], "idx": idx})
+            
+            # [수정] all_words[:goal] 대신 pick 사용
+            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "today_words": pick})
+            
+            # resume일 경우 인덱스 범위 안전 장치 추가 (단어 리스트가 바뀌므로)
+            idx = max(0, min(last_idx, len(pick) - 1)) if resume else 0
+            session.update({"topic": topic_name, "study_words": pick, "idx": idx})
             
             user["progress"]["last_session"] = {"topic": topic_name, "idx": idx}
             update_user(uid, user)
@@ -841,7 +853,14 @@ def main(page: ft.Page):
             if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
             all_words = VOCAB_DB[topic_name]
             goal = int(user["progress"]["settings"].get("goal", session["goal"]))
-            pick = all_words[:goal] if len(all_words) >= goal else all_words[:]
+            
+            # [추가됨] 학습한 단어 필터링 로직 적용
+            learned_set = set(user["progress"]["topics"].get(topic_name, {}).get("learned", {}).keys())
+            unlearned = [w for w in all_words if w["word"] not in learned_set]
+            
+            target_source = unlearned if unlearned else all_words
+            pick = target_source[:goal]
+
             session["today_words"] = pick[:]
             bump_nav_token()
             reset_pron_state()

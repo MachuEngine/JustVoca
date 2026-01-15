@@ -273,10 +273,185 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 16:55:05"
+            },
+            "관점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:03"
+            },
+            "시각": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:03"
+            },
+            "입장": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:03"
+            },
+            "견해": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:04"
+            },
+            "해당": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:05"
+            },
+            "인식하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:05"
+            },
+            "고려하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:05"
+            },
+            "평가하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:06"
+            },
+            "판단하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:06"
+            },
+            "분석하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:06"
+            },
+            "설명하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:11"
+            },
+            "규정하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:11"
+            },
+            "분류하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:11"
+            },
+            "구분하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:11"
+            },
+            "정리하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:13"
+            },
+            "원인": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:13"
+            },
+            "결과": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:13"
+            },
+            "영향": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:13"
+            },
+            "초래하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:13"
+            },
+            "기인하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:13"
+            },
+            "서론": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:17"
+            },
+            "본론": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:17"
+            },
+            "결론": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:17"
+            },
+            "구조": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:17"
+            },
+            "전개": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:18"
+            },
+            "반면에": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:19"
+            },
+            "한편": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:19"
+            },
+            "그럼에도 불구하고": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:19"
+            },
+            "비교하면": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:19"
+            },
+            "대조": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:19"
+            },
+            "타당하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:25"
+            },
+            "제도": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:30"
+            },
+            "체계": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:37"
+            },
+            "기능": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:41"
+            },
+            "역할": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:51:44"
             }
           },
           "stats": {
-            "studied_count": 10,
+            "studied_count": 45,
             "avg_score": 90.0
           },
           "wrong_notes": [
@@ -431,10 +606,60 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 16:18:24"
+            },
+            "부탁하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:01"
+            },
+            "괜찮으세요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:01"
+            },
+            "잠깐": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:01"
+            },
+            "미안해요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:01"
+            },
+            "고마워요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:02"
+            },
+            "여보세요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:03"
+            },
+            "말씀하세요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:03"
+            },
+            "전화하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:03"
+            },
+            "지금": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:03"
+            },
+            "나중에": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:53:03"
             }
           },
           "stats": {
-            "studied_count": 8,
+            "studied_count": 18,
             "avg_score": 90.0
           },
           "wrong_notes": []
@@ -490,10 +715,160 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 09:56:50"
+            },
+            "찬성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:29"
+            },
+            "반대": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:29"
+            },
+            "동의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:30"
+            },
+            "반박하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:30"
+            },
+            "토론": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:32"
+            },
+            "비교하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:32"
+            },
+            "대조하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:32"
+            },
+            "반면에": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:32"
+            },
+            "차이": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:32"
+            },
+            "공통점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:32"
+            },
+            "결론": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:38"
+            },
+            "정리하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:38"
+            },
+            "결국": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:38"
+            },
+            "따라서": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:39"
+            },
+            "요약하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:40"
+            },
+            "현상": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:40"
+            },
+            "문제": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:40"
+            },
+            "원인": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:40"
+            },
+            "결과": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:40"
+            },
+            "영향": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:41"
+            },
+            "환경": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:45"
+            },
+            "오염": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:46"
+            },
+            "보호": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:46"
+            },
+            "자원": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:46"
+            },
+            "재활용": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:47"
+            },
+            "인구": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:47"
+            },
+            "고령화": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:48"
+            },
+            "출산": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:48"
+            },
+            "가족": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:48"
+            },
+            "세대": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:52:48"
             }
           },
           "stats": {
-            "studied_count": 10,
+            "studied_count": 40,
             "avg_score": 90.0
           },
           "wrong_notes": []

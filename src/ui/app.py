@@ -566,63 +566,208 @@ def main(page: ft.Page):
         if not u: return mobile_shell("/profile", ft.Text("로그인이 필요합니다."), title="프로필")
         uid = u.get("id") or u.get("uid")
         u = ensure_progress(get_user(uid) or u)
-        country_dd = ft.Dropdown(label="국적", width=320, value=u.get("country", "KR"), options=[ft.dropdown.Option(code, name) for code, name in COUNTRY_OPTIONS], border_radius=12)
-        ui_lang_dd = ft.Dropdown(label="UI 언어", width=320, value=u["progress"]["settings"].get("ui_lang", "ko"), options=[ft.dropdown.Option(code, label) for code, label in UI_LANG_OPTIONS], border_radius=12)
 
-        def save_profile(e=None):
-            try:
-                u["country"] = country_dd.value or "KR"
-                u["progress"]["settings"]["ui_lang"] = ui_lang_dd.value or "ko"
-                update_user(uid, u)
-                session["user"] = u
-                show_snack("프로필이 저장되었습니다.", COLOR_PRIMARY)
-            except Exception as err:
-                log_write(f"save_profile error: {err}")
-                show_snack("저장 중 오류가 발생했습니다.", COLOR_ACCENT)
+        # 1. 통계 데이터 계산
+        topics = u["progress"]["topics"]
+        total_learned = sum(len(t.get("learned", {})) for t in topics.values())
+        
+        # [계산 로직]
+        # 연속 학습일: 실제로는 접속 로그나 학습 이력을 분석해야 하나, 
+        # 현재는 progress에 저장된 streak 값을 쓰거나 없으면 학습량 유무로 1일 표시
+        streak_days = u["progress"].get("streak", 1 if total_learned > 0 else 0)
+        
+        # 총 학습 시간: 별도 로그가 없다면 '학습 단어 수 * 3분' 등으로 추정하여 표시
+        # (DB에 total_time 필드가 있다면 그것을 사용)
+        total_minutes = u["progress"].get("total_time", total_learned * 3)
+        total_hours = total_minutes // 60
+        
+        # 현재 레벨 (마지막 학습 토픽)
+        last_topic = u["progress"].get("last_session", {}).get("topic", "-")
+        if not last_topic: last_topic = "학습 전"
 
-        body = ft.Container(
+        # 다음 목표 (현재 레벨에 따라 동적 표시)
+        next_goal_text = "중급 단어 완주" if "초급" in last_topic else "고급 단어 완주"
+        if "고급" in last_topic: next_goal_text = "마스터 과정 도전"
+
+        # 2. UI 구성
+        
+        # (1) 프로필 헤더 (이름, 상태, 배지)
+        profile_header = ft.Container(
             padding=20,
             content=ft.Column([
-                ft.Text("내 프로필", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8),
-                ft.Container(bgcolor="#f8f9fa", border_radius=18, padding=16, border=ft.border.all(1, "#eef1f4"), content=ft.Column([
-                    ft.Text(f"이름: {u.get('name','')}", size=13, color=COLOR_TEXT_MAIN), ft.Text(f"아이디: {uid}", size=12, color=COLOR_TEXT_DESC), ft.Text(f"권한: {u.get('role','')}", size=12, color=COLOR_TEXT_DESC)
-                ], spacing=4)),
-                ft.Container(height=12), country_dd, ft.Container(height=10), ui_lang_dd, ft.Container(height=14),
-                ft.ElevatedButton("저장", on_click=save_profile, width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14))),
-                ft.Container(height=6), ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320, height=48)
+                ft.Container(
+                    width=90, height=90, bgcolor="#eef5ff", border_radius=45,
+                    alignment=ft.Alignment(0,0),
+                    content=ft.Text(u.get("name", "")[:1], size=36, weight="bold", color=COLOR_PRIMARY)
+                ),
+                ft.Container(height=8),
+                ft.Text(u.get("name", ""), size=20, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Text("오늘도 한 걸음 성장하는 중! 🌱", size=12, color=COLOR_TEXT_DESC),
+                ft.Container(height=10),
+                # 오늘 단어를 학습했으면 배지 표시 (today_words가 있고 session에 완료 플래그가 있거나 할 때)
+                # 여기서는 간단히 session에 단어가 로드되어 있으면 표시
+                ft.Container(
+                    padding=ft.padding.symmetric(horizontal=12, vertical=6),
+                    bgcolor="#fff9db", border_radius=20,
+                    content=ft.Text("🔥 오늘 학습 완료!", size=11, weight="bold", color="#f59f00")
+                ) if session.get("today_words") else ft.Container()
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         )
-        return mobile_shell("/profile", ft.Container(padding=20, content=body, expand=True), title="프로필", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("settings"))
+
+        # (2) 통계 카드 ("지금까지 이렇게 했어요")
+        def _stat_box(val, label):
+            return ft.Container(
+                expand=True,
+                padding=16, bgcolor="#f8f9fa", border_radius=16, border=ft.border.all(1, "#eef1f4"),
+                content=ft.Column([
+                    ft.Text(str(val), size=18, weight="bold", color=COLOR_PRIMARY),
+                    ft.Text(label, size=11, color=COLOR_TEXT_DESC)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+            )
+
+        stats_row = ft.Row([
+            _stat_box(f"{streak_days}일", "연속 학습"),
+            _stat_box(f"{total_learned}단어", "총 학습"),
+            _stat_box(f"{total_hours}시간", "총 시간"),
+        ], spacing=10)
+
+        stats_section = ft.Container(
+            padding=20,
+            content=ft.Column([
+                ft.Text("지금까지 이렇게 했어요", size=15, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                stats_row
+            ])
+        )
+
+        # (3) 레벨/목표 카드
+        level_card = ft.Container(
+            padding=16, bgcolor="white", border_radius=16, border=ft.border.all(1, "#eef1f4"),
+            content=ft.Row([
+                ft.Container(
+                    width=40, height=40, bgcolor="#fdf2f8", border_radius=12, alignment=ft.Alignment(0,0),
+                    content=ft.Icon(ft.icons.FLAG, color=COLOR_SECONDARY, size=20)
+                ),
+                ft.Column([
+                    ft.Text(f"현재: {last_topic}", size=14, weight="bold", color=COLOR_TEXT_MAIN),
+                    ft.Text(f"다음 목표: {next_goal_text}", size=11, color=COLOR_TEXT_DESC)
+                ], spacing=2)
+            ], spacing=12)
+        )
+
+        level_section = ft.Container(
+            padding=ft.padding.symmetric(horizontal=20),
+            content=ft.Column([
+                ft.Text("나의 목표", size=15, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                level_card
+            ])
+        )
+
+        # 전체 조립
+        body = ft.Column(
+            scroll="auto",
+            controls=[
+                profile_header,
+                ft.Divider(height=1, thickness=1, color="#f1f3f5"),
+                stats_section,
+                level_section,
+                ft.Container(height=30),
+            ]
+        )
+
+        # [설정 이동] 우측 상단 액션 버튼
+        actions = [
+            ft.IconButton(icon=ft.icons.SETTINGS, icon_color=COLOR_TEXT_MAIN, on_click=lambda _: go_to("/settings"))
+        ]
+
+        return mobile_shell(
+            "/profile", 
+            ft.Container(expand=True, content=body), 
+            title="내 프로필", 
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), 
+            actions=actions,
+            bottom_nav=student_bottom_nav("settings")
+        )
 
     def view_settings():
         u = session.get("user")
         if not u: return mobile_shell("/settings", ft.Text("로그인이 필요합니다."), title="설정")
         uid = u.get("id") or u.get("uid")
         u = ensure_progress(get_user(uid) or u)
-        goal_field = ft.TextField(label="오늘 목표(단어 수)", value=str(u["progress"]["settings"].get("goal", sysdata.get("default_goal", 10))), width=320, keyboard_type=ft.KeyboardType.NUMBER, bgcolor="white", border_radius=12)
-        review_thr = int(load_system().get("review_threshold", 85))
-        info = ft.Text(f"복습 기준: {review_thr}점 미만(시스템 설정)", size=11, color=COLOR_TEXT_DESC)
 
-        def save_settings(e=None):
+        # [필드 구성] 프로필 화면에서 옮겨온 국적/언어 설정 및 개인정보
+        # 이름/아이디는 수정 불가(read_only)
+        name_tf = ft.TextField(label="이름", value=u.get("name", ""), width=320, read_only=True, bgcolor="#f0f2f5")
+        id_tf = ft.TextField(label="아이디", value=uid, width=320, read_only=True, bgcolor="#f0f2f5")
+        
+        email_tf = ft.TextField(label="이메일", value=u.get("email", ""), width=320)
+        phone_tf = ft.TextField(label="전화번호", value=u.get("phone", ""), width=320)
+        
+        country_dd = ft.Dropdown(
+            label="국적", width=320, value=u.get("country", "KR"), 
+            options=[ft.dropdown.Option(code, name) for code, name in COUNTRY_OPTIONS], 
+            border_radius=12
+        )
+        
+        goal_field = ft.TextField(
+            label="하루 목표(단어 수)", 
+            value=str(u["progress"]["settings"].get("goal", sysdata.get("default_goal", 10))), 
+            width=320, keyboard_type=ft.KeyboardType.NUMBER
+        )
+        
+        ui_lang_dd = ft.Dropdown(
+            label="UI 언어", width=320, value=u["progress"]["settings"].get("ui_lang", "ko"), 
+            options=[ft.dropdown.Option(code, label) for code, label in UI_LANG_OPTIONS], 
+            border_radius=12
+        )
+
+        def save_all(e):
             try:
                 g = int(goal_field.value)
                 g = max(1, min(100, g))
+                
+                # 정보 업데이트
                 u["progress"]["settings"]["goal"] = g
+                u["progress"]["settings"]["ui_lang"] = ui_lang_dd.value
+                u["country"] = country_dd.value
+                u["email"] = email_tf.value
+                u["phone"] = phone_tf.value
+                
                 update_user(uid, u)
                 session["goal"] = g
                 session["user"] = u
                 show_snack("설정이 저장되었습니다.", COLOR_PRIMARY)
-            except: show_snack("숫자만 입력 가능합니다.", COLOR_ACCENT)
+            except Exception as err:
+                show_snack(f"저장 오류: {err}", COLOR_ACCENT)
 
         body = ft.Container(
             padding=20,
             content=ft.Column([
-                ft.Text("설정", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=10), goal_field, ft.Container(height=8), info, ft.Container(height=14),
-                ft.ElevatedButton("저장", on_click=save_settings, width=320, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14))),
-                ft.Container(height=8), ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320)
-            ], scroll="auto", horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                ft.Text("계정 설정", size=16, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                ft.Column([name_tf, id_tf, email_tf, phone_tf, country_dd], spacing=10),
+                
+                ft.Container(height=24),
+                ft.Text("학습 설정", size=16, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                ft.Column([goal_field, ui_lang_dd], spacing=10),
+                
+                ft.Container(height=24),
+                ft.ElevatedButton("저장하기", on_click=save_all, width=320, height=48, bgcolor=COLOR_PRIMARY, color="white", style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))),
+                ft.Container(height=10),
+                ft.OutlinedButton("로그아웃", on_click=lambda _: do_logout(), width=320, height=48, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))),
+                ft.Container(height=40),
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto")
         )
-        return mobile_shell("/settings", ft.Container(expand=True, content=body), title="설정", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("settings"))
+
+        return mobile_shell(
+            "/settings", 
+            ft.Container(expand=True, content=body), 
+            title="설정", 
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), 
+            bottom_nav=student_bottom_nav("settings")
+        )
 
     def view_stats():
         u = session.get("user")

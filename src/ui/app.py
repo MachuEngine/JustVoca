@@ -833,130 +833,99 @@ def main(page: ft.Page):
         user = ensure_progress(get_user(uid) or u_session)
         session["user"] = user
 
-        # [추가됨] 1. 토픽 목록 및 순서 정의
+        # [설정] 레벨 순서 및 토픽 동기화
         LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급"]
         db_keys = list(VOCAB_DB.keys())
         topics = sorted(db_keys, key=lambda x: LEVEL_ORDER.index(x) if x in LEVEL_ORDER else 999)
 
-        # [추가됨] 2. 마지막 학습 정보 확인
         last = user["progress"].get("last_session", {"topic": "", "idx": 0})
         last_topic = (last.get("topic") or "").strip()
         last_idx = int(last.get("idx", 0) or 0)
 
-        # [추가됨] 3. 상단바 표시를 위해 세션 토픽 동기화
-        # 현재 세션에 토픽이 없으면 -> 마지막 학습 토픽 or 첫 번째 토픽으로 설정
         current_topic = session.get("topic")
         if not current_topic or current_topic == "-" or current_topic not in VOCAB_DB:
             if last_topic and last_topic in VOCAB_DB:
                 session["topic"] = last_topic
             elif topics:
                 session["topic"] = topics[0]
-
+        
+        current_topic = session.get("topic")
         goal = int(user["progress"]["settings"].get("goal", 10))
+        
+        # 통계 계산
         topics_prog = user["progress"]["topics"]
-        
-        # [수정] 변수명 통일 및 오답 수 계산 로직 추가
         total_learned = sum(len(t.get("learned", {})) for t in topics_prog.values())
-        wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics_prog.values())
-        
         progress_value = min(total_learned / max(1, goal), 1.0)
         percent = int(progress_value * 100)
 
-        # [추가] 읽지 않은 공지 확인
+        # 공지사항
         active_notices = get_active_notices(uid)
         unread_count = len([n for n in active_notices if uid not in n.get("read_by", [])])
-
-        # 알림 버튼 구성 (배지 포함)
         noti_icon = ft.IconButton(ft.icons.NOTIFICATIONS_OUTLINED, tooltip="공지사항", on_click=lambda _: go_to("/notice_inbox"))
-        if unread_count > 0:
-            actions = [
-                ft.Stack([
-                    noti_icon,
-                    ft.Container(
-                        content=ft.CircleAvatar(bgcolor=COLOR_ACCENT, radius=4, content=ft.Container()),
-                        padding=ft.padding.only(left=24, top=8) # 아이콘 위 붉은 점 위치 조정
-                    )
-                ])
-            ]
-        else:
-            actions = [noti_icon]
+        actions = [ft.Stack([noti_icon, ft.Container(content=ft.CircleAvatar(bgcolor=COLOR_ACCENT, radius=4, content=ft.Container()), padding=ft.padding.only(left=24, top=8))])] if unread_count > 0 else [noti_icon]
 
         from datetime import datetime
-        now = datetime.now()
-        today_str = now.strftime("%Y년 %m월 %d일")
-        today_day = now.day
+        today_str = datetime.now().strftime("%Y년 %m월 %d일")
 
-        last = user["progress"].get("last_session", {"topic": "", "idx": 0})
-        last_topic = (last.get("topic") or "").strip()
-        last_idx = int(last.get("idx", 0) or 0)
-        # [수정] 단순 정렬 대신 난이도 순서 정의
-        LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급"]
-        
-        # VOCAB_DB에 있는 키만 남기고 정렬 (지정된 순서 우선, 나머지는 뒤에 가나다순)
-        db_keys = list(VOCAB_DB.keys())
-        topics = sorted(db_keys, key=lambda x: LEVEL_ORDER.index(x) if x in LEVEL_ORDER else 999)
-
+        # [기능] 학습 시작
         def start_study(topic_name: str, resume: bool = False):
             if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
             
-            # [수정 1] 세션이 메모리에 있고, 같은 토픽을 '이어서' 한다면 -> 기존 세션 유지 (목록/위치 변경 X)
+            # 이어서 하기
             if resume and session.get("topic") == topic_name and session.get("study_words"):
                 go_to("/study")
                 return
 
-            # [수정 2] 그 외(새로 시작 or 앱 재시작 후 복귀) -> 안 배운 단어로 새로 목록 생성
+            # 새로 시작
             all_words = VOCAB_DB[topic_name] or []
             if not all_words: return show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
             
             learned_set = set(user["progress"]["topics"].get(topic_name, {}).get("learned", {}).keys())
             unlearned = [w for w in all_words if w["word"] not in learned_set]
             
-            # 안 배운 단어가 있으면 그것부터, 없으면 전체 복습
             target_source = unlearned if unlearned else all_words
             pick = target_source[:goal]
 
             bump_nav_token()
             reset_pron_state()
-            
-            # 목록이 새로 생성되었으므로 인덱스는 항상 0부터 시작 (기존 last_idx는 무시)
             idx = 0
             
-            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "today_words": pick})
-            session.update({"topic": topic_name, "study_words": pick, "idx": idx})
+            # review_queue 초기화
+            session.update({
+                "motivate_shown": False, 
+                "is_review": False, 
+                "test_queue": [], 
+                "today_words": pick,
+                "review_queue": [],
+                "topic": topic_name, 
+                "study_words": pick, 
+                "idx": idx
+            })
             
             user["progress"]["last_session"] = {"topic": topic_name, "idx": idx}
             update_user(uid, user)
             go_to("/study")
 
         def start_today(e=None):
-            if not topics: return show_snack("학습할 레벨이 없습니다.", COLOR_ACCENT)
-            
-            # [수정] 1순위: 마지막 학습 토픽, 2순위: 레벨 순서상 첫 번째 토픽
-            target_topic = last_topic if (last_topic and last_topic in VOCAB_DB) else topics[0]
-            
-            start_study(target_topic, resume=False)
+            target = current_topic if (current_topic and current_topic in VOCAB_DB) else (last_topic if last_topic else topics[0])
+            start_study(target, resume=False)
 
-        def build_mini_calendar():
-            days = []
-            for d in range(max(1, today_day-3), today_day + 4):
-                is_today = (d == today_day)
-                days.append(ft.Container(content=ft.Text(str(d), size=12, color="white" if is_today else COLOR_TEXT_MAIN, weight="bold" if is_today else None), width=30, height=30, bgcolor=COLOR_PRIMARY if is_today else "#f0f2f5", border_radius=15, alignment=ft.Alignment(0, 0)))
-            return ft.Row(days, alignment=ft.MainAxisAlignment.CENTER, spacing=8)
+        def on_ad_click(e):
+             show_snack("광고 페이지로 이동합니다.", COLOR_PRIMARY)
 
+        # UI 구성
         continue_btn = ft.Container(height=0)
         if last_topic and last_topic in VOCAB_DB:
             continue_btn = ft.Container(
                 bgcolor="#eef5ff", border_radius=18, padding=14, border=ft.border.all(1, "#dbeafe"),
                 content=ft.Row([
-                    ft.Column([ft.Text("이어서 학습하기", size=12, weight="bold", color=COLOR_PRIMARY), ft.Text(f"{last_topic} · {last_idx + 1}번째 단어부터", size=11, color=COLOR_TEXT_DESC)], expand=True, spacing=2),
+                    ft.Column([
+                        ft.Text("이어서 학습하기", size=12, weight="bold", color=COLOR_PRIMARY), 
+                        ft.Text(f"{last_topic} · {last_idx + 1}번째 단어부터", size=11, color=COLOR_TEXT_DESC)
+                    ], expand=True, spacing=2),
                     ft.ElevatedButton("계속", on_click=lambda _: start_study(last_topic, True), bgcolor=COLOR_PRIMARY, color="white")
                 ])
             )
-        
-        def on_ad_click(e):
-             show_snack("오누이 한국어 광고 페이지로 이동합니다 (임시)", COLOR_PRIMARY)
-
-        ad_zone = build_ad_zone(on_click=on_ad_click)
 
         content_body = ft.Column(
             spacing=0, scroll="auto",
@@ -965,60 +934,70 @@ def main(page: ft.Page):
                 ft.Container(
                     padding=20,
                     content=ft.Column([
-                        ft.Row([ft.Container(width=50, height=50, bgcolor="#f0f2f5", border_radius=25, content=ft.Icon(ft.icons.PERSON, color=COLOR_PRIMARY)), ft.Column([ft.Text(f"{user.get('name','')}님, 안녕하세요!", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"{today_str} 학습을 시작하세요.", size=12, color=COLOR_TEXT_DESC)], spacing=2)]),
+                        ft.Row([
+                            ft.Container(width=50, height=50, bgcolor="#f0f2f5", border_radius=25, content=ft.Icon(ft.icons.PERSON, color=COLOR_PRIMARY)), 
+                            ft.Column([
+                                ft.Text(f"{user.get('name','')}님, 안녕하세요!", size=18, weight="bold", color=COLOR_TEXT_MAIN), 
+                                ft.Text(f"{today_str} 학습을 시작하세요.", size=12, color=COLOR_TEXT_DESC)
+                            ], spacing=2)
+                        ]),
                         ft.Container(height=10),
+                        
                         ft.Container(
-                            bgcolor="white", padding=16, border_radius=18, border=ft.border.all(1, "#eef1f4"),
+                            bgcolor="white", padding=24, border_radius=20, border=ft.border.all(1, "#eef1f4"),
                             content=ft.Column([
                                 ft.Row([ft.Text("오늘의 달성률", size=13, weight="bold"), ft.Text(f"{percent}%", size=13, weight="bold", color=COLOR_PRIMARY)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
                                 ft.ProgressBar(value=progress_value, color=COLOR_PRIMARY, bgcolor="#eeeeee", height=8, border_radius=4),
-                                # [수정] 변수명 total_learned 사용
                                 ft.Text(f"목표 {goal}개 중 {total_learned}개 학습 완료", size=11, color=COLOR_TEXT_DESC),
-                            ], spacing=8)
-                        ),
-                        
-                        # 오답 및 누적 수치 Row (변수명 수정됨)
-                        ft.Row([
-                            ft.Container(
-                                expand=True, bgcolor="#f8f9fa", padding=14, border_radius=15,
-                                content=ft.Column([ft.Text("누적", size=10), ft.Text(str(total_learned), weight="bold", size=16)], spacing=2)
-                            ),
-                            ft.Container(
-                                expand=True, bgcolor="#f8f9fa", padding=14, border_radius=15,
-                                content=ft.Column([ft.Text("오답", size=10), ft.Text(str(wrong_cnt), weight="bold", size=16, color=COLOR_ACCENT)], spacing=2)
-                            ),
-                        ], spacing=10),
+                                ft.Container(height=16),
 
-                        ft.Container(height=5),
-                        ft.ElevatedButton(
-                            "오늘의 단어 학습 시작", 
-                            on_click=start_today, 
-                            bgcolor=COLOR_PRIMARY, color="white", 
-                            width=340, height=48, 
-                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))
+                                # [수정] 오답노트 버튼 제거됨, 학습 시작 버튼만 남음
+                                ft.ElevatedButton(
+                                    content=ft.Row([ft.Icon(ft.icons.PLAY_ARROW_ROUNDED, color="white"), ft.Text("오늘의 학습 시작", size=16, weight="bold", color="white")], alignment=ft.MainAxisAlignment.CENTER),
+                                    on_click=start_today, 
+                                    bgcolor=COLOR_PRIMARY, color="white", 
+                                    width=320, height=52, 
+                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16))
+                                ),
+                            ])
                         ),
-                        continue_btn,
-                        
-                        ft.Container(height=10),
-                        ft.Text("학습 달력", size=14, weight="bold"),
-                        build_mini_calendar(),
-                        
-                        ft.Container(height=15),
-                        ad_zone,
-                        ft.Text("※ 광고 영역 — 오누이 한국어", size=10, color=COLOR_TEXT_DESC, text_align="center"),
-                        ft.Container(height=20),
+                        ft.Container(height=10), continue_btn,
+                        ft.Container(height=20), build_ad_zone(on_click=on_ad_click), ft.Container(height=20),
                     ], spacing=12)
                 ),
             ]
         )
 
-        return mobile_shell(
-            "/student_home",
-            body=content_body, 
-            title="Just Voca", 
-            actions=actions,
-            bottom_nav=student_bottom_nav("home")
+        return mobile_shell("/student_home", body=content_body, title="Just Voca", actions=actions, bottom_nav=student_bottom_nav("home"))
+
+    def view_review_intro():
+        # [사양] "3초 후 복습이 시작돼요..." 또는 [지금 시작] 버튼
+        def start_review_now(e=None):
+            go_to("/study") # 복습 모드로 설정된 상태로 study로 이동
+
+        # 3초 후 자동 이동 타이머 (화면이 마운트된 후 실행 필요)
+        # Flet View에서는 did_mount 등을 쓰기 어려우므로 버튼 유도 혹은 비동기 sleep 사용
+        # 여기서는 심플하게 버튼 클릭을 유도하거나, schedule_go를 사용
+        schedule_go(3.0, "/study")
+
+        body = ft.Container(
+            expand=True,
+            alignment=ft.Alignment(0, 0),
+            padding=40,
+            content=ft.Column([
+                ft.Icon(ft.icons.ACCESS_TIME_FILLED_ROUNDED, size=60, color=COLOR_PRIMARY),
+                ft.Container(height=20),
+                ft.Text("오늘 학습 기록을\n지킬 수 있어요!", size=20, weight="bold", text_align="center", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                ft.Text("점수가 부족한 단어를\n한 번 더 복습하고 넘어갈게요.", size=14, color=COLOR_TEXT_DESC, text_align="center"),
+                ft.Container(height=40),
+                ft.Text("3초 후 복습이 시작돼요...", size=12, color="#adb5bd"),
+                ft.Container(height=20),
+                ft.ElevatedButton("지금 시작", on_click=start_review_now, bgcolor=COLOR_PRIMARY, color="white", width=200)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER)
         )
+        return mobile_shell("/review_intro", body, title="")
+    
     def view_level_select():
         if not session.get("user"): return mobile_shell("/level_select", ft.Text("로그인이 필요합니다."), title="레벨 선택")
         u_session = session.get("user")
@@ -1087,10 +1066,13 @@ def main(page: ft.Page):
 
     def view_study():
         if not session.get("user"): return mobile_shell("/study", ft.Text("로그인이 필요합니다."), title="단어 학습")
+        
         words = session.get("study_words", [])
         topic = session.get("topic", "")
-        if not words:
-            return mobile_shell("/study", ft.Container(padding=24, content=ft.Column([ft.Text("학습할 데이터가 없습니다."), ft.ElevatedButton("홈으로", on_click=lambda _: go_home())])), title="학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
+        if not words: return mobile_shell("/study", ft.Container(content=ft.Text("학습할 데이터가 없습니다.")), title="학습")
+
+        is_review = session.get("is_review", False)
+        page_title = "단어 복습" if is_review else "오늘의 학습"
 
         class StudyState:
             idx = session.get("idx", 0)
@@ -1100,15 +1082,7 @@ def main(page: ft.Page):
         total = len(words)
         status_text = ft.Text("", size=11, color="#95a5a6")
 
-        def persist_position():
-            u_session = session.get("user")
-            uid = u_session.get("id") or u_session.get("uid")
-            user = get_user(uid) or u_session
-            user = ensure_progress(user)
-            user["progress"]["last_session"] = {"topic": topic, "idx": st.idx}
-            update_user(uid, user)
-            session["user"] = user
-
+        # [기능] 단어 학습 처리 (DB 저장)
         def mark_seen_default(word_item):
             u_session = session.get("user")
             uid = u_session.get("id") or u_session.get("uid")
@@ -1117,21 +1091,23 @@ def main(page: ft.Page):
             user = ensure_topic_progress(user, topic)
             tpdata = user["progress"]["topics"].get(topic, {})
             learned = tpdata.get("learned", {})
+            
+            # 처음 본 단어면 learned에 추가
             if word_item["word"] not in learned:
                 user = update_learned_word(user, topic, word_item, 90)
             else:
                 user = update_last_seen_only(user, topic, word_item)
+                
             update_user(uid, user)
             session["user"] = user
 
-        def reset_pron_state_on_move():
-            session["pron_state"]["recording"] = False
-            session["pron_state"]["recorded"] = False
-            status_text.value = ""
-
+        # [기능 1] 격려 화면 로직 (복구됨)
         def maybe_motivate(new_idx: int):
-            if session.get("motivate_shown", False): return
+            # 복습 모드이거나 이미 보여줬으면 패스
+            if is_review or session.get("motivate_shown", False): return
             if len(words) < 2: return
+            
+            # 절반 지점(예: 10개 중 5번째)에서 격려
             half_reach_idx = math.ceil(len(words) / 2) - 1
             if new_idx == half_reach_idx:
                 session["motivate_shown"] = True
@@ -1139,21 +1115,70 @@ def main(page: ft.Page):
                 if not session.get("motivate_emoji"): session["motivate_emoji"] = random.choice(MOTIVATE_EMOJIS)
                 go_to("/motivate")
 
+        # [기능 2] 복습 큐 추가 (시뮬레이션 유지)
+        def check_and_add_review(word_item):
+            if is_review: return 
+            if "review_queue" not in session: session["review_queue"] = []
+            
+            # (테스트용) 30% 확률로 복습 대상 추가 (2번 항목 요청대로 유지)
+            import random
+            if random.random() < 0.3:
+                exists = any(w["word"] == word_item["word"] for w in session["review_queue"])
+                if not exists: session["review_queue"].append(word_item)
+
+        def persist_position():
+            u_session = session.get("user")
+            uid = u_session.get("id") or u_session.get("uid")
+            user = get_user(uid) or u_session
+            user = ensure_progress(user)
+            if not is_review:
+                user["progress"]["last_session"] = {"topic": topic, "idx": st.idx}
+                update_user(uid, user)
+            session["user"] = user
+
         def change_card(delta):
-            try: mark_seen_default(words[st.idx])
-            except: pass
+            # 1. 다음 카드로 넘어갈 때 처리 (delta > 0)
+            if delta > 0:
+                # 학습 완료 처리 (DB 저장)
+                try: mark_seen_default(words[st.idx])
+                except: pass
+                
+                # 복습 대상인지 체크 (시뮬레이션)
+                try: check_and_add_review(words[st.idx])
+                except: pass
+
+                # [복구됨] 다음 인덱스 기준으로 격려 화면 체크
+                maybe_motivate(st.idx + delta)
+
             new_idx = st.idx + delta
             if 0 <= new_idx < total:
                 st.idx = new_idx
                 session["idx"] = new_idx
                 st.is_front = True
-                reset_pron_state_on_move()
+                status_text.value = ""
                 persist_position()
                 update_view()
-                if delta > 0: maybe_motivate(new_idx)
             elif new_idx >= total:
                 persist_position()
-                go_to("/review_start")
+                
+                # 학습 종료 후 분기 처리
+                
+                # 1. 이미 복습 모드였으면 -> 바로 테스트로
+                if is_review:
+                    go_to("/test_intro")
+                    return
+
+                # 2. 일반 학습이었으면 -> 복습할게 있는지 확인
+                review_list = session.get("review_queue", [])
+                if review_list:
+                    # 복습 세션 설정
+                    session["study_words"] = review_list
+                    session["idx"] = 0
+                    session["is_review"] = True
+                    go_to("/review_intro") # 안내 화면으로 이동
+                else:
+                    # 복습할 게 없으면 바로 테스트
+                    go_to("/test_intro")
 
         def flip_card(e=None):
             st.is_front = not st.is_front
@@ -1183,7 +1208,8 @@ def main(page: ft.Page):
 
         def render_card_content():
             w = words[st.idx]
-            right_badges = [ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#fff5f5", border_radius=999, content=ft.Text("복습중", size=11, color=COLOR_ACCENT, weight="bold"))] if session.get("is_review") else []
+            right_badges = [ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#fff5f5", border_radius=999, content=ft.Text("복습중", size=11, color=COLOR_ACCENT, weight="bold"))] if is_review else []
+            
             header = ft.Row([
                 ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"{topic}", size=11, color=COLOR_TEXT_DESC)),
                 ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"{st.idx + 1}/{total}", size=11, color=COLOR_TEXT_DESC)),
@@ -1222,7 +1248,8 @@ def main(page: ft.Page):
                 card_container.update()
 
         body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Container(height=4), card_container, ft.Container(height=10), ft.Text("카드를 터치하거나 버튼으로 앞/뒤를 전환하세요", color="#bdc3c7", size=11)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))])
-        return mobile_shell("/study", body, title="단어 학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
+        
+        return mobile_shell("/study", body, title=page_title, leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 
     def view_pron_result():
         if not session.get("user"): return mobile_shell("/pron_result", ft.Text("로그인이 필요합니다."), title="발음 결과")
@@ -2120,6 +2147,10 @@ def main(page: ft.Page):
         elif r == "/study": page.views.append(view_study())
         elif r == "/motivate": page.views.append(view_motivate())
         elif r == "/pron_result": page.views.append(view_pron_result())
+        
+        # [추가된 부분] 복습 안내 화면 라우팅
+        elif r == "/review_intro": page.views.append(view_review_intro())
+        
         elif r == "/review_start": page.views.append(view_review_start())
         elif r == "/test_intro": page.views.append(view_test_intro())
         elif r == "/test":
@@ -2139,7 +2170,7 @@ def main(page: ft.Page):
         else: page.views.append(view_login())
         
         page.update()
-
+    
     def view_pop(e: ft.ViewPopEvent):
         page.views.pop()
         top_view = page.views[-1]

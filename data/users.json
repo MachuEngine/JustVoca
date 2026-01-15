@@ -448,10 +448,70 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 20:51:44"
+            },
+            "가정하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:40"
+            },
+            "전제": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:40"
+            },
+            "조건": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:03"
+            },
+            "경우": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:07"
+            },
+            "가설": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:07"
+            },
+            "논증": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:07"
+            },
+            "주장": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:10"
+            },
+            "근거": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:10"
+            },
+            "반박": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:11"
+            },
+            "문제점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:11"
+            },
+            "대책": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:11"
+            },
+            "해결 방안": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:58:11"
             }
           },
           "stats": {
-            "studied_count": 45,
+            "studied_count": 57,
             "avg_score": 90.0
           },
           "wrong_notes": [
@@ -656,10 +716,60 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 20:53:03"
+            },
+            "조심히 가세요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:46"
+            },
+            "다음에 연락해요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:51"
+            },
+            "곧 봐요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:52"
+            },
+            "또 연락할게요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:52"
+            },
+            "안녕히 주무세요": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:53"
+            },
+            "살다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:54"
+            },
+            "집": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:55"
+            },
+            "동네": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:55"
+            },
+            "아파트": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:55"
+            },
+            "기숙사": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 20:57:56"
             }
           },
           "stats": {
-            "studied_count": 18,
+            "studied_count": 28,
             "avg_score": 90.0
           },
           "wrong_notes": []
@@ -935,7 +1045,7 @@
       },
       "last_session": {
         "topic": "고급",
-        "idx": 0
+        "idx": 9
       },
       "today_flags": {
         "motivate_shown": true,

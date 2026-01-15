@@ -729,25 +729,30 @@ def main(page: ft.Page):
 
         def start_study(topic_name: str, resume: bool = False):
             if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
+            
+            # [수정 1] 세션이 메모리에 있고, 같은 토픽을 '이어서' 한다면 -> 기존 세션 유지 (목록/위치 변경 X)
+            if resume and session.get("topic") == topic_name and session.get("study_words"):
+                go_to("/study")
+                return
+
+            # [수정 2] 그 외(새로 시작 or 앱 재시작 후 복귀) -> 안 배운 단어로 새로 목록 생성
             all_words = VOCAB_DB[topic_name] or []
             if not all_words: return show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
             
-            # [추가됨] 이미 학습한 단어는 제외하고 안 배운 단어만 필터링
             learned_set = set(user["progress"]["topics"].get(topic_name, {}).get("learned", {}).keys())
             unlearned = [w for w in all_words if w["word"] not in learned_set]
             
-            # 안 배운 단어가 있으면 그것부터, 다 배웠으면 전체 중에서 선택
+            # 안 배운 단어가 있으면 그것부터, 없으면 전체 복습
             target_source = unlearned if unlearned else all_words
             pick = target_source[:goal]
 
             bump_nav_token()
             reset_pron_state()
             
-            # [수정] all_words[:goal] 대신 pick 사용
-            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "today_words": pick})
+            # 목록이 새로 생성되었으므로 인덱스는 항상 0부터 시작 (기존 last_idx는 무시)
+            idx = 0
             
-            # resume일 경우 인덱스 범위 안전 장치 추가 (단어 리스트가 바뀌므로)
-            idx = max(0, min(last_idx, len(pick) - 1)) if resume else 0
+            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "today_words": pick})
             session.update({"topic": topic_name, "study_words": pick, "idx": idx})
             
             user["progress"]["last_session"] = {"topic": topic_name, "idx": idx}

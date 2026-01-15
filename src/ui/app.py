@@ -833,6 +833,25 @@ def main(page: ft.Page):
         user = ensure_progress(get_user(uid) or u_session)
         session["user"] = user
 
+        # [추가됨] 1. 토픽 목록 및 순서 정의
+        LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급"]
+        db_keys = list(VOCAB_DB.keys())
+        topics = sorted(db_keys, key=lambda x: LEVEL_ORDER.index(x) if x in LEVEL_ORDER else 999)
+
+        # [추가됨] 2. 마지막 학습 정보 확인
+        last = user["progress"].get("last_session", {"topic": "", "idx": 0})
+        last_topic = (last.get("topic") or "").strip()
+        last_idx = int(last.get("idx", 0) or 0)
+
+        # [추가됨] 3. 상단바 표시를 위해 세션 토픽 동기화
+        # 현재 세션에 토픽이 없으면 -> 마지막 학습 토픽 or 첫 번째 토픽으로 설정
+        current_topic = session.get("topic")
+        if not current_topic or current_topic == "-" or current_topic not in VOCAB_DB:
+            if last_topic and last_topic in VOCAB_DB:
+                session["topic"] = last_topic
+            elif topics:
+                session["topic"] = topics[0]
+
         goal = int(user["progress"]["settings"].get("goal", 10))
         topics_prog = user["progress"]["topics"]
         
@@ -1357,7 +1376,12 @@ def main(page: ft.Page):
                 if w and w not in seen:
                     seen.add(w)
                     combined.append(it)
-            session.update({"test_queue": make_test_queue(topic, combined, n_choices=4), "test_idx": 0, "test_score": 0, "is_review": False})
+            
+            # [수정] 전체 문제를 생성한 뒤 3개로 제한
+            full_queue = make_test_queue(topic, combined, n_choices=4)
+            final_queue = full_queue[:3]  # 최대 3문제만 출제
+            
+            session.update({"test_queue": final_queue, "test_idx": 0, "test_score": 0, "is_review": False})
             go_to("/test?i=0")
 
         def stamp_widget():
@@ -1377,32 +1401,48 @@ def main(page: ft.Page):
 
     def view_test():
         if not session.get("user"): return mobile_shell("/test", ft.Text("로그인이 필요합니다."), title="연습문제")
+        
+        # 1. 큐에서 데이터 가져오기
         qlist = session.get("test_queue", [])
         if not qlist: return mobile_shell("/test", ft.Container(padding=24, content=ft.Column([ft.Text("테스트 데이터가 없습니다.", size=13, color=COLOR_TEXT_DESC), ft.Container(height=10), ft.ElevatedButton("홈", on_click=lambda _: go_home(), bgcolor=COLOR_PRIMARY, color="white")], horizontal_alignment=ft.CrossAxisAlignment.CENTER)), title="연습문제", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
 
+        # 2. 현재 인덱스 및 문제 로드
         idx = max(0, min(int(session.get("test_idx", 0) or 0), len(qlist) - 1))
         q, total = qlist[idx], len(qlist)
-        feedback = ft.Text("", size=12, weight="bold")
+        
+        feedback = ft.Text("", size=14, weight="bold")
         option_boxes = []
 
         def _ensure_wrong_set():
             if not isinstance(q.get("wrong_set"), set): q["wrong_set"] = set()
             return q["wrong_set"]
 
+        # [UI 업데이트] 선택 상태에 따라 보기 스타일 변경
         def apply_styles(do_update=True):
             selected, answered, correct, wrong_set = q.get("selected"), bool(q.get("answered")), q.get("correct"), _ensure_wrong_set()
             for box in option_boxes:
                 word = box.data
                 border_color, bg, txt_color = "#dfe6ee", "white", COLOR_TEXT_MAIN
-                if word in wrong_set: border_color, bg, txt_color = COLOR_ACCENT, "#fff5f5", COLOR_ACCENT
-                if answered and word == correct: border_color, bg, txt_color = COLOR_EVAL, "#f0fdf4", COLOR_EVAL
-                if (not answered) and selected == word: border_color, bg, txt_color = COLOR_PRIMARY, "#eef5ff", COLOR_PRIMARY
+                
+                # 오답인 경우 (붉은색)
+                if word in wrong_set: 
+                    border_color, bg, txt_color = COLOR_ACCENT, "#fff5f5", COLOR_ACCENT
+                
+                # 정답인 경우 (초록색) - 문제 풀이가 끝난 후 정답 표시
+                if answered and word == correct: 
+                    border_color, bg, txt_color = COLOR_EVAL, "#f0fdf4", COLOR_EVAL
+                
+                # 현재 선택 중인 경우 (파란색)
+                if (not answered) and selected == word: 
+                    border_color, bg, txt_color = COLOR_PRIMARY, "#eef5ff", COLOR_PRIMARY
+                
                 box.border, box.bgcolor = ft.border.all(2, border_color), bg
                 if isinstance(box.content, ft.Text): box.content.color = txt_color
                 if do_update and box.page: box.update()
 
+        # 보기 선택 핸들러
         def pick(word):
-            if q.get("answered"): return
+            if q.get("answered"): return # 이미 정답을 맞췄으면 선택 변경 불가
             q["selected"] = word
             feedback.value = ""
             feedback.update()
@@ -1415,22 +1455,35 @@ def main(page: ft.Page):
             update_user(uid, user)
             session["user"] = user
 
+        # [다음 문제 이동]
         def on_next(e=None):
             session["test_idx"] = idx + 1
+            # 마지막 문제면 결과 페이지로, 아니면 다음 문제로
             go_to("/study_complete" if session["test_idx"] >= total else f"/test?i={session['test_idx']}")
 
+        # [정답 확인] 버튼 핸들러
         def on_confirm(e=None):
+            # 이미 정답 처리된 상태라면 바로 다음으로 이동
             if q.get("answered"): return on_next()
+            
             selected = (q.get("selected") or "").strip()
             if not selected: return show_snack("보기를 선택해주세요.", COLOR_ACCENT)
+            
             correct, prompt = (q.get("correct") or "").strip(), (q.get("prompt") or "").strip()
 
             if selected == correct:
+                # 정답 처리
                 q["answered"] = True
                 session["test_score"] = int(session.get("test_score", 0) or 0) + 1
                 feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
-                primary_btn.text, primary_btn.on_click = "다음 문제", on_next
+                
+                # [수정] 버튼 텍스트 및 스타일 변경 (content 사용)
+                primary_btn.content.value = "다음 문제"
+                primary_btn.on_click = on_next 
+                # 스타일 업데이트 (새 ButtonStyle 할당)
+                primary_btn.style = ft.ButtonStyle(bgcolor=COLOR_EVAL, color="white", shape=ft.RoundedRectangleBorder(radius=14))
             else:
+                # 오답 처리
                 ws = _ensure_wrong_set()
                 if selected not in ws:
                     ws.add(selected)
@@ -1442,26 +1495,70 @@ def main(page: ft.Page):
             primary_btn.update()
             apply_styles()
 
+        # 3. UI 구성 요소 생성
         for w in (q.get("choices") or []):
-            option_boxes.append(ft.Container(width=320, padding=ft.padding.symmetric(horizontal=14, vertical=12), border_radius=12, border=ft.border.all(2, "#dfe6ee"), bgcolor="white", ink=True, data=w, on_click=lambda e, ww=w: pick(ww), content=ft.Text(w, size=13, color=COLOR_TEXT_MAIN, weight="bold")))
+            option_boxes.append(
+                ft.Container(
+                    width=320, padding=ft.padding.symmetric(horizontal=14, vertical=12),
+                    border_radius=12, border=ft.border.all(2, "#dfe6ee"), bgcolor="white",
+                    ink=True, data=w, on_click=lambda e, ww=w: pick(ww),
+                    content=ft.Text(w, size=15, color=COLOR_TEXT_MAIN, weight="bold")
+                )
+            )
 
+        # 초기 버튼 상태 설정
         is_answered = bool(q.get("answered"))
-        primary_btn = ft.ElevatedButton("다음 문제" if is_answered else "확인", on_click=on_next if is_answered else on_confirm, width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14)))
-        if is_answered: feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
+        btn_text = "다음 문제" if is_answered else "확인"
+        btn_func = on_next if is_answered else on_confirm
+        btn_color = COLOR_EVAL if is_answered else COLOR_PRIMARY
+
+        # [수정] text=... 대신 content=ft.Text(...) 사용 (오류 해결 핵심)
+        primary_btn = ft.ElevatedButton(
+            content=ft.Text(btn_text, size=15, weight="bold", color="white"), 
+            on_click=btn_func, 
+            width=320, height=48, 
+            style=ft.ButtonStyle(bgcolor=btn_color, color="white", shape=ft.RoundedRectangleBorder(radius=14))
+        )
+        
+        if is_answered: 
+            feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
 
         body = ft.Column(spacing=0, controls=[
             student_info_bar(),
-            ft.Container(expand=True, padding=20, content=ft.Column([
-                ft.Container(bgcolor="#ffffff", border_radius=20, padding=18, border=ft.border.all(1, "#eef1f4"), content=ft.Column([
-                    ft.Text(f"문제 {idx+1}/{total}", size=12, color=COLOR_PRIMARY, weight="bold"), ft.Container(height=8),
-                    ft.Container(bgcolor="#f8f9fa", border_radius=14, padding=14, content=ft.Column([ft.Text(f"“{q.get('prompt','')}”", size=13, color=COLOR_TEXT_MAIN), ft.Container(height=6), ft.Text("이 설명에 알맞은 단어는 무엇일까요?", size=12, color=COLOR_TEXT_DESC)], spacing=0)),
-                    ft.Container(height=12), ft.Column(option_boxes, spacing=10), ft.Container(height=10), feedback, ft.Container(height=18), primary_btn
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER))
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))
+            ft.Container(
+                expand=True, padding=20, 
+                content=ft.Column([
+                    ft.Container(
+                        bgcolor="#ffffff", border_radius=20, padding=18, border=ft.border.all(1, "#eef1f4"),
+                        content=ft.Column([
+                            ft.Row([
+                                ft.Text(f"문제 {idx+1}/{total}", size=14, color=COLOR_PRIMARY, weight="bold"),
+                                ft.Container(expand=True)
+                            ]),
+                            ft.Container(height=12),
+                            ft.Container(
+                                bgcolor="#f8f9fa", border_radius=14, padding=20, width=320,
+                                content=ft.Column([
+                                    ft.Text(f"“{q.get('prompt','')}”", size=16, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"),
+                                    ft.Container(height=8),
+                                    ft.Text("이 설명에 알맞은 단어는?", size=12, color=COLOR_TEXT_DESC)
+                                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                            ),
+                            ft.Container(height=20),
+                            ft.Column(option_boxes, spacing=10),
+                            ft.Container(height=16),
+                            feedback,
+                            ft.Container(height=16),
+                            primary_btn
+                        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                    )
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True)
+            )
         ])
+        
         apply_styles(False)
         return mobile_shell("/test", body, title="연습문제", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
-
+    
     def view_study_complete():
         if not session.get("user"): return mobile_shell("/study_complete", ft.Text("로그인이 필요합니다."), title="학습 결과")
         qlist, total, score = session.get("test_queue", []), len(session.get("test_queue", [])), int(session.get("test_score", 0) or 0)

@@ -560,7 +560,7 @@
       },
       "last_session": {
         "topic": "고급",
-        "idx": 9
+        "idx": 0
       },
       "today_flags": {
         "motivate_shown": true,
@@ -924,5 +924,24 @@
       }
     },
     "id": "teacher4"
+  },
+  "teacher5": {
+    "uid": "teacher5",
+    "pw": "pbkdf2$120000$98a5dd3f90b7fc7a173872f22007e04b$ea07347607adaaede24becccd2b1becc8b1c011cc255f2c48df2eb4d4bdb99d4",
+    "name": "선생님5",
+    "email": "teacher5@voca",
+    "phone": "1111",
+    "country": "JP",
+    "role": "teacher",
+    "is_approved": false,
+    "phone_verified": true,
+    "created_at": "2026-01-15T17:02:05.078227",
+    "progress": {
+      "settings": {
+        "goal": 10,
+        "ui_lang": "ko"
+      }
+    },
+    "id": "teacher5"
   }
 }

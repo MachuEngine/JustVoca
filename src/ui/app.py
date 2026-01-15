@@ -5,6 +5,7 @@ import random
 import asyncio
 import math
 import flet as ft
+from datetime import datetime
 
 # =============================================================================
 # Flet 0.80+ 호환
@@ -34,6 +35,10 @@ from src.storage import (
     get_user,
     register_user,
     update_user_approval,
+    load_notices,
+    add_notice,
+    get_active_notices,
+    mark_notice_read
 )
 from src.progress import (
     ensure_progress,
@@ -140,6 +145,7 @@ def main(page: ft.Page):
         return raw_comment
 
     def show_snack(msg, color="black"):
+        print(f"SNACK: {msg}")  # [추가] 콘솔에 로그 출력 (화면에 안 뜰 경우 확인용)
         page.snack_bar = ft.SnackBar(ft.Text(msg, color="white"), bgcolor=color)
         page.snack_bar.open = True
         page.update()
@@ -305,20 +311,114 @@ def main(page: ft.Page):
     # Views
     # =============================================================================
     def view_landing():
-        body = ft.Column(
-            scroll="auto", alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        def feature_card(icon_text: str, title: str, desc: str):
+            return ft.Container(
+                width=340,
+                padding=ft.padding.symmetric(horizontal=16, vertical=14),
+                bgcolor="#f4f6f8",
+                border_radius=18,
+                content=ft.Row(
+                    spacing=14,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Container(
+                            width=42,
+                            height=42,
+                            bgcolor="white",
+                            border_radius=14,
+                            alignment=ft.Alignment(0, 0),
+                            content=ft.Text(icon_text, size=20),
+                        ),
+                        ft.Column(
+                            spacing=4,
+                            expand=True,
+                            controls=[
+                                ft.Text(title, size=13, weight="bold", color=COLOR_TEXT_MAIN),
+                                ft.Text(desc, size=11, color=COLOR_TEXT_DESC),
+                            ],
+                        ),
+                    ],
+                ),
+            )
+
+        content = ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=0,
             controls=[
                 ft.Container(height=10),
-                ft.Container(width=110, height=110, bgcolor="#f0f6ff", border_radius=26, alignment=ft.Alignment(0, 0), content=ft.Text("🇰🇷", size=56)),
+
+                # 상단 KR 아이콘(이미지에 맞게: 텍스트 "KR"로)
+                ft.Container(
+                    width=120,
+                    height=120,
+                    bgcolor="#eef5ff",
+                    border_radius=30,
+                    alignment=ft.Alignment(0, 0),
+                    content=ft.Text("KR", size=42, weight="bold", color=COLOR_TEXT_MAIN),
+                ),
+
                 ft.Container(height=18),
-                ft.Text("한국어 학습", size=28, weight="bold", color=COLOR_TEXT_MAIN),
-                ft.Text("쉽고 체계적인 한국어 학습", size=13, color=COLOR_TEXT_DESC, text_align="center"),
+
+                ft.Text("한국어 학습", size=26, weight="bold", color=COLOR_TEXT_MAIN),
+
+                ft.Container(height=6),
+
+                ft.Text(
+                    "단어부터 발음, 진도 관리까지\n쉽고 체계적인 한국어 학습",
+                    size=12,
+                    color=COLOR_TEXT_DESC,
+                    text_align="center",
+                ),
+
                 ft.Container(height=22),
-                ft.ElevatedButton("학습 시작하기", on_click=lambda _: go_to("/login"), width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14))),
+
+                feature_card(
+                    "📘",
+                    "체계적 단계별 단어 & 예문 학습",
+                    "한국어 표준 교육 과정에 따른\n단계별 단어 학습",
+                ),
+                ft.Container(height=12),
+                feature_card(
+                    "🎧",
+                    "발음 녹음 & 평가",
+                    "특별한 발음평가 엔진으로\n보다 정확한 발음 진단",
+                ),
+                ft.Container(height=12),
+                feature_card(
+                    "📊",
+                    "학습 진도 관리",
+                    "학생별 맞춤 진도 및 평균점 관리",
+                ),
+
+                ft.Container(height=18),
+
+                ft.Text(
+                    "화면을 터치하면 학습을 시작합니다",
+                    size=10,
+                    color="#b0b7c3",
+                ),
+
                 ft.Container(height=10),
-            ]
+            ],
         )
-        return mobile_shell("/", ft.Container(padding=28, content=body), title="")
+
+        # 화면 전체 탭 시 로그인으로 이동
+        tappable = ft.GestureDetector(
+            on_tap=lambda _: go_to("/login"),
+            content=ft.Container(
+                padding=28,
+                content=ft.Column(
+                    expand=True,
+                    scroll="auto",
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[content],
+                ),
+            ),
+        )
+
+        return mobile_shell("/", tappable, title="")
 
     def view_login():
         id_field = ft.TextField(label="아이디", width=320, border_radius=12, bgcolor="white", text_size=14, autofocus=True)
@@ -598,6 +698,25 @@ def main(page: ft.Page):
         progress_value = min(total_learned / max(1, goal), 1.0)
         percent = int(progress_value * 100)
 
+        # [추가] 읽지 않은 공지 확인
+        active_notices = get_active_notices(uid)
+        unread_count = len([n for n in active_notices if uid not in n.get("read_by", [])])
+
+        # 알림 버튼 구성 (배지 포함)
+        noti_icon = ft.IconButton(ft.icons.NOTIFICATIONS_OUTLINED, tooltip="공지사항", on_click=lambda _: go_to("/notice_inbox"))
+        if unread_count > 0:
+            actions = [
+                ft.Stack([
+                    noti_icon,
+                    ft.Container(
+                        content=ft.CircleAvatar(bgcolor=COLOR_ACCENT, radius=4, content=ft.Container()),
+                        padding=ft.padding.only(left=24, top=8) # 아이콘 위 붉은 점 위치 조정
+                    )
+                ])
+            ]
+        else:
+            actions = [noti_icon]
+
         from datetime import datetime
         now = datetime.now()
         today_str = now.strftime("%Y년 %m월 %d일")
@@ -707,7 +826,7 @@ def main(page: ft.Page):
             "/student_home",
             body=content_body, 
             title="Just Voca", 
-            actions=[ft.IconButton(ft.icons.NOTIFICATIONS_OUTLINED, tooltip="공지사항")],
+            actions=actions,
             bottom_nav=student_bottom_nav("home")
         )
     def view_level_select():
@@ -1290,37 +1409,247 @@ def main(page: ft.Page):
         return mobile_shell("/review", body, title="복습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")), bottom_nav=student_bottom_nav("stats"))
 
     def view_teacher_dash():
+        # 1. 권한 체크
         u = session.get("user")
-        if not u or u.get("role") != "teacher": return mobile_shell("/teacher_dash", ft.Text("접근 권한이 없습니다."), title="선생님 대시보드")
+        if not u or u.get("role") != "teacher": 
+            return mobile_shell("/teacher_dash", ft.Text("접근 권한이 없습니다."), title="선생님 대시보드")
+        
+        # 2. 학생 목록 데이터 준비
         users = load_users()
         rows = []
-        for uid, u in users.items():
-            if u.get("role") != "student": continue
-            u = ensure_progress(u)
-            goal = int(u["progress"]["settings"].get("goal", 10))
-            topics = u["progress"]["topics"]
+        for uid, s_user in users.items():
+            if s_user.get("role") != "student": continue
+            s_user = ensure_progress(s_user)
+            
+            goal = int(s_user["progress"]["settings"].get("goal", 10))
+            topics = s_user["progress"]["topics"]
+            
             total_learned = sum(len(t.get("learned", {})) for t in topics.values())
             avgs = [t.get("stats", {}).get("avg_score", 0) for t in topics.values() if t.get("learned")]
-            rows.append({"uid": uid, "name": u.get("name", uid), "goal": goal, "learned": total_learned, "ratio": int((min(total_learned, goal) / max(1, goal)) * 100) if goal else 0, "avg": round(sum(avgs) / max(1, len(avgs)), 2) if avgs else 0.0, "wrong": sum(len(t.get("wrong_notes", [])) for t in topics.values())})
+            avg_val = round(sum(avgs) / max(1, len(avgs)), 2) if avgs else 0.0
+            w_cnt = sum(len(t.get("wrong_notes", [])) for t in topics.values())
+            
+            rows.append({
+                "uid": uid, "name": s_user.get("name", uid), "goal": goal, 
+                "learned": total_learned, 
+                "ratio": int((min(total_learned, goal) / max(1, goal)) * 100) if goal else 0,
+                "avg": avg_val, "wrong": w_cnt
+            })
         rows.sort(key=lambda x: (-x["ratio"], -x["avg"], x["name"]))
 
-        def open_student(uid):
-            session["selected_student_id"] = uid
-            go_to("/teacher_student")
+        # 3. 학생 카드 리스트
+        student_cards = []
+        for s in rows:
+            student_cards.append(
+                ft.Container(
+                    bgcolor="white", padding=14, border_radius=16, border=ft.border.all(1, "#eef1f4"), 
+                    content=ft.Row([
+                        ft.Container(
+                            expand=True, ink=True, 
+                            on_click=lambda e, u=s["uid"]: (session.update({"selected_student_id": u}), go_to("/teacher_student")),
+                            content=ft.Row([
+                                ft.Column([
+                                    ft.Text(s["name"], weight="bold", size=15, color=COLOR_TEXT_MAIN), 
+                                    ft.Text(f"목표 {s['goal']} · 누적 {s['learned']}", size=11, color=COLOR_TEXT_DESC),
+                                    ft.Text(f"평균 {s['avg']} · 오답 {s['wrong']}", size=11, color=COLOR_TEXT_DESC)
+                                ], spacing=2, expand=True), 
+                                ft.Container(padding=8, border_radius=12, bgcolor="#eef5ff", content=ft.Text(f"{s['ratio']}%", weight="bold", color=COLOR_PRIMARY))
+                            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+                        )
+                    ])
+                )
+            )
+        if not student_cards: student_cards = [ft.Container(padding=20, content=ft.Text("등록된 학생이 없습니다.", color=COLOR_TEXT_DESC))]
+
+        # 4. 공지사항 입력 UI
+        notice_title = ft.TextField(label="제목", width=280, height=40, text_size=13, content_padding=10)
+        notice_content = ft.TextField(label="내용을 입력하세요", width=280, multiline=True, min_lines=3, text_size=13)
         
-        def reset_pw(uid):
-            users2 = load_users()
-            if uid in users2:
-                users2[uid]["pw"] = hash_password("1111")
-                save_users(users2)
-                show_snack(f"{users2[uid].get('name', uid)} 비밀번호를 1111로 초기화했습니다.", COLOR_PRIMARY)
+        is_scheduled = ft.Checkbox(label="예약 발송", value=False)
+        date_btn = ft.ElevatedButton("날짜 선택", icon=ft.icons.CALENDAR_TODAY, visible=False)
+        time_btn = ft.ElevatedButton("시간 선택", icon=ft.icons.ACCESS_TIME, visible=False)
+        schedule_info = ft.Text("즉시 발송됩니다.", size=11, color=COLOR_TEXT_DESC)
+        
+        selected_dt = {"date": None, "time": None}
 
-        cards = [ft.Container(bgcolor="white", padding=14, border_radius=16, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Container(expand=True, ink=True, on_click=lambda e, u=s["uid"]: open_student(u), content=ft.Row([ft.Column([ft.Text(s["name"], weight="bold", size=15, color=COLOR_TEXT_MAIN), ft.Text(f"목표 {s['goal']} · 누적 {s['learned']}", size=11, color=COLOR_TEXT_DESC), ft.Text(f"평균 {s['avg']} · 오답 {s['wrong']}", size=11, color=COLOR_TEXT_DESC)], spacing=2, expand=True), ft.Container(padding=8, border_radius=12, bgcolor="#eef5ff", content=ft.Text(f"{s['ratio']}%", weight="bold", color=COLOR_PRIMARY))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)), ft.IconButton(icon=ft.icons.RESTART_ALT, tooltip="비밀번호 초기화(1111)", on_click=lambda e, u=s["uid"]: reset_pw(u))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)) for s in rows]
-        if not cards: cards = [ft.Text("학생 계정이 없습니다.", color=COLOR_TEXT_DESC)]
+        def update_schedule_ui():
+            if not is_scheduled.value:
+                schedule_info.value = "즉시 발송됩니다."
+                date_btn.visible = False
+                time_btn.visible = False
+            else:
+                date_btn.visible = True
+                time_btn.visible = True
+                d_str = selected_dt["date"].strftime("%Y-%m-%d") if selected_dt["date"] else "날짜미정"
+                t_str = selected_dt["time"].strftime("%H:%M") if selected_dt["time"] else "시간미정"
+                schedule_info.value = f"발송 예정: {d_str} {t_str}"
+            if page: page.update()
 
-        body = ft.Container(padding=20, content=ft.Column([ft.Row([ft.Container(expand=True, bgcolor=COLOR_PRIMARY, padding=16, border_radius=18, content=ft.Column([ft.Text("학생 수", color="white", size=11), ft.Text(str(len(rows)), size=22, weight="bold", color="white")], spacing=2)), ft.Container(expand=True, bgcolor="#f8f9fa", padding=16, border_radius=18, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("관리 지표", color=COLOR_TEXT_DESC, size=11), ft.Text("진도/평균/오답", size=16, weight="bold", color=COLOR_TEXT_MAIN)], spacing=2))], spacing=10), ft.Container(height=14), ft.Text("학생 목록", size=16, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Column(cards, spacing=10, scroll="auto")], spacing=0))
-        return mobile_shell("/teacher_dash", body, title="선생님 대시보드", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()), actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())])
+        def on_date_change(e):
+            selected_dt["date"] = e.control.value
+            update_schedule_ui()
+        
+        def on_time_change(e):
+            selected_dt["time"] = e.control.value
+            update_schedule_ui()
 
+        # DatePicker, TimePicker 생성
+        date_picker = ft.DatePicker(on_change=on_date_change)
+        time_picker = ft.TimePicker(on_change=on_time_change)
+
+        # [핵심 수정] 3중 안전장치가 적용된 열기 함수
+        def open_picker_safe(picker):
+            print(f"DEBUG: Trying to open picker {picker}") # 콘솔 디버깅용
+            
+            # 0. Overlay에 없으면 무조건 추가
+            try:
+                if picker not in page.overlay:
+                    page.overlay.append(picker)
+                    page.update()
+            except: pass
+
+            # 1. 최신 Flet 방식 (page.open)
+            if hasattr(page, "open"):
+                try:
+                    page.open(picker)
+                    return
+                except Exception as e:
+                    print(f"DEBUG: page.open failed: {e}")
+
+            # 2. 구버전 Flet 방식 (pick_date/pick_time)
+            try:
+                if isinstance(picker, ft.DatePicker) and hasattr(picker, "pick_date"):
+                    picker.pick_date()
+                    return
+                elif isinstance(picker, ft.TimePicker) and hasattr(picker, "pick_time"):
+                    picker.pick_time()
+                    return
+            except Exception as e:
+                print(f"DEBUG: pick_date/time failed: {e}")
+
+            # 3. 강제 방식 (open 속성 직접 변경)
+            try:
+                picker.open = True
+                picker.update()
+                print("DEBUG: Force open=True executed")
+            except Exception as e:
+                print(f"DEBUG: Force open failed: {e}")
+                show_snack(f"기능을 열 수 없습니다. 오류: {e}", COLOR_ACCENT)
+
+        date_btn.on_click = lambda _: open_picker_safe(date_picker)
+        time_btn.on_click = lambda _: open_picker_safe(time_picker)
+        is_scheduled.on_change = lambda _: update_schedule_ui()
+
+        # 5. 공지 로그
+        log_col = ft.Column(spacing=6)
+
+        def refresh_notice_log():
+            try:
+                # load_notices가 없으면 에러가 날 수 있음 (import 확인 필요)
+                all_notices = load_notices()
+                my_notices = sorted(all_notices, key=lambda x: x["created_at"], reverse=True)[:5]
+                
+                items = []
+                for n in my_notices:
+                    t_str = n["created_at"][:16].replace("T", " ")
+                    sch = n.get("scheduled_at", "")
+                    now_iso = datetime.now().isoformat()
+                    status_text = "예약중" if sch > now_iso else "발송됨"
+                    status_color = COLOR_ACCENT if status_text == "예약중" else COLOR_PRIMARY
+                    
+                    items.append(
+                        ft.Container(
+                            padding=10, bgcolor="#f8f9fa", border_radius=8,
+                            content=ft.Row([
+                                ft.Column([ft.Text(f"[{status_text}] {n['title']}", size=12, weight="bold", color=status_color), ft.Text(f"작성: {t_str}", size=10, color="#95a5a6")], expand=True),
+                                ft.Text(f"읽음 {len(n.get('read_by',[]))}", size=10, color=COLOR_PRIMARY)
+                            ])
+                        )
+                    )
+                log_col.controls = items if items else [ft.Text("발송 이력이 없습니다.", size=11, color="#95a5a6")]
+                if page: page.update()
+            except Exception as e:
+                print(f"DEBUG: Log refresh failed: {e}")
+
+        # 6. 공지 보내기 버튼 동작
+        def send_notice_action(e):
+            print("DEBUG: Send button clicked") # 클릭 확인용
+            
+            # 입력값 검증
+            if not notice_title.value or not notice_content.value:
+                show_snack("제목과 내용을 모두 입력해주세요.", COLOR_ACCENT)
+                return
+            
+            # 예약값 검증
+            scheduled_at_iso = None
+            if is_scheduled.value:
+                if not selected_dt["date"] or not selected_dt["time"]:
+                    show_snack("예약 날짜와 시간을 선택해주세요.", COLOR_ACCENT)
+                    return
+                dt = datetime.combine(selected_dt["date"], selected_dt["time"])
+                scheduled_at_iso = dt.isoformat()
+            
+            # 저장 및 초기화
+            try:
+                add_notice(notice_title.value, notice_content.value, u.get("id"), scheduled_at_iso)
+                show_snack("공지가 등록되었습니다.", COLOR_PRIMARY)
+                
+                notice_title.value = ""
+                notice_content.value = ""
+                is_scheduled.value = False
+                selected_dt["date"] = None
+                selected_dt["time"] = None
+                update_schedule_ui()
+                refresh_notice_log()
+            except Exception as err:
+                print(f"DEBUG: Save failed: {err}")
+                show_snack(f"저장 실패: {err}", COLOR_ACCENT)
+
+        refresh_notice_log()
+
+        # 7. 화면 구성
+        main_content = ft.Column(
+            scroll="auto", expand=True,
+            controls=[
+                ft.Row([
+                    ft.Container(expand=True, bgcolor=COLOR_PRIMARY, padding=16, border_radius=18, content=ft.Column([ft.Text("학생 수", color="white", size=11), ft.Text(str(len(rows)), size=22, weight="bold", color="white")], spacing=2)),
+                    ft.Container(expand=True, bgcolor="#f8f9fa", padding=16, border_radius=18, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("관리 지표", color=COLOR_TEXT_DESC, size=11), ft.Text("진도/평균/오답", size=16, weight="bold", color=COLOR_TEXT_MAIN)], spacing=2))
+                ], spacing=10),
+                ft.Container(height=20),
+                ft.Text("학생 목록", size=16, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=8),
+                ft.Column(student_cards, spacing=10),
+                ft.Container(height=30),
+                ft.Divider(height=1, color="#eef1f4"),
+                ft.Container(height=20),
+                ft.Text("공지사항 발송", size=16, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                ft.Container(
+                    bgcolor="white", padding=16, border_radius=16, border=ft.border.all(1, "#eef1f4"),
+                    content=ft.Column([
+                        notice_title, notice_content,
+                        ft.Row([is_scheduled, schedule_info], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                        ft.Row([date_btn, time_btn], spacing=10),
+                        ft.Container(height=10),
+                        ft.ElevatedButton("공지 보내기", on_click=send_notice_action, width=320, bgcolor=COLOR_PRIMARY, color="white")
+                    ])
+                ),
+                ft.Container(height=20),
+                ft.Text("최근 발송 이력", size=14, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=8),
+                log_col,
+                ft.Container(height=40),
+            ]
+        )
+
+        return mobile_shell(
+            "/teacher_dash", 
+            ft.Container(padding=20, content=main_content, expand=True),
+            title="선생님 대시보드", 
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()), 
+            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())]
+        )
+    
     def view_teacher_student():
         me = session.get("user")
         if not me or me.get("role") not in ("teacher", "admin"): return mobile_shell("/teacher_student", ft.Text("접근 권한이 없습니다."), title="학생 상세")
@@ -1345,7 +1674,114 @@ def main(page: ft.Page):
 
         body = ft.Container(padding=20, content=ft.Column([ft.Container(bgcolor="#f8f9fa", border_radius=18, padding=16, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(f"{u.get('name', uid)} ({uid})", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"국적: {country_label(u.get('country','KR'))}", size=12, color=COLOR_TEXT_DESC), ft.Text(f"누적 학습: {sum(len(t.get('learned', {})) for t in topics.values())} · 오답: {sum(len(t.get('wrong_notes', [])) for t in topics.values())}", size=12, color=COLOR_TEXT_DESC), ft.Text(f"마지막 학습: {last.get('topic','')} / idx {int(last.get('idx',0))+1}", size=12, color=COLOR_TEXT_DESC), ft.Container(height=10), ft.Row([ft.ElevatedButton("비밀번호 초기화(1111)", on_click=lambda e: reset_pw(), bgcolor=COLOR_ACCENT, color="white", expand=True), ft.OutlinedButton("목록", on_click=lambda e: go_to("/teacher_dash"), expand=True)], spacing=10)], spacing=4)), ft.Container(height=12), ft.Text("토픽별 현황", weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Column(topic_cards, spacing=10, scroll="auto")], scroll="auto"))
         return mobile_shell("/teacher_student", body, title="학생 상세", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/teacher_dash")))
+    
+    # =============================================================================
+    # [추가] 학생용 공지사항 수신함 뷰
+    # =============================================================================
+    def view_notice_inbox():
+        u_session = session.get("user")
+        if not u_session: return mobile_shell("/notice_inbox", ft.Text("로그인이 필요합니다."), title="공지사항")
+        
+        uid = u_session.get("id") or u_session.get("uid")
+        notices = get_active_notices(uid)
+        
+        notice_list = ft.Column(spacing=10, scroll="auto", expand=True)
+        
+        if not notices:
+            notice_list.controls = [
+                ft.Container(
+                    padding=40, alignment=ft.Alignment(0, 0),
+                    content=ft.Column([
+                        ft.Icon(ft.icons.MAIL_OUTLINE, size=40, color="#bdc3c7"),
+                        ft.Text("도착한 공지사항이 없습니다.", color="#95a5a6")
+                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                )
+            ]
+        else:
+            for n in notices:
+                is_read = uid in n.get("read_by", [])
+                card_bg = "white" if is_read else "#eef5ff"
+                icon_color = "#bdc3c7" if is_read else COLOR_PRIMARY
+                
+                # [수정] 클릭 시 세션에 ID 저장 후 상세 페이지로 이동
+                def on_click_notice(e, nid=n["id"]):
+                    session["selected_notice_id"] = nid
+                    go_to("/notice_detail")
 
+                notice_list.controls.append(
+                    ft.Container(
+                        bgcolor=card_bg, border_radius=12, padding=14,
+                        border=ft.border.all(1, "#eef1f4"),
+                        ink=True,  # [추가] 클릭 시 물결 효과 (터치감 향상)
+                        on_click=on_click_notice,
+                        content=ft.Row([
+                            ft.Icon(ft.icons.MARK_EMAIL_UNREAD if not is_read else ft.icons.MAIL_OUTLINE, color=icon_color),
+                            ft.Column([
+                                ft.Text(n.get("title", ""), weight="bold", color=COLOR_TEXT_MAIN),
+                                ft.Text(n.get("created_at", "")[:16].replace("T", " "), size=11, color=COLOR_TEXT_DESC)
+                            ], expand=True, spacing=2),
+                            ft.Icon(ft.icons.CHEVRON_RIGHT, size=16, color="#bdc3c7")
+                        ])
+                    )
+                )
+
+        body = ft.Container(
+            padding=20,
+            content=ft.Column([
+                ft.Text("받은 메시지함", size=18, weight="bold"),
+                ft.Container(height=10),
+                notice_list
+            ])
+        )
+        return mobile_shell("/notice_inbox", ft.Container(expand=True, content=body), title="공지사항", leading=ft.IconButton(ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
+
+    def view_notice_detail():
+        u_session = session.get("user")
+        if not u_session: return mobile_shell("/notice_detail", ft.Text("로그인이 필요합니다."), title="공지 상세")
+        
+        nid = session.get("selected_notice_id")
+        if not nid: return mobile_shell("/notice_detail", ft.Text("공지 정보를 찾을 수 없습니다."), title="오류")
+        
+        notices = load_notices()
+        target = next((n for n in notices if n["id"] == nid), None)
+        
+        if not target:
+             return mobile_shell("/notice_detail", ft.Text("삭제되었거나 존재하지 않는 공지입니다."), title="오류", leading=ft.IconButton(ft.icons.ARROW_BACK, on_click=lambda _: go_to("/notice_inbox")))
+        
+        uid = u_session.get("id") or u_session.get("uid")
+        mark_notice_read(nid, uid)
+        
+        body = ft.Container(
+            padding=24,
+            content=ft.Column([
+                # 제목
+                ft.Text(target.get("title", ""), size=20, weight="bold", color=COLOR_TEXT_MAIN),
+                
+                ft.Container(height=8),
+                
+                # 작성 시간
+                ft.Row([
+                    ft.Icon(ft.icons.ACCESS_TIME, size=14, color=COLOR_TEXT_DESC),
+                    ft.Text(f"보낸 시간: {target.get('created_at', '')[:16].replace('T', ' ')}", size=12, color=COLOR_TEXT_DESC)
+                ], spacing=4),
+                
+                ft.Divider(height=30, color="#eef1f4"),
+                
+                # [수정] 본문 내용 (height 속성 제거)
+                ft.Container(
+                    content=ft.Text(
+                        target.get("content", ""), 
+                        size=15, 
+                        color=COLOR_TEXT_MAIN,
+                        # height=1.6 제거 (이것 때문에 텍스트가 안 보였습니다)
+                    ),
+                    expand=True, 
+                )
+            ], scroll="auto")
+        )
+        
+        return mobile_shell("/notice_detail", ft.Container(expand=True, content=body), title="공지 상세", leading=ft.IconButton(ft.icons.ARROW_BACK, on_click=lambda _: go_to("/notice_inbox")))
+    
     def view_system_dash():
         u = session.get("user")
         if not u or u.get("role") != "admin": return mobile_shell("/system_dash", ft.Text("접근 권한이 없습니다."), title="시스템 대시보드")
@@ -1420,6 +1856,8 @@ def main(page: ft.Page):
         elif r == "/cumulative": page.views.append(view_cumulative())
         elif r == "/wrong_notes": page.views.append(view_wrong_notes())
         elif r == "/review": page.views.append(view_review())
+        elif r == "/notice_inbox": page.views.append(view_notice_inbox())
+        elif r == "/notice_detail": page.views.append(view_notice_detail())
         elif r in ("/teacher_dash", "/teacher_dashboard"): page.views.append(view_teacher_dash())
         elif r == "/teacher_student": page.views.append(view_teacher_student())
         elif r in ("/system_dash", "/admin_dash", "/system_dashboard"): page.views.append(view_system_dash())

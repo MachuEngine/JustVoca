@@ -65,22 +65,22 @@
             "일상": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 09:37:13"
+              "last_seen": "2026-01-15 14:14:27"
             },
             "보통": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 09:37:13"
+              "last_seen": "2026-01-15 14:14:32"
             },
             "아침마다": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 09:37:13"
+              "last_seen": "2026-01-15 14:14:32"
             },
             "퇴근하다": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 09:37:14"
+              "last_seen": "2026-01-15 14:14:33"
             },
             "하루": {
               "mean": "",
@@ -223,52 +223,52 @@
             "개념": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:23"
+              "last_seen": "2026-01-15 14:23:51"
             },
             "의미": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:24"
+              "last_seen": "2026-01-15 14:23:51"
             },
             "본질": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:24"
+              "last_seen": "2026-01-15 14:23:50"
             },
             "정의": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:25"
+              "last_seen": "2026-01-15 14:23:50"
             },
             "해석": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:26"
+              "last_seen": "2026-01-15 14:23:52"
             },
             "가치": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:27"
+              "last_seen": "2026-01-15 14:23:52"
             },
             "중요성": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:27"
+              "last_seen": "2026-01-15 14:23:52"
             },
             "필요성": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:27"
+              "last_seen": "2026-01-15 14:23:52"
             },
             "정당성": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:28"
+              "last_seen": "2026-01-15 14:23:52"
             },
             "의의": {
               "mean": "",
               "last_score": 90,
-              "last_seen": "2026-01-15 10:46:28"
+              "last_seen": "2026-01-15 14:23:52"
             }
           },
           "stats": {
@@ -555,8 +555,8 @@
         }
       },
       "last_session": {
-        "topic": "중급1",
-        "idx": 0
+        "topic": "고급",
+        "idx": 9
       },
       "today_flags": {
         "motivate_shown": true,
@@ -805,5 +805,16 @@
     "country": "KR",
     "progress": {},
     "id": "student5"
+  },
+  "student6": {
+    "pw": "pbkdf2$120000$fa9201b7b50dfffb96c9f7babbcc6e44$2778712c25cb71a9123dfddb1ac5ea314433555767b80b7b15117ffa4c11f89d",
+    "name": "학습자6",
+    "email": "student6@voca.com",
+    "phone": "1111",
+    "phone_verified": true,
+    "role": "student",
+    "country": "KR",
+    "progress": {},
+    "id": "student6"
   }
 }

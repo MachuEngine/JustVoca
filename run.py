@@ -45,7 +45,6 @@ def _pick_view():
     # 최후의 fallback: AppView 자체가 예상과 다를 때
     return None
 
-
 if __name__ == "__main__":
     os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
 

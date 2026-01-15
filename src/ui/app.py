@@ -624,62 +624,49 @@ def main(page: ft.Page):
             login_btn.content = ft.Text("로그인 중..." if loading else "로그인", color="white", weight="bold")
             login_btn.update()
 
-        def on_login_click(e=None):
-            print("LOGIN CLICKED")  # ✅ 클릭 이벤트가 들어오는지 확정
-            err = None
+        async def on_login_click(e=None):
+            uid = (id_field.value or "").strip()
+            pw = (pw_field.value or "")
+
+            if not uid or not pw:
+                show_snack("아이디와 비밀번호를 입력해주세요.", COLOR_ACCENT)
+                return
+
+            set_login_loading(True)
             try:
-                uid = (id_field.value or "").strip()
-                pw = (pw_field.value or "")
-                print("uid=", uid, "pw_len=", len(pw))  # ✅ 값도 확인
-
-                if not uid or not pw:
-                    show_snack("아이디와 비밀번호를 입력해주세요.", COLOR_ACCENT)
-                    return
-
-                set_login_loading(True)
-
+                # 1. 함수 실행 (내부에서 try-except로 안전하게 처리되어 False/None 반환)
                 ok, user = authenticate_user(uid, pw)
-                print("LOGIN ERROR:", repr(err))
 
-                if ok and user:
-                    user = ensure_progress(user)
-                    reset_today_session(keep_user=True)
-                    session["user"] = user
-                    session["goal"] = int(user["progress"]["settings"].get("goal", sysdata.get("default_goal", 10)))
-                    session["is_review"] = False
-
-                    # user dict에 id가 없을 수도 있으니 안전 처리
-                    if "id" not in user:
-                        user["id"] = uid
-
-                    update_user(user["id"], user)
-
-                    show_snack(f"환영합니다, {user.get('name','')}님!", COLOR_PRIMARY)
-                    go_home()
-                else:
+                # 2. 논리적 체크: 로그인 결과가 ok가 아닌 경우
+                if not ok:
+                    print("Login failed: Invalid credentials")
                     show_snack("로그인 정보가 올바르지 않습니다.", COLOR_ACCENT)
+                    return # 실패 시 여기서 중단
 
-            except Exception as err:
-                print("LOGIN ERROR:", repr(err))        # ✅ 콘솔에도 남김
-                log_write(f"login error: {repr(err)}")
-                show_snack("로그인 처리 중 오류가 발생했습니다. app.log를 확인하세요.", COLOR_ACCENT)
+                # 3. 성공 시 로직
+                user = ensure_progress(user)
+                session["user"] = user
+                show_snack(f"환영합니다, {user.get('name','')}님!", COLOR_PRIMARY)
+                go_home()
+
+            except Exception as e:
+                # 4. 시스템 크래시: 위 코드 실행 중 예상치 못한 오류 발생 시
+                print(f"SYSTEM CRASH: {repr(e)}")
+                show_snack("시스템 오류가 발생했습니다.", COLOR_ACCENT)
             finally:
-                try:
-                    set_login_loading(False)
-                except Exception as err2:
-                    print("loading reset error:", repr(err2))
+                set_login_loading(False)
 
-        def id_submit(e):
+        async def id_submit(e):
             # 아이디 Enter -> 비번으로
             try:
-                pw_field.focus()
+                await pw_field.focus()
                 page.update()
             except Exception:
                 pass
 
-        def pw_submit(e):
+        async def pw_submit(e):
             # 비번 Enter -> 로그인
-            on_login_click()
+            await on_login_click()
 
         # 이벤트 연결은 "정의 후"에
         id_field.on_submit = id_submit

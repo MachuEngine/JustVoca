@@ -29,10 +29,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 VOCAB_DB = {}
 DATA_DIR = PROJECT_ROOT / "data"
 ASSETS_DIR = PROJECT_ROOT / "assets"
-HISTORY_FILE = "history.json"
-USERS_FILE = "users.json"
-SYSTEM_FILE = "system.json"
-LOG_FILE = "app.log"
+HISTORY_FILE = DATA_DIR / "history.json"
+USERS_FILE = DATA_DIR / "users.json"
+SYSTEM_FILE = DATA_DIR / "system.json"
+LOG_FILE = PROJECT_ROOT / "app.log" # 로그 파일도 절대 경로로 관리하는 것이 안전합니다.
 
 DEFAULT_SYSTEM = {
     "default_goal": 10,
@@ -63,3 +63,10 @@ UI_LANG_OPTIONS = [
 # 임시 광고(더미) 데이터
 # =========================
 
+DUMMY_ADS = [
+    {
+        "title": "📌 광고: 오누이 한국어",
+        "desc": "한국에 거주를 원하는 외국인들을 위한 한국어 교육 솔루션",
+        "cta": "자세히 보기",
+    }
+]

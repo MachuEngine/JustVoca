@@ -3,26 +3,8 @@ import random
 
 # src/constants.py
 from pathlib import Path
+from src.constants import DUMMY_ADS
 
-# src/constants.py 파일 위치: project_root/src/constants.py
-# project_root = src의 부모
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-
-DATA_DIR = PROJECT_ROOT / "data"
-ASSETS_DIR = PROJECT_ROOT / "assets"
-
-SYSTEM_FILE = DATA_DIR / "system.json"
-USERS_FILE = DATA_DIR / "users.json"
-HISTORY_FILE = DATA_DIR / "history.json"
-
-
-DUMMY_ADS = [
-    {
-        "title": "📌 광고: 오누이 한국어",
-        "desc": "한국에 거주를 원하는 외국인들을 위한 한국어 교육 솔루션",
-        "cta": "자세히 보기",
-    }
-]
 def build_ad_zone(on_click=None) -> ft.Control:
     """
     홈 화면용 광고 영역(임시 더미).

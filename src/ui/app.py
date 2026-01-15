@@ -725,7 +725,12 @@ def main(page: ft.Page):
         last = user["progress"].get("last_session", {"topic": "", "idx": 0})
         last_topic = (last.get("topic") or "").strip()
         last_idx = int(last.get("idx", 0) or 0)
-        topics = sorted(list(VOCAB_DB.keys()))
+        # [수정] 단순 정렬 대신 난이도 순서 정의
+        LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급"]
+        
+        # VOCAB_DB에 있는 키만 남기고 정렬 (지정된 순서 우선, 나머지는 뒤에 가나다순)
+        db_keys = list(VOCAB_DB.keys())
+        topics = sorted(db_keys, key=lambda x: LEVEL_ORDER.index(x) if x in LEVEL_ORDER else 999)
 
         def start_study(topic_name: str, resume: bool = False):
             if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
@@ -761,7 +766,11 @@ def main(page: ft.Page):
 
         def start_today(e=None):
             if not topics: return show_snack("학습할 레벨이 없습니다.", COLOR_ACCENT)
-            start_study(topics[0], resume=False)
+            
+            # [수정] 1순위: 마지막 학습 토픽, 2순위: 레벨 순서상 첫 번째 토픽
+            target_topic = last_topic if (last_topic and last_topic in VOCAB_DB) else topics[0]
+            
+            start_study(target_topic, resume=False)
 
         def build_mini_calendar():
             days = []

@@ -975,10 +975,220 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 20:52:48"
+            },
+            "경제": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:46"
+            },
+            "물가": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:46"
+            },
+            "소득": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:47"
+            },
+            "지출": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:47"
+            },
+            "소비": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:48"
+            },
+            "변화": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:49"
+            },
+            "발전": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:49"
+            },
+            "문제점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:49"
+            },
+            "해결책": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:49"
+            },
+            "대안": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:49"
+            },
+            "업무": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:56"
+            },
+            "담당": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:57"
+            },
+            "진행하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:57"
+            },
+            "보고하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:57"
+            },
+            "확인하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:58"
+            },
+            "회의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:58"
+            },
+            "안건": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:58"
+            },
+            "결정": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:58"
+            },
+            "논의하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:59"
+            },
+            "요청하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:34:59"
+            },
+            "지시하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:05"
+            },
+            "부탁하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:09"
+            },
+            "확인": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:10"
+            },
+            "처리하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:10"
+            },
+            "이메일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:11"
+            },
+            "제목": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:11"
+            },
+            "내용": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:12"
+            },
+            "첨부": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:12"
+            },
+            "회신": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:12"
+            },
+            "상황": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:12"
+            },
+            "지연": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:15"
+            },
+            "조치": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:35:16"
+            },
+            "대응하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:37"
+            },
+            "사건": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:38"
+            },
+            "발생하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:38"
+            },
+            "과정": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:39"
+            },
+            "초래하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:39"
+            },
+            "관련": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:40"
+            },
+            "해결하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:40"
+            },
+            "대처하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:40"
+            },
+            "시도하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:40"
+            },
+            "실패": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-15 21:36:40"
             }
           },
           "stats": {
-            "studied_count": 40,
+            "studied_count": 82,
             "avg_score": 90.0
           },
           "wrong_notes": []
@@ -1044,7 +1254,7 @@
         }
       },
       "last_session": {
-        "topic": "고급",
+        "topic": "중급2",
         "idx": 9
       },
       "today_flags": {

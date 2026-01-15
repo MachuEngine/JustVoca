@@ -1,502 +1,62 @@
+import os
+import json
+import random
+import asyncio
+import math
+import re
+
 import flet as ft
 
 # =============================================================================
 # Flet 0.80+ 호환: 구버전 ft.icons.* 를 계속 쓰기 위한 alias
 # =============================================================================
 try:
-    _ = ft.icons.ABC  # 존재하면 그대로 사용
+    _ = ft.icons.ABC
 except Exception:
     try:
-        ft.icons = ft.Icons  # 없으면 ft.Icons를 old-style alias로 연결
+        ft.icons = ft.Icons
     except Exception:
         pass
 
-import pandas as pd
-import random
-import os
-import json
-import warnings
-import tempfile
-import hashlib
-import secrets
-from datetime import datetime
-import math
-import asyncio
-import re
+# ------------------------------
+# Local modules (src 기준)
+# ------------------------------
+from src.constants import *
 
-warnings.filterwarnings("ignore")
-
-# =============================================================================
-# 0. 디자인 상수 (모바일 카드 프레임)
-# =============================================================================
-COLOR_BG = "#f4f7f6"
-COLOR_CARD_BG = "#ffffff"
-COLOR_PRIMARY = "#4a90e2"
-COLOR_SECONDARY = "#f39c12"
-COLOR_ACCENT = "#e74c3c"
-COLOR_EVAL = "#27ae60"
-COLOR_TEXT_MAIN = "#2c3e50"
-COLOR_TEXT_DESC = "#5d6d7e"
-
-STYLE_BORDER_RADIUS = 28
-STYLE_CARD_SHADOW = ft.BoxShadow(
-    blur_radius=45,
-    color="#14000000",
-    offset=ft.Offset(0, 18),
+from src.utils import (
+    log_write,
+    hash_password,
 )
 
-# =============================================================================
-# 1. 파일 경로 및 데이터 관리
-# =============================================================================
-VOCAB_DB = {}
-HISTORY_FILE = "history.json"
-USERS_FILE = "users.json"
-SYSTEM_FILE = "system.json"
-LOG_FILE = "app.log"
-
-DEFAULT_SYSTEM = {
-    "default_goal": 10,
-    "review_threshold": 85,
-    "api": {
-        "openai_api_key": "",
-        "stt_provider": "none",
-    },
-}
-
-COUNTRY_OPTIONS = [
-    ("KR", "대한민국"),
-    ("MN", "몽골"),
-    ("UZ", "우즈베키스탄"),
-    ("VN", "베트남"),
-    ("CN", "중국"),
-    ("JP", "일본"),
-    ("ETC", "기타"),
-]
-
-UI_LANG_OPTIONS = [
-    ("ko", "한국어"),
-    ("en", "English"),
-    # 추후 확장
-]
-
-# =========================
-# 임시 광고(더미) 데이터
-# =========================
-
-DUMMY_ADS = [
-    {
-        "title": "📌 광고: 오누이 한국어",
-        "desc": "한국에 거주를 원하는 외국인들을 위한 한국어 교육 솔루션",
-        "cta": "자세히 보기",
-    }
-]
-def build_ad_zone(on_click=None) -> ft.Control:
-    """
-    홈 화면용 광고 영역(임시 더미).
-    - 랜덤 1개 선택
-    - 눌렀을 때 동작은 on_click으로 주입 가능
-    """
-    ad = random.choice(DUMMY_ADS)
-
-    return ft.Container(
-        padding=14,
-        border_radius=18,
-        bgcolor="#ffffff",
-        border=ft.border.all(1, "#dfe6ee"),
-        content=ft.Column(
-            spacing=6,
-            controls=[
-                ft.Text(ad["title"], size=14, weight="w700"),
-                ft.Text(ad["desc"], size=12, color="#56606a"),
-                ft.Container(height=6),
-                ft.Container(
-                    padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                    border_radius=999,
-                    bgcolor="#f2f4f7",
-                    content=ft.Text(ad["cta"], size=12),
-                ),
-            ],
-        ),
-        on_click=on_click,
-    )
-
-
-# =============================================================================
-# 유틸: 로깅/원자적 JSON 저장/비밀번호 해시
-# =============================================================================
-def log_write(msg: str):
-    try:
-        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        line = f"[{ts}] {msg}\n"
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(line)
-    except:
-        pass
-
-
-def atomic_write_json(path: str, data):
-    """
-    JSON 저장 시 파일 깨짐 방지:
-    임시파일에 먼저 쓰고 os.replace로 교체(원자적)
-    """
-    try:
-        d = os.path.dirname(os.path.abspath(path)) or "."
-        os.makedirs(d, exist_ok=True)
-        fd, tmp_path = tempfile.mkstemp(prefix=".tmp_", suffix=".json", dir=d)
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-            os.replace(tmp_path, path)
-        finally:
-            try:
-                if os.path.exists(tmp_path):
-                    os.remove(tmp_path)
-            except:
-                pass
-    except Exception as e:
-        log_write(f"atomic_write_json error({path}): {e}")
-
-
-# ---- password hashing (PBKDF2) ----
-_PBKDF2_ITER = 120_000
-
-def hash_password(pw: str, salt: bytes | None = None) -> str:
-    salt = salt or secrets.token_bytes(16)
-    dk = hashlib.pbkdf2_hmac("sha256", (pw or "").encode("utf-8"), salt, _PBKDF2_ITER)
-    return f"pbkdf2${_PBKDF2_ITER}${salt.hex()}${dk.hex()}"
-
-
-def verify_password(stored: str, pw: str) -> tuple[bool, bool]:
-    """
-    return (ok, needs_upgrade)
-    - needs_upgrade: stored가 평문이어서 로그인 성공 후 해시로 바꿔야 하는 경우
-    """
-    stored = stored or ""
-    pw = pw or ""
-    if stored.startswith("pbkdf2$"):
-        try:
-            _, it_s, salt_hex, hash_hex = stored.split("$", 3)
-            it = int(it_s)
-            salt = bytes.fromhex(salt_hex)
-            dk = hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), salt, it)
-            ok = (dk.hex() == hash_hex)
-            return ok, False
-        except:
-            return False, False
-    else:
-        # legacy plain-text
-        return stored == pw, True
-
-
-def load_system():
-    if not os.path.exists(SYSTEM_FILE):
-        save_system(DEFAULT_SYSTEM)
-        return dict(DEFAULT_SYSTEM)
-    try:
-        with open(SYSTEM_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        for k, v in DEFAULT_SYSTEM.items():
-            if k not in data:
-                data[k] = v
-
-        if "api" not in data:
-            data["api"] = dict(DEFAULT_SYSTEM["api"])
-        for k, v in DEFAULT_SYSTEM["api"].items():
-            if k not in data["api"]:
-                data["api"][k] = v
-
-        save_system(data)
-        return data
-    except:
-        save_system(DEFAULT_SYSTEM)
-        return dict(DEFAULT_SYSTEM)
-
-
-def save_system(sysdata):
-    try:
-        atomic_write_json(SYSTEM_FILE, sysdata)
-    except Exception as e:
-        log_write(f"save_system error: {e}")
-
-
-def load_vocab_data():
-    """엑셀 파일 로드: sheet_name == 토픽/레벨로 취급"""
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(current_dir, "data", "vocab")
-    os.makedirs(data_dir, exist_ok=True)
-
-    excel_path = os.path.join(data_dir, "vocabulary.xlsx")
-
-    if not os.path.exists(excel_path):
-        dummy_data = []
-        for i in range(1, 21):
-            dummy_data.append(
-                {
-                    "word": f"테스트단어{i}",
-                    "mean": "테스트 의미",
-                    "ex": f"이것은 예문입니다 {i}",
-                    "desc": "설명",
-                    "pronunciation": f"[단어{i}]",
-                    "image": "📝",
-                }
-            )
-        return {"초급1": dummy_data, "초급2": dummy_data, "중급1": dummy_data}
-
-    try:
-        print(f"📂 엑셀 로딩 중... ({excel_path})")
-        all_sheets = pd.read_excel(excel_path, sheet_name=None, engine="openpyxl")
-
-        vocab_db = {}
-        for sheet_name, df in all_sheets.items():
-            df = df.fillna("")
-            items = []
-
-            for _, row in df.iterrows():
-                cols = row.index.tolist()
-                if "단어" not in cols and "word" not in cols:
-                    continue
-
-                word_item = {
-                    "word": str(row.get("단어", row.get("word", ""))).strip(),
-                    "mean": str(row.get("의미", row.get("뜻", row.get("mean", "")))).strip(),
-                    "ex": str(row.get("예문", row.get("예문1", row.get("example", "")))).strip(),
-                    "desc": str(row.get("설명", row.get("주제", row.get("desc", "")))).strip(),
-                    "pronunciation": str(row.get("발음", row.get("pronunciation", ""))).strip(),
-                    "image": str(row.get("이미지", row.get("image", "📖"))).strip(),
-                }
-                if not word_item["pronunciation"] and word_item["word"]:
-                    word_item["pronunciation"] = f"[{word_item['word']}]"
-                if word_item["word"]:
-                    items.append(word_item)
-
-            if items:
-                vocab_db[sheet_name] = items
-                print(f"✅ [{sheet_name}] 로드 완료 ({len(items)}개)")
-        return vocab_db
-    except Exception as e:
-        print(f"❌ 엑셀 읽기 실패: {e}")
-        log_write(f"excel read error: {e}")
-        return {}
-
-
-# --- 사용자 관리 ---
-def load_users():
-    if not os.path.exists(USERS_FILE):
-        # 기본 계정도 해시로 저장(안전)
-        default_users = {
-            "admin": {
-                "pw": hash_password("1111"),
-                "name": "관리자",
-                "role": "admin",
-                "country": "KR",
-                "progress": {},
-            },
-            "teacher": {
-                "pw": hash_password("1111"),
-                "name": "선생님",
-                "role": "teacher",
-                "country": "KR",
-                "progress": {},
-            },
-            "student": {
-                "pw": hash_password("1111"),
-                "name": "학습자",
-                "role": "student",
-                "country": "KR",
-                "progress": {},
-            },
-        }
-        save_users(default_users)
-        return default_users
-    try:
-        with open(USERS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        # 보정
-        for uid, u in data.items():
-            if "progress" not in u:
-                u["progress"] = {}
-            if "country" not in u:
-                u["country"] = "KR"
-            if "pw" not in u:
-                u["pw"] = hash_password("1111")
-            # [추가] 사양 반영 필드 보정
-            if "email" not in u:
-                u["email"] = ""
-            if "phone" not in u:
-                u["phone"] = ""
-            if "phone_verified" not in u:
-                u["phone_verified"] = False
-
-        save_users(data)
-        return data
-    except:
-        return {}
-
-
-def save_users(users_data):
-    try:
-        atomic_write_json(USERS_FILE, users_data)
-    except Exception as e:
-        log_write(f"save_users error: {e}")
-
-
-def register_user(uid, pw, name, email="", phone="", country="KR", role="student", phone_verified=False):
-    users = load_users()
-    uid = (uid or "").strip()
-
-    if not uid:
-        return False, "아이디를 입력해주세요."
-    if uid in users:
-        return False, "이미 존재하는 아이디입니다."
-
-    users[uid] = {
-        "pw": hash_password(pw),
-        "name": name,
-        "email": email or "",
-        "phone": phone or "",
-        "phone_verified": bool(phone_verified),
-        "role": role,
-        "country": country,
-        "progress": {},
-    }
-    save_users(users)
-    return True, "회원가입 완료! 로그인해주세요."
-
-
-def authenticate_user(uid, pw):
-    users = load_users()
-    if uid in users:
-        stored = users[uid].get("pw", "")
-        ok, needs_upgrade = verify_password(stored, pw)
-        if ok:
-            # legacy plain-text -> hash upgrade
-            if needs_upgrade:
-                users[uid]["pw"] = hash_password(pw)
-                save_users(users)
-
-            u = users[uid]
-            u["id"] = uid
-            if "progress" not in u:
-                u["progress"] = {}
-            if "country" not in u:
-                u["country"] = "KR"
-            save_users(users)
-            return True, u
-    return False, None
-
-
-def get_user(uid):
-    users = load_users()
-    return users.get(uid)
-
-
-def update_user(uid, new_user_obj):
-    users = load_users()
-    users[uid] = new_user_obj
-    save_users(users)
-
-
-def ensure_progress(user):
-    if "progress" not in user:
-        user["progress"] = {}
-    if "settings" not in user["progress"]:
-        user["progress"]["settings"] = {}
-    if "goal" not in user["progress"]["settings"]:
-        sysdata = load_system()
-        user["progress"]["settings"]["goal"] = int(sysdata.get("default_goal", 10))
-    if "ui_lang" not in user["progress"]["settings"]:
-        user["progress"]["settings"]["ui_lang"] = "ko"
-
-    if "topics" not in user["progress"]:
-        user["progress"]["topics"] = {}
-
-    # 마지막 학습 자리 기억(토픽/인덱스)
-    if "last_session" not in user["progress"]:
-        user["progress"]["last_session"] = {"topic": "", "idx": 0}
-    else:
-        if "topic" not in user["progress"]["last_session"]:
-            user["progress"]["last_session"]["topic"] = ""
-        if "idx" not in user["progress"]["last_session"]:
-            user["progress"]["last_session"]["idx"] = 0
-
-    # 격려 화면(하루 1회) 플래그
-    if "today_flags" not in user["progress"]:
-        user["progress"]["today_flags"] = {}
-    if "motivate_shown_date" not in user["progress"]["today_flags"]:
-        user["progress"]["today_flags"]["motivate_shown_date"] = ""  # "YYYY-MM-DD"
-
-    return user
-
-
-def ensure_topic_progress(user, topic):
-    user = ensure_progress(user)
-    topics = user["progress"]["topics"]
-    if topic not in topics:
-        topics[topic] = {
-            "learned": {},
-            "stats": {"studied_count": 0, "avg_score": 0.0},
-            "wrong_notes": [],
-        }
-    return user
-
-
-def update_learned_word(user, topic, word_item, score):
-    user = ensure_topic_progress(user, topic)
-    t = user["progress"]["topics"][topic]
-    learned = t["learned"]
-
-    w = word_item["word"]
-    learned[w] = {
-        "mean": word_item.get("mean", ""),
-        "last_score": int(score),
-        "last_seen": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-
-    scores = [v.get("last_score", 0) for v in learned.values()]
-    t["stats"]["studied_count"] = len(learned)
-    t["stats"]["avg_score"] = round(sum(scores) / max(1, len(scores)), 2)
-    return user
-
-
-def update_last_seen_only(user, topic, word_item):
-    """이미 learned에 있는 단어도 last_seen은 갱신(점수는 유지)."""
-    user = ensure_topic_progress(user, topic)
-    t = user["progress"]["topics"][topic]
-    learned = t["learned"]
-    w = word_item.get("word", "")
-    if not w:
-        return user
-    if w in learned:
-        learned[w]["last_seen"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return user
-
-
-def add_wrong_note(user, topic, q, correct, user_answer):
-    user = ensure_topic_progress(user, topic)
-    t = user["progress"]["topics"][topic]
-    t["wrong_notes"].append(
-        {
-            "q": q,
-            "a": correct,
-            "user": user_answer,
-            "ts": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        }
-    )
-    return user
-
-
-def country_label(code: str) -> str:
-    mp = {c: n for c, n in COUNTRY_OPTIONS}
-    return mp.get(code or "", code or "KR")
+from src.vocab import load_vocab_data
+
+from src.ui.components import build_ad_zone
+
+from src.storage import (
+    load_system,
+    save_system,
+    load_users,
+    save_users,
+    load_history,
+    save_history,
+    authenticate_user,
+    update_user,
+    # 아래 두 개가 실제로 있다면 유지, 없으면 app.py에서 쓰는 곳도 함께 정리 필요
+    get_user,
+    register_user,
+)
+
+from src.progress import (
+    ensure_progress,
+    ensure_topic_progress,
+    update_learned_word,
+    update_last_seen_only,
+    add_wrong_note,
+    country_label,
+)
 
 
 VOCAB_DB = load_vocab_data()
-
-# =============================================================================
-# 2. 메인 앱 로직
-# =============================================================================
 def main(page: ft.Page):
     page.title = "한국어 학습 앱"
     page.bgcolor = COLOR_BG
@@ -742,6 +302,7 @@ def main(page: ft.Page):
         token = bump_nav_token()
 
         async def _job():
+            err = None
             try:
                 await asyncio.sleep(max(0.0, float(delay_sec)))
                 # 토큰이 바뀌었으면(다른 스케줄/이동이 발생) 취소
@@ -752,8 +313,8 @@ def main(page: ft.Page):
                 if before_go:
                     before_go()
                 page.go(route)
-            except Exception as ex:
-                log_write(f"schedule_go error: {repr(ex)}")
+            except Exception as err:
+                log_write(f"schedule_go error: {repr(err)}")
 
         try:
             page.run_task(_job)
@@ -1028,6 +589,7 @@ def main(page: ft.Page):
     # View: Login 개선 적용(먹통 방지 + Enter 로그인)
     # =============================================================================
     def view_login():
+        # 먼저 컨트롤 변수 선언(핸들러에서 참조하려고)
         id_field = ft.TextField(
             label="아이디",
             width=320,
@@ -1036,6 +598,7 @@ def main(page: ft.Page):
             text_size=14,
             autofocus=True,
         )
+
         pw_field = ft.TextField(
             label="비밀번호",
             password=True,
@@ -1046,67 +609,68 @@ def main(page: ft.Page):
             can_reveal_password=True,
         )
 
-        # (가능한 버전에서만) 모바일 키보드 액션
-        try:
-            id_field.text_input_action = ft.TextInputAction.NEXT
-            pw_field.text_input_action = ft.TextInputAction.DONE
-        except Exception:
-            pass
-
         login_btn = ft.ElevatedButton(
-            "로그인",
+            content=ft.Text("로그인", color="white", weight="bold"),
             width=320,
             height=48,
             style=ft.ButtonStyle(
                 bgcolor=COLOR_PRIMARY,
-                color="white",
                 shape=ft.RoundedRectangleBorder(radius=14),
             ),
         )
 
         def set_login_loading(loading: bool):
             login_btn.disabled = loading
-            login_btn.text = "로그인 중..." if loading else "로그인"
-            page.update()
+            login_btn.content = ft.Text("로그인 중..." if loading else "로그인", color="white", weight="bold")
+            login_btn.update()
 
         def on_login_click(e=None):
+            print("LOGIN CLICKED")  # ✅ 클릭 이벤트가 들어오는지 확정
+            err = None
             try:
-                if not id_field.value or not pw_field.value:
+                uid = (id_field.value or "").strip()
+                pw = (pw_field.value or "")
+                print("uid=", uid, "pw_len=", len(pw))  # ✅ 값도 확인
+
+                if not uid or not pw:
                     show_snack("아이디와 비밀번호를 입력해주세요.", COLOR_ACCENT)
                     return
 
                 set_login_loading(True)
 
-                ok, user = authenticate_user(id_field.value.strip(), pw_field.value)
-                if ok:
+                ok, user = authenticate_user(uid, pw)
+                print("LOGIN ERROR:", repr(err))
+
+                if ok and user:
                     user = ensure_progress(user)
                     reset_today_session(keep_user=True)
                     session["user"] = user
                     session["goal"] = int(user["progress"]["settings"].get("goal", sysdata.get("default_goal", 10)))
                     session["is_review"] = False
+
+                    # user dict에 id가 없을 수도 있으니 안전 처리
+                    if "id" not in user:
+                        user["id"] = uid
+
                     update_user(user["id"], user)
 
-                    show_snack(f"환영합니다, {user['name']}님!", COLOR_PRIMARY)
-                    if user["role"] == "student":
-                        go_home()
-                    elif user["role"] == "teacher":
-                        go_to("/teacher_dash")
-                    else:
-                        go_to("/system_dash")
+                    show_snack(f"환영합니다, {user.get('name','')}님!", COLOR_PRIMARY)
+                    go_home()
                 else:
                     show_snack("로그인 정보가 올바르지 않습니다.", COLOR_ACCENT)
 
-            except Exception as ex:
-                log_write(f"login error: {repr(ex)}")
+            except Exception as err:
+                print("LOGIN ERROR:", repr(err))        # ✅ 콘솔에도 남김
+                log_write(f"login error: {repr(err)}")
                 show_snack("로그인 처리 중 오류가 발생했습니다. app.log를 확인하세요.", COLOR_ACCENT)
             finally:
                 try:
                     set_login_loading(False)
-                except Exception:
-                    pass
+                except Exception as err2:
+                    print("loading reset error:", repr(err2))
 
         def id_submit(e):
-            # 아이디 Enter -> 비번으로 포커스 이동
+            # 아이디 Enter -> 비번으로
             try:
                 pw_field.focus()
                 page.update()
@@ -1117,9 +681,17 @@ def main(page: ft.Page):
             # 비번 Enter -> 로그인
             on_login_click()
 
+        # 이벤트 연결은 "정의 후"에
         id_field.on_submit = id_submit
         pw_field.on_submit = pw_submit
         login_btn.on_click = on_login_click
+
+        # (가능한 버전에서만) 모바일 키보드 액션
+        try:
+            id_field.text_input_action = ft.TextInputAction.NEXT
+            pw_field.text_input_action = ft.TextInputAction.DONE
+        except Exception:
+            pass
 
         body = ft.Container(
             padding=28,
@@ -1141,10 +713,7 @@ def main(page: ft.Page):
                             ft.TextButton(
                                 "회원가입 하기",
                                 on_click=lambda _: go_to("/signup"),
-                                style=ft.ButtonStyle(
-                                    color=COLOR_PRIMARY,
-                                    overlay_color="#00000000",
-                                ),
+                                style=ft.ButtonStyle(color=COLOR_PRIMARY, overlay_color="#00000000"),
                             ),
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -1168,6 +737,7 @@ def main(page: ft.Page):
             ),
         )
         return mobile_shell("/login", body, title="한국어 학습")
+
 
     # =============================================================================
     # View: Signup (국적 필수)
@@ -2332,7 +1902,7 @@ def main(page: ft.Page):
             return mobile_shell("/pron_result", ft.Text("로그인이 필요합니다."), title="발음 결과")
         ps = session.get("pron_state", {})
         word = ps.get("target_word", "")
-        ex = ps.get("target_example", "")
+        example_text = ps.get("target_example", "")
         recorded = bool(ps.get("recorded", False))
 
         score_text = ft.Text("", size=22, weight="bold", color=COLOR_EVAL)
@@ -2382,7 +1952,7 @@ def main(page: ft.Page):
                 show_snack("먼저 문장 녹음을 완료해 주세요. (현재는 더미)", COLOR_ACCENT)
                 return
 
-            score, raw_comment, tag, detail = evaluate_pronunciation_dummy(ex or word)
+            score, raw_comment, tag, detail = evaluate_pronunciation_dummy(example_text or word)
             comment = post_process_comment(tag, raw_comment)
 
             score_text.value = str(score)
@@ -2425,8 +1995,8 @@ def main(page: ft.Page):
                     user = update_learned_word(user, topic, found, score)
                     update_user(user["id"], user)
                     session["user"] = user
-            except Exception as ex2:
-                log_write(f"persist pron score error: {ex2}")
+            except Exception as err2:
+                log_write(f"persist pron score error: {err2}")
 
         def back_to_study(e=None):
             session["pron_state"]["recording"] = False
@@ -2452,11 +2022,11 @@ def main(page: ft.Page):
                                 content=ft.Column(
                                     [
                                         ft.Text(word, size=20, weight="bold", color=COLOR_TEXT_MAIN),
-                                        ft.Text(ex, size=13, color=COLOR_TEXT_DESC),
+                                        ft.Text(example_text, size=13, color=COLOR_TEXT_DESC),
                                         ft.Container(height=8),
                                         ft.Row(
                                             [
-                                                ft.ElevatedButton("▶ 문장 듣기", on_click=lambda _: play_tts(ex), bgcolor=COLOR_PRIMARY, color="white", expand=True),
+                                                ft.ElevatedButton("▶ 문장 듣기", on_click=lambda _: play_tts(example_text), bgcolor=COLOR_PRIMARY, color="white", expand=True),
                                                 ft.ElevatedButton("AI 평가", on_click=run_ai_eval, bgcolor=COLOR_ACCENT, color="white", expand=True),
                                             ],
                                             spacing=10,
@@ -2587,6 +2157,7 @@ def main(page: ft.Page):
             token = bump_nav_token()
 
             async def _countdown():
+                err = None
                 try:
                     remain = total_sec
                     while remain > 0:
@@ -2617,8 +2188,8 @@ def main(page: ft.Page):
                     _prepare_review_words()
                     page.go("/study")
 
-                except Exception as ex:
-                    log_write(f"auto countdown error: {repr(ex)}")
+                except Exception as err:
+                    log_write(f"auto countdown error: {repr(err)}")
 
             try:
                 page.run_task(_countdown)
@@ -3738,6 +3309,7 @@ def main(page: ft.Page):
         )
 
         def refresh_log(e=None):
+            err = None
             try:
                 if not os.path.exists(LOG_FILE):
                     log_box.value = "(로그 없음)"
@@ -3745,8 +3317,8 @@ def main(page: ft.Page):
                     with open(LOG_FILE, "r", encoding="utf-8") as f:
                         lines = f.readlines()
                     log_box.value = "".join(lines[-200:]) if lines else "(로그 없음)"
-            except Exception as ex:
-                log_box.value = f"(로그 읽기 실패: {ex})"
+            except Exception as err:
+                log_box.value = f"(로그 읽기 실패: {err})"
             page.update()
 
         def save_admin_settings(e=None):
@@ -3829,6 +3401,7 @@ def main(page: ft.Page):
     # Routing
     # =============================================================================
     def route_change(e: ft.RouteChangeEvent):
+
         log_write(f"route_change: {page.route}")
         page.views.clear()
 
@@ -3920,35 +3493,3 @@ def main(page: ft.Page):
     page.on_view_pop = view_pop
 
     page.go("/login")
-
-
-# =============================================================================
-# 실행
-# =============================================================================
-if __name__ == "__main__":
-    os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
-    print("🚀 Flet 앱 시작...")
-    print("http://localhost:8100 에서 접속하세요.")
-
-    # xdg-open 오류(헤드리스/서버 환경) 회피:
-    # DISPLAY/WAYLAND가 없으면 WEB_BROWSER 대신 WEB_SERVER로 실행
-    def _is_headless_linux() -> bool:
-        if os.name != "posix":
-            return False
-        return (not os.environ.get("DISPLAY")) and (not os.environ.get("WAYLAND_DISPLAY"))
-
-    try:
-        if _is_headless_linux():
-            try:
-                view_mode = ft.AppView.WEB_SERVER
-            except AttributeError:
-                view_mode = "web_server"
-        else:
-            try:
-                view_mode = ft.AppView.WEB_BROWSER
-            except AttributeError:
-                view_mode = "web_browser"
-    except Exception:
-        view_mode = "web_server"
-
-    ft.app(target=main, port=8100, view=view_mode, assets_dir="assets")

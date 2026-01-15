@@ -5,15 +5,29 @@ from datetime import datetime
 from src.constants import COUNTRY_OPTIONS
 
 def ensure_progress(user: dict) -> dict:
-    """
-    user dict에 progress 기본 구조를 보장
-    """
-    if user is None:
-        user = {}
+    if user is None: user = {}
+    
+    # 1. progress 구조 보장
     if "progress" not in user or not isinstance(user["progress"], dict):
         user["progress"] = {}
+    
+    # 2. settings 구조 보장 (KeyError 해결 핵심)
+    if "settings" not in user["progress"] or not isinstance(user["progress"]["settings"], dict):
+        user["progress"]["settings"] = {
+            "goal": 10,
+            "ui_lang": "ko"
+        }
+    
+    # 3. 기타 하위 키 보장
     if "topics" not in user["progress"] or not isinstance(user["progress"]["topics"], dict):
         user["progress"]["topics"] = {}
+        
+    if "last_session" not in user["progress"]:
+        user["progress"]["last_session"] = {"topic": "", "idx": 0}
+        
+    if "today_flags" not in user["progress"]:
+        user["progress"]["today_flags"] = {"motivate_shown_date": ""}
+
     return user
 
 

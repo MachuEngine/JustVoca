@@ -1,14 +1,13 @@
+# src/ui/app.py
 import os
 import json
 import random
 import asyncio
 import math
-import re
-
 import flet as ft
 
 # =============================================================================
-# Flet 0.80+ 호환: 구버전 ft.icons.* 를 계속 쓰기 위한 alias
+# Flet 0.80+ 호환
 # =============================================================================
 try:
     _ = ft.icons.ABC
@@ -19,33 +18,23 @@ except Exception:
         pass
 
 # ------------------------------
-# Local modules (src 기준)
+# Local modules
 # ------------------------------
 from src.constants import *
-
-from src.utils import (
-    log_write,
-    hash_password,
-)
-
+from src.utils import log_write, hash_password
 from src.vocab import load_vocab_data
-
 from src.ui.components import build_ad_zone
-
 from src.storage import (
     load_system,
     save_system,
     load_users,
     save_users,
-    load_history,
-    save_history,
     authenticate_user,
     update_user,
-    # 아래 두 개가 실제로 있다면 유지, 없으면 app.py에서 쓰는 곳도 함께 정리 필요
     get_user,
     register_user,
+    update_user_approval,
 )
-
 from src.progress import (
     ensure_progress,
     ensure_topic_progress,
@@ -55,15 +44,14 @@ from src.progress import (
     country_label,
 )
 
-
 VOCAB_DB = load_vocab_data()
+
 def main(page: ft.Page):
     page.title = "한국어 학습 앱"
     page.bgcolor = COLOR_BG
     page.theme_mode = ft.ThemeMode.LIGHT
     page.padding = 0
 
-    # URL 끝에 # 붙는 문제(해시 라우팅) 줄이기: PATH 전략(가능한 버전에서만)
     try:
         page.route_url_strategy = "path"
     except:
@@ -86,13 +74,11 @@ def main(page: ft.Page):
         "test_queue": [],
         "test_idx": 0,
         "test_score": 0,
-        "is_review": False,  # 복습 플로우 표시용
-        "selected_student_id": None,  # teacher 상세 보기용
-        "motivate_shown": False, # 오늘 격려 화면 표시 여부
+        "is_review": False,
+        "selected_student_id": None,
+        "motivate_shown": False,
         "motivate_msg": "",
         "motivate_emoji": "",
-
-        # 발음(녹음/결과) 더미 상태
         "pron_state": {
             "recording": False,
             "recorded": False,
@@ -102,14 +88,10 @@ def main(page: ft.Page):
             "result_comment": "",
             "detail": [],
         },
-        # 오늘 학습 단어 목록
         "today_words": [],
         "nav_token": 0,
     }
 
-    # ============================================================================
-    # 격려 화면 데이터
-    # ============================================================================
     MOTIVATE_MESSAGES = [
         "지금처럼만 하면 충분해요 ☺️",
         "충분히 잘하고 있어요! 지금처럼만 해요.",
@@ -119,51 +101,22 @@ def main(page: ft.Page):
         "아주 안정적인 속도예요. 차근차근 가요.",
         "좋아요! 조금만 더 힘내면 목표 달성이에요!",
     ]
-
     MOTIVATE_EMOJIS = ["🙂", "🙌", "💪", "🌟", "✨", "👍", "💯"]
 
-
-    # =============================================================================
-    # (기초) UI 언어팩 구조
-    # =============================================================================
     I18N = {
-        "ko": {
-            "app_title": "한국어 학습",
-            "login": "로그인",
-            "signup": "회원가입",
-            "logout": "로그아웃",
-            "save": "저장",
-            "home": "홈",
-            "level_select": "레벨 선택",
-            "settings": "설정",
-            "stats": "통계",
-        },
-        "en": {
-            "app_title": "Korean Study",
-            "login": "Login",
-            "signup": "Sign up",
-            "logout": "Logout",
-            "save": "Save",
-            "home": "Home",
-            "level_select": "Levels",
-            "settings": "Settings",
-            "stats": "Stats",
-        },
+        "ko": {"app_title": "한국어 학습", "login": "로그인", "signup": "회원가입", "home": "홈", "settings": "설정"},
+        "en": {"app_title": "Korean Study", "login": "Login", "signup": "Sign up", "home": "Home", "settings": "Settings"},
     }
 
     def t(key: str) -> str:
         u = session.get("user") or {}
         lang = (u.get("progress", {}).get("settings", {}) or {}).get("ui_lang", "ko")
-        return I18N.get(lang, I18N["ko"]).get(key, I18N["ko"].get(key, key))
+        return I18N.get(lang, I18N["ko"]).get(key, key)
 
-    # ------------------------------
-    # TTS (Web Native)
-    # ------------------------------
     def play_tts(text: str):
         try:
             tjson = json.dumps(text)
-            page.run_javascript(
-                f"""
+            page.run_javascript(f"""
             try {{
                 if (!window.speechSynthesis) return;
                 window.speechSynthesis.cancel();
@@ -171,59 +124,20 @@ def main(page: ft.Page):
                 u.lang = "ko-KR"; u.rate = 1.0; u.volume = 1.0;
                 window.speechSynthesis.speak(u);
             }} catch(e) {{}}
-            """
-            )
+            """)
         except:
             pass
 
-    # ------------------------------
-    # Pronunciation 평가 (현재 더미)
-    # ------------------------------
     def evaluate_pronunciation_dummy(text: str):
         score = random.randint(75, 100)
-        if score >= 95:
-            comment = "발음이 매우 정확하고 자연스럽습니다."
-            tag = "excellent"
-        elif score >= 88:
-            comment = "전체적으로 좋습니다. 억양을 조금만 더 또렷하게 해보세요."
-            tag = "good"
-        elif score >= 80:
-            comment = "의미 전달은 충분합니다. 받침/연음을 조금 더 신경써보세요."
-            tag = "ok"
-        else:
-            comment = "천천히 또박또박 반복 연습이 필요합니다."
-            tag = "need_practice"
-
+        tag = "excellent" if score >= 95 else "good" if score >= 88 else "ok" if score >= 80 else "need_practice"
+        comment = "발음이 매우 정확합니다." if score >= 95 else "좋습니다." if score >= 88 else "의미 전달은 충분합니다."
         words = [w for w in (text or "").split() if w.strip()]
-        detail = []
-        for w in words[:12]:
-            detail.append({"unit": w, "score": random.randint(max(60, score - 15), min(100, score + 10))})
+        detail = [{"unit": w, "score": random.randint(max(60, score - 15), min(100, score + 10))} for w in words[:12]]
         return score, comment, tag, detail
 
-    COMMENT_DB = {
-        "excellent": [
-            "발음이 아주 안정적이에요. 지금 속도로 문장 길이를 조금씩 늘려보세요.",
-            "억양이 자연스럽습니다. 오늘 발음은 특히 또렷했어요.",
-        ],
-        "good": [
-            "전반적으로 좋습니다. 문장 끝 억양을 조금 더 또렷하게 해보세요.",
-            "발음이 잘 들립니다. 받침이 있는 구간만 한 번 더 반복해보면 더 좋아져요.",
-        ],
-        "ok": [
-            "의미 전달은 충분합니다. 연음이 생기는 구간을 천천히 끊어 연습해보세요.",
-            "발음이 조금 흔들리는 부분이 있어요. 단어를 먼저 또박또박 말한 뒤 문장으로 이어보세요.",
-        ],
-        "need_practice": [
-            "천천히 말해도 괜찮아요. 한 어절씩 끊어 연습한 뒤 다시 문장으로 이어보세요.",
-            "받침 발음이 불안정합니다. 속도를 낮추고 반복 연습을 권장해요.",
-        ],
-    }
-
     def post_process_comment(tag: str, raw_comment: str) -> str:
-        pool = COMMENT_DB.get(tag, [])
-        if pool:
-            return random.choice(pool)
-        return raw_comment or "연습을 계속해보세요."
+        return raw_comment
 
     def show_snack(msg, color="black"):
         page.snack_bar = ft.SnackBar(ft.Text(msg, color="white"), bgcolor=color)
@@ -234,40 +148,12 @@ def main(page: ft.Page):
         page.go(route)
 
     def reset_pron_state():
-        session["pron_state"] = {
-            "recording": False,
-            "recorded": False,
-            "target_word": "",
-            "target_example": "",
-            "result_score": None,
-            "result_comment": "",
-            "detail": [],
-        }
+        session["pron_state"] = {"recording": False, "recorded": False, "target_word": "", "target_example": "", "result_score": None, "result_comment": "", "detail": []}
 
     def reset_today_session(keep_user: bool = True):
-        # 예약된 자동이동/카운트다운 취소
         bump_nav_token()
-
-        if not keep_user:
-            session["user"] = None
-
-        session["topic"] = ""
-        session["study_words"] = []
-        session["idx"] = 0
-
-        session["today_words"] = []
-
-        session["mask_mode"] = "none"
-
-        session["test_queue"] = []
-        session["test_idx"] = 0
-        session["test_score"] = 0
-
-        session["is_review"] = False
-        session["selected_student_id"] = None
-
-        session["motivate_shown"] = False
-
+        if not keep_user: session["user"] = None
+        session.update({"topic": "", "study_words": [], "idx": 0, "today_words": [], "mask_mode": "none", "test_queue": [], "test_idx": 0, "test_score": 0, "is_review": False, "selected_student_id": None, "motivate_shown": False})
         reset_pron_state()
 
     def go_home():
@@ -275,752 +161,345 @@ def main(page: ft.Page):
         if not u:
             go_to("/login")
             return
-
         role = u.get("role", "student")
-        if role == "student":
-            go_to("/student_home")
-        elif role == "teacher":
-            go_to("/teacher_dash")
-        else:
-            go_to("/system_dash")
+        if role == "student": go_to("/student_home")
+        elif role == "teacher": go_to("/teacher_dash")
+        else: go_to("/system_dash")
 
     def do_logout():
-        reset_today_session(keep_user=False)
+        reset_today_session(False)
         page.go("/login")
-
 
     def bump_nav_token() -> int:
         session["nav_token"] = int(session.get("nav_token", 0) or 0) + 1
         return session["nav_token"]
 
     def schedule_go(delay_sec: float, route: str, *, only_if_route: str | None = None, before_go=None):
-        """
-        delay_sec 후 route로 이동.
-        - only_if_route: 현재 page.route가 이 값일 때만 이동(사용자가 이미 다른 화면으로 갔으면 취소)
-        - before_go: 이동 직전 실행(예: session 세팅)
-        """
         token = bump_nav_token()
-
         async def _job():
-            err = None
             try:
                 await asyncio.sleep(max(0.0, float(delay_sec)))
-                # 토큰이 바뀌었으면(다른 스케줄/이동이 발생) 취소
-                if token != session.get("nav_token"):
-                    return
-                if only_if_route and ((page.route or "").split("?", 1)[0] != only_if_route):
-                    return
-                if before_go:
-                    before_go()
+                if token != session.get("nav_token"): return
+                if only_if_route and ((page.route or "").split("?", 1)[0] != only_if_route): return
+                if before_go: before_go()
                 page.go(route)
-            except Exception as err:
-                log_write(f"schedule_go error: {repr(err)}")
+            except: pass
+        try: page.run_task(_job)
+        except: pass
 
-        try:
-            page.run_task(_job)
-        except Exception:
-            # 구버전 대비: run_task가 없으면 그냥 무시(자동전환만 빠짐)
-            pass
-
-
-    # =============================================================================
-    # Signup helpers (중복확인 / 전화 인증: 더미)
-    # =============================================================================
-    signup_state = {
-        "id_checked": False,
-        "id_ok": False,
-        "sent_code": None,
-        "phone_verified": False,
-    }
+    # --- Signup Helpers ---
+    signup_state = {"id_checked": False, "id_ok": False, "sent_code": None, "phone_verified": False}
 
     def check_id_available(uid: str):
         uid = (uid or "").strip()
-        if not uid:
-            return False, "아이디를 입력해주세요."
+        if not uid: return False, "아이디를 입력해주세요."
         users = load_users()
-        if uid in users:
-            return False, "이미 존재하는 아이디입니다."
+        if uid in users: return False, "이미 존재하는 아이디입니다."
         return True, "사용 가능한 아이디입니다."
 
     def send_phone_code_dummy(phone: str):
-        # 더미: 6자리 코드 생성해서 session에 저장 (실서비스에서는 SMS API로 대체)
         phone = (phone or "").strip()
-        if not phone:
-            return False, "전화번호를 입력해주세요."
-        code = "111111" # 프로토타입 임시 고정 
-        #code = f"{random.randint(0, 999999):06d}"
-        signup_state["sent_code"] = code
-        signup_state["phone_verified"] = False
-        # 개발 편의: 로그 남김(원하면 snack으로 코드 노출 가능)
-        log_write(f"[dummy sms] phone={phone}, code={code}")
+        if not phone: return False, "전화번호를 입력해주세요."
+        signup_state.update({"sent_code": "111111", "phone_verified": False})
         return True, "인증번호를 전송했습니다. (더미: 111111)"
 
     def verify_phone_code_dummy(code_in: str):
         code_in = (code_in or "").strip()
-        if not code_in:
-            return False, "인증번호를 입력해주세요."
-        if signup_state.get("sent_code") and code_in == signup_state["sent_code"]:
+        if not code_in: return False, "인증번호를 입력해주세요."
+        if signup_state.get("sent_code") == code_in:
             signup_state["phone_verified"] = True
             return True, "전화번호 인증이 완료되었습니다."
         return False, "인증번호가 올바르지 않습니다."
 
     # =============================================================================
-    # 공통 모바일 쉘
+    # [수정] 모바일 쉘: 상단-본문(스크롤)-하단(고정) 구조
     # =============================================================================
-    def mobile_shell(route: str, body: ft.Control, title: str = "", leading=None, actions=None):
+    def mobile_shell(route: str, body: ft.Control, title: str = "", leading=None, actions=None, bottom_nav: ft.Control = None):
         actions = actions or []
         topbar = None
-
         if title:
             left = leading if leading else ft.Container(width=40)
             right = ft.Row(actions, spacing=6) if actions else ft.Container(width=40)
             topbar = ft.Container(
                 padding=ft.padding.only(left=16, right=16, top=14, bottom=10),
-                content=ft.Row(
-                    [
-                        ft.Container(width=40, content=left),
-                        ft.Text(title, size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                        ft.Container(width=40, content=right, alignment=ft.Alignment(1, 0)),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
+                content=ft.Row([
+                    ft.Container(width=40, content=left),
+                    ft.Text(title, size=16, weight="bold", color=COLOR_TEXT_MAIN),
+                    ft.Container(width=40, content=right, alignment=ft.Alignment(1, 0)),
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER)
             )
 
-        shell_content = ft.Column(
-            expand=True,
-            spacing=0,
-            controls=[topbar, ft.Container(expand=True, content=body)] if topbar else [ft.Container(expand=True, content=body)],
-        )
+        controls_list = []
+        if topbar:
+            controls_list.append(topbar)
+        
+        # 본문은 확장(expand=True) -> 남은 공간 차지
+        controls_list.append(ft.Container(content=body, expand=True))
+        
+        # 하단 메뉴 고정
+        if bottom_nav:
+            controls_list.append(bottom_nav)
+
+        shell_content = ft.Column(expand=True, spacing=0, controls=controls_list)
 
         return ft.View(
             route=route,
             bgcolor=COLOR_BG,
             controls=[
                 ft.Container(
-                    expand=True,
-                    alignment=ft.Alignment(0, 0),
-                    padding=ft.padding.symmetric(vertical=24, horizontal=12),
+                    expand=True, alignment=ft.Alignment(0, 0), padding=ft.padding.symmetric(vertical=24, horizontal=12),
                     content=ft.Container(
-                        width=380,
-                        bgcolor="white",
-                        border_radius=STYLE_BORDER_RADIUS,
-                        shadow=STYLE_CARD_SHADOW,
-                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS,
-                        content=shell_content,
-                    ),
+                        width=380, bgcolor="white", border_radius=STYLE_BORDER_RADIUS, shadow=STYLE_CARD_SHADOW,
+                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS, content=shell_content
+                    )
                 )
-            ],
+            ]
         )
 
     def level_button(title: str, subtitle: str, on_click):
         return ft.Container(
-            border_radius=18,
-            bgcolor="#f8f9fa",
-            padding=14,
-            ink=True,
-            on_click=on_click,
-            border=ft.border.all(1, "#eef1f4"),
-            content=ft.Column(
-                [
-                    ft.Text(title, size=15, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=2),
-                    ft.Text(subtitle, size=11, color=COLOR_TEXT_DESC),
-                    ft.Container(height=10),
-                    ft.Row(
-                        [
-                            ft.Container(
-                                padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                                border_radius=999,
-                                bgcolor="#eef5ff",
-                                content=ft.Text("학습하기", size=11, color=COLOR_PRIMARY, weight="bold"),
-                            )
-                        ],
-                        alignment=ft.MainAxisAlignment.END,
-                    ),
-                ],
-                spacing=0,
-            ),
+            border_radius=18, bgcolor="#f8f9fa", padding=14, ink=True, on_click=on_click, border=ft.border.all(1, "#eef1f4"),
+            content=ft.Column([
+                ft.Text(title, size=15, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=2),
+                ft.Text(subtitle, size=11, color=COLOR_TEXT_DESC), ft.Container(height=10),
+                ft.Row([ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), border_radius=999, bgcolor="#eef5ff", content=ft.Text("학습하기", size=11, color=COLOR_PRIMARY, weight="bold"))], alignment=ft.MainAxisAlignment.END)
+            ], spacing=0)
         )
 
-    # =============================================================================
-    # 학생용: 상단 정보 바(국가/레벨/토픽/프로필)
-    # =============================================================================
     def student_info_bar():
         u = session.get("user")
-        if not u:
-            return ft.Container(height=0)
-
+        if not u: return ft.Container(height=0)
         country = country_label(u.get("country", "KR"))
         topic = session.get("topic") or "-"
         level = topic
-
         return ft.Container(
-            padding=ft.padding.only(left=16, right=16, top=10, bottom=8),
-            bgcolor="#ffffff",
-            border=ft.border.only(bottom=ft.BorderSide(1, "#eef1f4")),
-            content=ft.Row(
-                [
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor="#f8f9fa",
-                        border_radius=999,
-                        content=ft.Text(f"🌍 {country}", size=11, color=COLOR_TEXT_DESC),
-                    ),
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor="#eef5ff",
-                        border_radius=999,
-                        content=ft.Text(f"📘 레벨: {level}", size=11, color=COLOR_PRIMARY, weight="bold"),
-                    ),
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor="#fff9f0",
-                        border_radius=999,
-                        content=ft.Text(f"🏷 토픽: {topic}", size=11, color=COLOR_SECONDARY, weight="bold"),
-                    ),
-                    ft.Container(expand=True),
-                    ft.IconButton(icon=ft.icons.PERSON, icon_color=COLOR_TEXT_MAIN, on_click=lambda _: go_to("/profile")),
-                ],
-                spacing=8,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
+            padding=ft.padding.only(left=16, right=16, top=10, bottom=8), bgcolor="#ffffff", border=ft.border.only(bottom=ft.BorderSide(1, "#eef1f4")),
+            content=ft.Row([
+                ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"🌍 {country}", size=11, color=COLOR_TEXT_DESC)),
+                ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#eef5ff", border_radius=999, content=ft.Text(f"📘 레벨: {level}", size=11, color=COLOR_PRIMARY, weight="bold")),
+                ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#fff9f0", border_radius=999, content=ft.Text(f"🏷 토픽: {topic}", size=11, color=COLOR_SECONDARY, weight="bold")),
+                ft.Container(expand=True),
+                ft.IconButton(icon=ft.icons.PERSON, icon_color=COLOR_TEXT_MAIN, on_click=lambda _: go_to("/profile"))
+            ], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
         )
 
     def student_bottom_nav(active: str = "home"):
         def nav_btn(icon, label, route, key):
             is_active = (active == key)
             return ft.Container(
-                padding=ft.padding.symmetric(horizontal=10, vertical=8),
-                border_radius=14,
-                bgcolor="#eef5ff" if is_active else "#ffffff",
-                ink=True,
-                on_click=lambda _: go_to(route),
-                content=ft.Row(
-                    [
-                        ft.Text(icon, size=13),
-                        ft.Text(label, size=11, color=COLOR_PRIMARY if is_active else COLOR_TEXT_DESC, weight="bold" if is_active else None),
-                    ],
-                    spacing=6,
-                ),
+                padding=ft.padding.symmetric(horizontal=10, vertical=8), border_radius=14,
+                bgcolor="#eef5ff" if is_active else "#ffffff", ink=True, on_click=lambda _: go_to(route),
+                content=ft.Row([ft.Text(icon, size=13), ft.Text(label, size=11, color=COLOR_PRIMARY if is_active else COLOR_TEXT_DESC, weight="bold" if is_active else None)], spacing=6)
             )
-
         return ft.Container(
-            padding=ft.padding.only(left=12, right=12, bottom=12, top=10),
-            bgcolor="#ffffff",
-            border=ft.border.only(top=ft.BorderSide(1, "#eef1f4")),
-            content=ft.Row(
-                [
-                    nav_btn("🏠", t("home"), "/student_home", "home"),
-                    nav_btn("🗂", t("level_select"), "/level_select", "level"),
-                    nav_btn("⚙️", t("settings"), "/settings", "settings"),
-                    nav_btn("📊", t("stats"), "/stats", "stats"),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            ),
+            padding=ft.padding.only(left=12, right=12, bottom=12, top=10), bgcolor="#ffffff", border=ft.border.only(top=ft.BorderSide(1, "#eef1f4")),
+            content=ft.Row([
+                nav_btn("🏠", t("home"), "/student_home", "home"),
+                nav_btn("🗂", t("level_select"), "/level_select", "level"),
+                nav_btn("⚙️", t("settings"), "/settings", "settings"),
+                nav_btn("📊", t("stats"), "/stats", "stats"),
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
     # =============================================================================
-    # View: Landing
+    # Views
     # =============================================================================
     def view_landing():
-        body = ft.Container(
-            padding=28,
-            content=ft.Column(
-                [
-                    ft.Container(height=10),
-                    ft.Container(
-                        width=110,
-                        height=110,
-                        bgcolor="#f0f6ff",
-                        border_radius=26,
-                        alignment=ft.Alignment(0, 0),
-                        content=ft.Text("🇰🇷", size=56),
-                    ),
-                    ft.Container(height=18),
-                    ft.Text("한국어 학습", size=28, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Text(
-                        "단어부터 발음, 진도 관리까지\n쉽고 체계적인 한국어 학습",
-                        size=13,
-                        color=COLOR_TEXT_DESC,
-                        text_align="center",
-                    ),
-                    ft.Container(height=22),
-                    ft.Container(
-                        bgcolor="#f8f9fa",
-                        border_radius=18,
-                        padding=16,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Column(
-                            [
-                                ft.Row([ft.Text("📘", size=18), ft.Text("단계별 토픽 학습", weight="bold", size=13)], spacing=10),
-                                ft.Text("토픽/레벨 기반 단어 DB로 학습", size=11, color=COLOR_TEXT_DESC),
-                                ft.Divider(height=18),
-                                ft.Row([ft.Text("🎧", size=18), ft.Text("웹 네이티브 TTS", weight="bold", size=13)], spacing=10),
-                                ft.Text("단어/문장 듣기 + 연습 흐름", size=11, color=COLOR_TEXT_DESC),
-                                ft.Divider(height=18),
-                                ft.Row([ft.Text("📊", size=18), ft.Text("진도/오답/복습", weight="bold", size=13)], spacing=10),
-                                ft.Text("누적 학습과 복습 대상 자동 추출", size=11, color=COLOR_TEXT_DESC),
-                            ],
-                            spacing=4,
-                        ),
-                    ),
-                    ft.Container(height=22),
-                    ft.ElevatedButton(
-                        "학습 시작하기",
-                        on_click=lambda _: go_to("/login"),
-                        width=320,
-                        height=48,
-                        style=ft.ButtonStyle(
-                            bgcolor=COLOR_PRIMARY,
-                            color="white",
-                            shape=ft.RoundedRectangleBorder(radius=14),
-                        ),
-                    ),
-                    ft.Container(height=10),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
+        body = ft.Column(
+            scroll="auto", alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(height=10),
+                ft.Container(width=110, height=110, bgcolor="#f0f6ff", border_radius=26, alignment=ft.Alignment(0, 0), content=ft.Text("🇰🇷", size=56)),
+                ft.Container(height=18),
+                ft.Text("한국어 학습", size=28, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Text("쉽고 체계적인 한국어 학습", size=13, color=COLOR_TEXT_DESC, text_align="center"),
+                ft.Container(height=22),
+                ft.ElevatedButton("학습 시작하기", on_click=lambda _: go_to("/login"), width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14))),
+                ft.Container(height=10),
+            ]
         )
-        return mobile_shell("/", body, title="")
+        return mobile_shell("/", ft.Container(padding=28, content=body), title="")
 
-    # =============================================================================
-    # View: Login 개선 적용(먹통 방지 + Enter 로그인)
-    # =============================================================================
     def view_login():
-        # 먼저 컨트롤 변수 선언(핸들러에서 참조하려고)
-        id_field = ft.TextField(
-            label="아이디",
-            width=320,
-            border_radius=12,
-            bgcolor="white",
-            text_size=14,
-            autofocus=True,
-        )
+        id_field = ft.TextField(label="아이디", width=320, border_radius=12, bgcolor="white", text_size=14, autofocus=True)
+        pw_field = ft.TextField(label="비밀번호", password=True, width=320, border_radius=12, bgcolor="white", text_size=14, can_reveal_password=True)
+        # [수정] 에러 텍스트
+        error_text = ft.Text(value="", color=COLOR_ACCENT, size=12, weight="bold", text_align="center", visible=False)
+        login_btn = ft.ElevatedButton(content=ft.Text("로그인", color="white", weight="bold"), width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, shape=ft.RoundedRectangleBorder(radius=14)))
 
-        pw_field = ft.TextField(
-            label="비밀번호",
-            password=True,
-            width=320,
-            border_radius=12,
-            bgcolor="white",
-            text_size=14,
-            can_reveal_password=True,
-        )
-
-        login_btn = ft.ElevatedButton(
-            content=ft.Text("로그인", color="white", weight="bold"),
-            width=320,
-            height=48,
-            style=ft.ButtonStyle(
-                bgcolor=COLOR_PRIMARY,
-                shape=ft.RoundedRectangleBorder(radius=14),
-            ),
-        )
-
-        def set_login_loading(loading: bool):
-            login_btn.disabled = loading
-            login_btn.content = ft.Text("로그인 중..." if loading else "로그인", color="white", weight="bold")
+        def set_loading(is_loading):
+            login_btn.disabled = is_loading
+            login_btn.content = ft.ProgressRing(width=20, height=20, color="white") if is_loading else ft.Text("로그인", color="white", weight="bold")
+            if is_loading: error_text.visible = False
             login_btn.update()
+            error_text.update()
+
+        def show_error(msg):
+            error_text.value = f"⚠️ {msg}"
+            error_text.visible = True
+            error_text.update()
+            set_loading(False)
 
         async def on_login_click(e=None):
             uid = (id_field.value or "").strip()
             pw = (pw_field.value or "")
+            if not uid or not pw: return show_error("아이디와 비밀번호를 입력해주세요.")
+            
+            set_loading(True)
+            await asyncio.sleep(0.1)
 
-            if not uid or not pw:
-                show_snack("아이디와 비밀번호를 입력해주세요.", COLOR_ACCENT)
-                return
-
-            set_login_loading(True)
             try:
-                # 1. 함수 실행 (내부에서 try-except로 안전하게 처리되어 False/None 반환)
                 ok, user = authenticate_user(uid, pw)
+                if not ok: return show_error("아이디 또는 비밀번호가 틀렸습니다.")
 
-                # 2. 논리적 체크: 로그인 결과가 ok가 아닌 경우
-                if not ok:
-                    print("Login failed: Invalid credentials")
-                    show_snack("로그인 정보가 올바르지 않습니다.", COLOR_ACCENT)
-                    return # 실패 시 여기서 중단
+                if user.get("role") == "teacher" and user.get("is_approved") is False:
+                    return show_error("승인 대기 중입니다. 관리자에게 문의 해주세요")
 
-                # 3. 성공 시 로직
                 user = ensure_progress(user)
+                user["id"] = user.get("uid")
                 session["user"] = user
                 show_snack(f"환영합니다, {user.get('name','')}님!", COLOR_PRIMARY)
                 go_home()
+            except Exception as ex:
+                show_error(f"시스템 오류: {str(ex)}")
 
-            except Exception as e:
-                # 4. 시스템 크래시: 위 코드 실행 중 예상치 못한 오류 발생 시
-                print(f"SYSTEM CRASH: {repr(e)}")
-                show_snack("시스템 오류가 발생했습니다.", COLOR_ACCENT)
-            finally:
-                set_login_loading(False)
+        async def id_submit(e): await pw_field.focus()
+        async def pw_submit(e): await on_login_click()
 
-        async def id_submit(e):
-            # 아이디 Enter -> 비번으로
-            try:
-                await pw_field.focus()
-                page.update()
-            except Exception:
-                pass
-
-        async def pw_submit(e):
-            # 비번 Enter -> 로그인
-            await on_login_click()
-
-        # 이벤트 연결은 "정의 후"에
         id_field.on_submit = id_submit
         pw_field.on_submit = pw_submit
         login_btn.on_click = on_login_click
 
-        # (가능한 버전에서만) 모바일 키보드 액션
         try:
             id_field.text_input_action = ft.TextInputAction.NEXT
             pw_field.text_input_action = ft.TextInputAction.DONE
-        except Exception:
-            pass
+        except: pass
 
-        body = ft.Container(
-            padding=28,
-            content=ft.Column(
-                [
-                    ft.Container(height=14),
-                    ft.Text("로그인", size=24, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Text("한국어 학습을 시작해보세요", size=12, color=COLOR_TEXT_DESC),
-                    ft.Container(height=18),
-                    id_field,
-                    ft.Container(height=10),
-                    pw_field,
-                    ft.Container(height=18),
-                    login_btn,
-                    ft.Container(height=12),
-                    ft.Row(
-                        [
-                            ft.Text("아직 회원이 아니신가요?", size=11, color=COLOR_TEXT_DESC),
-                            ft.TextButton(
-                                "회원가입 하기",
-                                on_click=lambda _: go_to("/signup"),
-                                style=ft.ButtonStyle(color=COLOR_PRIMARY, overlay_color="#00000000"),
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=6,
-                    ),
-                    ft.Container(height=10),
-                    ft.Container(
-                        bgcolor="#f8f9fa",
-                        border_radius=14,
-                        padding=12,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Text(
-                            "테스트 계정: student/1111, teacher/1111, admin/1111",
-                            size=10,
-                            color="#95a5a6",
-                        ),
-                    ),
-                    ft.Container(height=10),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
+        body = ft.Column(
+            scroll="auto", horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(height=14), ft.Text("로그인", size=24, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Text("한국어 학습을 시작해보세요", size=12, color=COLOR_TEXT_DESC),
+                ft.Container(height=18), id_field, ft.Container(height=10), pw_field,
+                ft.Container(height=10), error_text, ft.Container(height=10), login_btn,
+                ft.Container(height=12),
+                ft.Row([ft.Text("아직 회원이 아니신가요?", size=11, color=COLOR_TEXT_DESC), ft.TextButton("회원가입 하기", on_click=lambda _: go_to("/signup"), style=ft.ButtonStyle(color=COLOR_PRIMARY, overlay_color="#00000000"))], alignment=ft.MainAxisAlignment.CENTER, spacing=6),
+                ft.Container(height=10),
+                ft.Container(bgcolor="#f8f9fa", border_radius=14, padding=12, border=ft.border.all(1, "#eef1f4"), content=ft.Text("테스트 계정: student/1111, teacher/1111, admin/1111", size=10, color="#95a5a6")),
+                ft.Container(height=10),
+            ]
         )
-        return mobile_shell("/login", body, title="한국어 학습")
+        return mobile_shell("/login", ft.Container(padding=28, content=body), title="한국어 학습")
 
-
-    # =============================================================================
-    # View: Signup (국적 필수)
-    # =============================================================================
     def view_signup():
-        # 회원가입 화면 진입 시 상태 리셋
-        signup_state["id_checked"] = False
-        signup_state["id_ok"] = False
-        signup_state["sent_code"] = None
-        signup_state["phone_verified"] = False
-
-        # 입력 필드
+        signup_state.update({"id_checked": False, "id_ok": False, "sent_code": None, "phone_verified": False})
         teacher_ck = ft.Checkbox(label="선생님", value=False)
+        name_tf, id_tf, email_tf = ft.TextField(label="이름", width=320), ft.TextField(label="아이디", width=230), ft.TextField(label="이메일", width=320)
+        pw_tf, pw2_tf = ft.TextField(label="비밀번호", password=True, width=320), ft.TextField(label="비밀번호 확인", password=True, width=320)
+        phone_tf, code_tf = ft.TextField(label="전화번호", width=230), ft.TextField(label="인증번호", width=230)
+        country_dd = ft.Dropdown(label="국적", width=320, value="KR", options=[ft.dropdown.Option(c, n) for c, n in COUNTRY_OPTIONS])
 
-        name_tf = ft.TextField(label="이름", width=320, border_radius=12, bgcolor="white")
-        id_tf = ft.TextField(label="아이디", width=230, border_radius=12, bgcolor="white")
-        email_tf = ft.TextField(label="이메일", width=320, border_radius=12, bgcolor="white", hint_text="example@email.com")
-
-        pw_tf = ft.TextField(label="비밀번호", password=True, width=320, border_radius=12, bgcolor="white", can_reveal_password=True)
-        pw2_tf = ft.TextField(label="비밀번호 확인", password=True, width=320, border_radius=12, bgcolor="white", can_reveal_password=True)
-
-        phone_tf = ft.TextField(label="전화번호", width=230, border_radius=12, bgcolor="white", hint_text="01012345678")
-        code_tf = ft.TextField(label="인증번호", width=230, border_radius=12, bgcolor="white", hint_text="6자리 숫자")
-
-        country_dd = ft.Dropdown(
-            label="국적",
-            width=320,
-            value="KR",
-            options=[ft.dropdown.Option(code, name) for code, name in COUNTRY_OPTIONS],
-        )
-
-        # 상태 텍스트(사양상 알림용)
         id_status = ft.Text("", size=11, color=COLOR_TEXT_DESC)
         phone_status = ft.Text("", size=11, color=COLOR_TEXT_DESC)
 
-        # 버튼
         btn_check_id = ft.ElevatedButton("중복확인", height=44)
         btn_send = ft.ElevatedButton("인증하기", height=44)
         btn_verify = ft.ElevatedButton("확인", height=44)
-
-        signup_btn = ft.ElevatedButton(
-            "회원가입",
-            width=320,
-            height=48,
-            style=ft.ButtonStyle(
-                bgcolor=COLOR_PRIMARY,
-                color="white",
-                shape=ft.RoundedRectangleBorder(radius=14),
-            ),
-            disabled=True,  # 인증/중복확인 전에는 비활성
-        )
+        signup_btn = ft.ElevatedButton("회원가입", width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14)), disabled=True)
 
         def refresh_signup_btn():
-            # 아이디 중복확인 통과 + 전화 인증 완료 + 필수값 OK + pw 일치
-            must_ok = (
-                signup_state.get("id_ok") is True
-                and signup_state.get("phone_verified") is True
-                and bool(name_tf.value)
-                and bool(id_tf.value)
-                and bool(email_tf.value)
-                and bool(pw_tf.value)
-                and bool(pw2_tf.value)
-                and (pw_tf.value == pw2_tf.value)
-                and bool(country_dd.value)
-                and bool(phone_tf.value)
-            )
+            must_ok = (signup_state.get("id_ok") is True and signup_state.get("phone_verified") is True and bool(name_tf.value) and bool(id_tf.value) and bool(email_tf.value) and bool(pw_tf.value) and bool(pw2_tf.value) and (pw_tf.value == pw2_tf.value) and bool(country_dd.value) and bool(phone_tf.value))
             signup_btn.disabled = not must_ok
             page.update()
 
         def on_check_id(e=None):
             ok, msg = check_id_available(id_tf.value)
-            signup_state["id_checked"] = True
-            signup_state["id_ok"] = ok
-            id_status.value = msg
-            id_status.color = COLOR_PRIMARY if ok else COLOR_ACCENT
+            signup_state.update({"id_checked": True, "id_ok": ok})
+            id_status.value, id_status.color = msg, COLOR_PRIMARY if ok else COLOR_ACCENT
             refresh_signup_btn()
 
         def on_send_code(e=None):
             ok, msg = send_phone_code_dummy(phone_tf.value)
-            phone_status.value = msg
-            phone_status.color = COLOR_PRIMARY if ok else COLOR_ACCENT
+            phone_status.value, phone_status.color = msg, COLOR_PRIMARY if ok else COLOR_ACCENT
             refresh_signup_btn()
             show_snack(msg, COLOR_PRIMARY if ok else COLOR_ACCENT)
 
         def on_verify_code(e=None):
             ok, msg = verify_phone_code_dummy(code_tf.value)
-            phone_status.value = msg
-            phone_status.color = COLOR_PRIMARY if ok else COLOR_ACCENT
+            phone_status.value, phone_status.color = msg, COLOR_PRIMARY if ok else COLOR_ACCENT
             refresh_signup_btn()
             show_snack(msg, COLOR_PRIMARY if ok else COLOR_ACCENT)
 
-        def on_signup(e=None):
-            # 최종 검증
-            if pw_tf.value != pw2_tf.value:
-                show_snack("비밀번호가 일치하지 않습니다.", COLOR_ACCENT)
-                return
-            if not signup_state.get("id_ok"):
-                show_snack("아이디 중복확인을 해주세요.", COLOR_ACCENT)
-                return
-            if not signup_state.get("phone_verified"):
-                show_snack("전화번호 인증을 완료해주세요.", COLOR_ACCENT)
-                return
-
-            role = "teacher" if teacher_ck.value else "student"
-            ok, msg = register_user(
-                uid=id_tf.value,
-                pw=pw_tf.value,
-                name=name_tf.value,
-                email=email_tf.value,
-                phone=phone_tf.value,
-                country=country_dd.value,
-                role=role,
-                phone_verified=True,
-            )
+        async def on_signup(e=None):
+            if pw_tf.value != pw2_tf.value: return show_snack("비밀번호가 일치하지 않습니다.", COLOR_ACCENT)
+            ok, msg = register_user(id_tf.value, pw_tf.value, name_tf.value, email_tf.value, phone_tf.value, country_dd.value, "teacher" if teacher_ck.value else "student", True)
             show_snack(msg, COLOR_PRIMARY if ok else COLOR_ACCENT)
             if ok:
-                # 상태 초기화(선택)
-                signup_state["id_checked"] = False
-                signup_state["id_ok"] = False
-                signup_state["sent_code"] = None
-                signup_state["phone_verified"] = False
+                show_snack("회원가입 성공! 선생님 계정은 관리자 승인 후 로그인 가능합니다.", COLOR_PRIMARY)
                 go_to("/login")
 
-        # 이벤트 연결
         btn_check_id.on_click = on_check_id
         btn_send.on_click = on_send_code
         btn_verify.on_click = on_verify_code
         signup_btn.on_click = on_signup
 
-        # 입력 바뀔 때 가입 버튼 상태 갱신
-        for tf in [name_tf, id_tf, email_tf, pw_tf, pw2_tf, phone_tf, code_tf]:
-            tf.on_change = lambda e: refresh_signup_btn()
+        for tf in [name_tf, id_tf, email_tf, pw_tf, pw2_tf, phone_tf, code_tf]: tf.on_change = lambda e: refresh_signup_btn()
         country_dd.on_change = lambda e: refresh_signup_btn()
         teacher_ck.on_change = lambda e: refresh_signup_btn()
 
         body = ft.Container(
-            expand=True,
-            padding=24,
-            content=ft.Column(
-                [
-                    ft.Text("회원가입", size=22, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Text("한국어 학습을 시작해보세요", size=12, color=COLOR_TEXT_DESC),
-                    ft.Container(height=8),
-                    teacher_ck,
-                    ft.Container(height=10),
-
-                    name_tf,
-                    ft.Container(height=10),
-
-                    ft.Row([id_tf, btn_check_id], spacing=10),
-                    id_status,
-                    ft.Container(height=6),
-
-                    email_tf,
-                    ft.Container(height=10),
-
-                    pw_tf,
-                    ft.Container(height=10),
-                    pw2_tf,
-                    ft.Container(height=10),
-
-                    ft.Row([phone_tf, btn_send], spacing=10),
-                    ft.Container(height=6),
-                    ft.Row([code_tf, btn_verify], spacing=10),
-                    phone_status,
-                    ft.Container(height=12),
-
-                    country_dd,
-                    ft.Container(height=18),
-
-                    signup_btn,
-                    ft.Container(height=10),
-
-                    ft.Row(
-                        [
-                            ft.Text("이미 계정이 있으신가요?", size=11, color=COLOR_TEXT_DESC),
-                            ft.TextButton("로그인", on_click=lambda _: go_to("/login")),
-                        ],
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=6,
-                    ),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                scroll="auto",
-                expand=True,
-            ),
+            expand=True, padding=24,
+            content=ft.Column([
+                ft.Text("회원가입", size=22, weight="bold", color=COLOR_TEXT_MAIN), ft.Text("한국어 학습을 시작해보세요", size=12, color=COLOR_TEXT_DESC),
+                ft.Container(height=8), teacher_ck, ft.Container(height=10), name_tf, ft.Container(height=10),
+                ft.Row([id_tf, btn_check_id], spacing=10), id_status, ft.Container(height=6),
+                email_tf, ft.Container(height=10), pw_tf, ft.Container(height=10), pw2_tf, ft.Container(height=10),
+                ft.Row([phone_tf, btn_send], spacing=10), ft.Container(height=6), ft.Row([code_tf, btn_verify], spacing=10), phone_status, ft.Container(height=12),
+                country_dd, ft.Container(height=18), signup_btn, ft.Container(height=10),
+                ft.Row([ft.Text("이미 계정이 있으신가요?", size=11, color=COLOR_TEXT_DESC), ft.TextButton("로그인", on_click=lambda _: go_to("/login"))], alignment=ft.MainAxisAlignment.CENTER, spacing=6),
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True)
         )
+        return mobile_shell("/signup", body, title="회원가입", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")))
 
-        return mobile_shell(
-            "/signup",
-            body,
-            title="회원가입",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
-        )
-
-
-    # =============================================================================
-    # View: Profile
-    # =============================================================================
     def view_profile():
         u = session.get("user")
-        if not u:
-            return mobile_shell("/profile", ft.Text("로그인이 필요합니다."), title="프로필")
-
-        u = get_user(u["id"]) or u
-        u = ensure_progress(u)
-
-        country_dd = ft.Dropdown(
-            label="국적",
-            width=320,
-            value=u.get("country", "KR"),
-            options=[ft.dropdown.Option(code, name) for code, name in COUNTRY_OPTIONS],
-        )
-        ui_lang_dd = ft.Dropdown(
-            label="UI 언어(추후 다국어팩)",
-            width=320,
-            value=u["progress"]["settings"].get("ui_lang", "ko"),
-            options=[ft.dropdown.Option(code, label) for code, label in UI_LANG_OPTIONS],
-        )
+        if not u: return mobile_shell("/profile", ft.Text("로그인이 필요합니다."), title="프로필")
+        uid = u.get("id") or u.get("uid")
+        u = ensure_progress(get_user(uid) or u)
+        country_dd = ft.Dropdown(label="국적", width=320, value=u.get("country", "KR"), options=[ft.dropdown.Option(code, name) for code, name in COUNTRY_OPTIONS], border_radius=12)
+        ui_lang_dd = ft.Dropdown(label="UI 언어", width=320, value=u["progress"]["settings"].get("ui_lang", "ko"), options=[ft.dropdown.Option(code, label) for code, label in UI_LANG_OPTIONS], border_radius=12)
 
         def save_profile(e=None):
-            u["country"] = country_dd.value or "KR"
-            u["progress"]["settings"]["ui_lang"] = ui_lang_dd.value or "ko"
-            update_user(u["id"], u)
-            session["user"] = u
-            show_snack("프로필이 저장되었습니다.", COLOR_PRIMARY)
+            try:
+                u["country"] = country_dd.value or "KR"
+                u["progress"]["settings"]["ui_lang"] = ui_lang_dd.value or "ko"
+                update_user(uid, u)
+                session["user"] = u
+                show_snack("프로필이 저장되었습니다.", COLOR_PRIMARY)
+            except Exception as err:
+                log_write(f"save_profile error: {err}")
+                show_snack("저장 중 오류가 발생했습니다.", COLOR_ACCENT)
 
         body = ft.Container(
             padding=20,
-            content=ft.Column(
-                [
-                    ft.Text("내 프로필", size=18, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=8),
-                    ft.Container(
-                        bgcolor="#f8f9fa",
-                        border_radius=18,
-                        padding=16,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Column(
-                            [
-                                ft.Text(f"이름: {u.get('name','')}", size=13, color=COLOR_TEXT_MAIN),
-                                ft.Text(f"아이디: {u.get('id','')}", size=12, color=COLOR_TEXT_DESC),
-                                ft.Text(f"권한: {u.get('role','')}", size=12, color=COLOR_TEXT_DESC),
-                            ],
-                            spacing=4,
-                        ),
-                    ),
-                    ft.Container(height=12),
-                    country_dd,
-                    ft.Container(height=10),
-                    ui_lang_dd,
-                    ft.Container(height=14),
-                    ft.ElevatedButton(
-                        "저장",
-                        on_click=save_profile,
-                        width=320,
-                        style=ft.ButtonStyle(
-                            bgcolor=COLOR_PRIMARY,
-                            color="white",
-                            shape=ft.RoundedRectangleBorder(radius=14),
-                        ),
-                    ),
-                    ft.Container(height=6),
-                    ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
+            content=ft.Column([
+                ft.Text("내 프로필", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8),
+                ft.Container(bgcolor="#f8f9fa", border_radius=18, padding=16, border=ft.border.all(1, "#eef1f4"), content=ft.Column([
+                    ft.Text(f"이름: {u.get('name','')}", size=13, color=COLOR_TEXT_MAIN), ft.Text(f"아이디: {uid}", size=12, color=COLOR_TEXT_DESC), ft.Text(f"권한: {u.get('role','')}", size=12, color=COLOR_TEXT_DESC)
+                ], spacing=4)),
+                ft.Container(height=12), country_dd, ft.Container(height=10), ui_lang_dd, ft.Container(height=14),
+                ft.ElevatedButton("저장", on_click=save_profile, width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14))),
+                ft.Container(height=6), ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320, height=48)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         )
+        return mobile_shell("/profile", ft.Container(padding=20, content=body, expand=True), title="프로필", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("settings"))
 
-        return mobile_shell(
-            "/profile",
-            body,
-            title="프로필",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
-        )
-
-    # =============================================================================
-    # View: Settings (학생 설정)
-    # =============================================================================
     def view_settings():
         u = session.get("user")
-        if not u:
-            return mobile_shell("/settings", ft.Text("로그인이 필요합니다."), title="설정")
-
-        u = get_user(u["id"]) or u
-        u = ensure_progress(u)
-
-        goal_field = ft.TextField(
-            label="오늘 목표(단어 수)",
-            value=str(u["progress"]["settings"].get("goal", sysdata.get("default_goal", 10))),
-            width=320,
-            keyboard_type=ft.KeyboardType.NUMBER,
-            bgcolor="white",
-            border_radius=12,
-        )
-
+        if not u: return mobile_shell("/settings", ft.Text("로그인이 필요합니다."), title="설정")
+        uid = u.get("id") or u.get("uid")
+        u = ensure_progress(get_user(uid) or u)
+        goal_field = ft.TextField(label="오늘 목표(단어 수)", value=str(u["progress"]["settings"].get("goal", sysdata.get("default_goal", 10))), width=320, keyboard_type=ft.KeyboardType.NUMBER, bgcolor="white", border_radius=12)
         review_thr = int(load_system().get("review_threshold", 85))
         info = ft.Text(f"복습 기준: {review_thr}점 미만(시스템 설정)", size=11, color=COLOR_TEXT_DESC)
 
@@ -1028,66 +507,28 @@ def main(page: ft.Page):
             try:
                 g = int(goal_field.value)
                 g = max(1, min(100, g))
-            except:
-                g = int(sysdata.get("default_goal", 10))
-            u["progress"]["settings"]["goal"] = g
-            update_user(u["id"], u)
-            session["goal"] = g
-            session["user"] = u
-            show_snack("설정이 저장되었습니다.", COLOR_PRIMARY)
+                u["progress"]["settings"]["goal"] = g
+                update_user(uid, u)
+                session["goal"] = g
+                session["user"] = u
+                show_snack("설정이 저장되었습니다.", COLOR_PRIMARY)
+            except: show_snack("숫자만 입력 가능합니다.", COLOR_ACCENT)
 
         body = ft.Container(
             padding=20,
-            content=ft.Column(
-                [
-                    ft.Text("설정", size=18, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=10),
-                    goal_field,
-                    ft.Container(height=8),
-                    info,
-                    ft.Container(height=14),
-                    ft.ElevatedButton(
-                        "저장",
-                        on_click=save_settings,
-                        width=320,
-                        style=ft.ButtonStyle(
-                            bgcolor=COLOR_PRIMARY,
-                            color="white",
-                            shape=ft.RoundedRectangleBorder(radius=14),
-                        ),
-                    ),
-                    ft.Container(height=8),
-                    ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
+            content=ft.Column([
+                ft.Text("설정", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=10), goal_field, ft.Container(height=8), info, ft.Container(height=14),
+                ft.ElevatedButton("저장", on_click=save_settings, width=320, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14))),
+                ft.Container(height=8), ft.OutlinedButton("로그아웃", on_click=lambda e: do_logout(), width=320)
+            ], scroll="auto", horizontal_alignment=ft.CrossAxisAlignment.CENTER)
         )
+        return mobile_shell("/settings", ft.Container(expand=True, content=body), title="설정", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("settings"))
 
-        shell_body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(expand=True, content=body),
-                student_bottom_nav(active="settings"),
-            ],
-        )
-        return mobile_shell(
-            "/settings",
-            shell_body,
-            title="설정",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
-        )
-
-    # =============================================================================
-    # View: Stats (학생 통계 + 오답/누적/복습 진입)
-    # =============================================================================
     def view_stats():
         u = session.get("user")
-        if not u:
-            return mobile_shell("/stats", ft.Text("로그인이 필요합니다."), title="통계")
-
-        u = get_user(u["id"]) or u
-        u = ensure_progress(u)
+        if not u: return mobile_shell("/stats", ft.Text("로그인이 필요합니다."), title="통계")
+        uid = u.get("id") or u.get("uid")
+        u = ensure_progress(get_user(uid) or u)
 
         topics = u["progress"]["topics"]
         total_learned = sum(len(t.get("learned", {})) for t in topics.values())
@@ -1096,48 +537,9 @@ def main(page: ft.Page):
         avg_score = round(sum(avgs) / max(1, len(avgs)), 2) if avgs else 0.0
 
         cards = [
-            ft.Container(
-                expand=True,
-                bgcolor="#f8f9fa",
-                border_radius=18,
-                padding=14,
-                border=ft.border.all(1, "#eef1f4"),
-                content=ft.Column(
-                    [
-                        ft.Text("누적 학습", size=11, color=COLOR_TEXT_DESC),
-                        ft.Text(str(total_learned), size=22, weight="bold", color=COLOR_PRIMARY),
-                    ],
-                    spacing=2,
-                ),
-            ),
-            ft.Container(
-                expand=True,
-                bgcolor="#f8f9fa",
-                border_radius=18,
-                padding=14,
-                border=ft.border.all(1, "#eef1f4"),
-                content=ft.Column(
-                    [
-                        ft.Text("평균 점수", size=11, color=COLOR_TEXT_DESC),
-                        ft.Text(str(avg_score), size=22, weight="bold", color=COLOR_TEXT_MAIN),
-                    ],
-                    spacing=2,
-                ),
-            ),
-            ft.Container(
-                expand=True,
-                bgcolor="#f8f9fa",
-                border_radius=18,
-                padding=14,
-                border=ft.border.all(1, "#eef1f4"),
-                content=ft.Column(
-                    [
-                        ft.Text("오답", size=11, color=COLOR_TEXT_DESC),
-                        ft.Text(str(wrong_cnt), size=22, weight="bold", color=COLOR_ACCENT),
-                    ],
-                    spacing=2,
-                ),
-            ),
+            ft.Container(expand=True, bgcolor="#f8f9fa", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("누적 학습", size=11, color=COLOR_TEXT_DESC), ft.Text(str(total_learned), size=22, weight="bold", color=COLOR_PRIMARY)], spacing=2)),
+            ft.Container(expand=True, bgcolor="#f8f9fa", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("평균 점수", size=11, color=COLOR_TEXT_DESC), ft.Text(str(avg_score), size=22, weight="bold", color=COLOR_TEXT_MAIN)], spacing=2)),
+            ft.Container(expand=True, bgcolor="#f8f9fa", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("오답", size=11, color=COLOR_TEXT_DESC), ft.Text(str(wrong_cnt), size=22, weight="bold", color=COLOR_ACCENT)], spacing=2))
         ]
 
         topic_rows = []
@@ -1148,51 +550,24 @@ def main(page: ft.Page):
             wcnt = len(tpdata.get("wrong_notes", []))
             topic_rows.append(
                 ft.Container(
-                    bgcolor="white",
-                    border_radius=16,
-                    padding=12,
-                    border=ft.border.all(1, "#eef1f4"),
-                    content=ft.Row(
-                        [
-                            ft.Column(
-                                [
-                                    ft.Text(tp, size=13, weight="bold", color=COLOR_TEXT_MAIN),
-                                    ft.Text(f"누적 {studied} · 평균 {avg} · 오답 {wcnt}", size=11, color=COLOR_TEXT_DESC),
-                                ],
-                                spacing=2,
-                                expand=True,
-                            ),
-                            ft.Icon(ft.icons.CHEVRON_RIGHT, color="#bdc3c7"),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    ),
-                    ink=True,
-                    on_click=lambda e, tpn=tp: (session.update({"topic": tpn}), go_to("/cumulative")),
+                    bgcolor="white", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"),
+                    content=ft.Row([
+                        ft.Column([ft.Text(tp, size=13, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"누적 {studied} · 평균 {avg} · 오답 {wcnt}", size=11, color=COLOR_TEXT_DESC)], spacing=2, expand=True),
+                        ft.Icon(ft.icons.CHEVRON_RIGHT, color="#bdc3c7")
+                    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                    ink=True, on_click=lambda e, tpn=tp: (session.update({"topic": tpn}), go_to("/cumulative"))
                 )
             )
 
         body = ft.Container(
             padding=20,
-            content=ft.Column(
-                [
-                    ft.Row(cards, spacing=10),
-                    ft.Container(height=14),
-                    ft.Row(
-                        [
-                            ft.ElevatedButton("누적", on_click=lambda _: go_to("/cumulative"), bgcolor=COLOR_PRIMARY, color="white", expand=True),
-                            ft.ElevatedButton("오답노트", on_click=lambda _: go_to("/wrong_notes"), bgcolor=COLOR_ACCENT, color="white", expand=True),
-                        ],
-                        spacing=10,
-                    ),
-                    ft.Container(height=10),
-                    ft.ElevatedButton("복습", on_click=lambda _: go_to("/review"), bgcolor=COLOR_TEXT_MAIN, color="white", width=320),
-                    ft.Container(height=14),
-                    ft.Text("토픽별 보기", size=14, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=8),
-                    ft.Column(topic_rows, spacing=10, scroll="auto"),
-                ],
-                spacing=0,
-            ),
+            content=ft.Column([
+                ft.Row(cards, spacing=10), ft.Container(height=14),
+                ft.Row([ft.ElevatedButton("누적", on_click=lambda _: go_to("/cumulative"), bgcolor=COLOR_PRIMARY, color="white", expand=True), ft.ElevatedButton("오답노트", on_click=lambda _: go_to("/wrong_notes"), bgcolor=COLOR_ACCENT, color="white", expand=True)], spacing=10),
+                ft.Container(height=10), ft.ElevatedButton("복습", on_click=lambda _: go_to("/review"), bgcolor=COLOR_TEXT_MAIN, color="white", width=320),
+                ft.Container(height=14), ft.Text("토픽별 보기", size=14, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8),
+                ft.Column(topic_rows, spacing=10, scroll="auto"),
+            ], spacing=0)
         )
 
         shell_body = ft.Column(
@@ -1203,263 +578,162 @@ def main(page: ft.Page):
                 student_bottom_nav(active="stats"),
             ],
         )
-        return mobile_shell(
-            "/stats",
-            shell_body,
-            title="통계",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
-        )
+        return mobile_shell("/stats", shell_body, title="통계", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
 
-    # =============================================================================
-    # View: Student Home
-    # =============================================================================
     def view_student_home():
-        if not session.get("user"):
-            return mobile_shell("/student_home", ft.Text("로그인이 필요합니다."), title="학습 홈")
-
-        # 최신 사용자 상태 로드/보정
-        user = get_user(session["user"]["id"]) or session["user"]
-        user = ensure_progress(user)
+        u_session = session.get("user")
+        if not u_session: return mobile_shell("/student_home", ft.Text("로그인이 필요합니다."), title="학습 홈")
+        
+        uid = u_session.get("id") or u_session.get("uid")
+        user = ensure_progress(get_user(uid) or u_session)
         session["user"] = user
 
-        # 마지막 학습 정보
+        goal = int(user["progress"]["settings"].get("goal", 10))
+        topics_prog = user["progress"]["topics"]
+        
+        # [수정] 변수명 통일 및 오답 수 계산 로직 추가
+        total_learned = sum(len(t.get("learned", {})) for t in topics_prog.values())
+        wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics_prog.values())
+        
+        progress_value = min(total_learned / max(1, goal), 1.0)
+        percent = int(progress_value * 100)
+
+        from datetime import datetime
+        now = datetime.now()
+        today_str = now.strftime("%Y년 %m월 %d일")
+        today_day = now.day
+
         last = user["progress"].get("last_session", {"topic": "", "idx": 0})
         last_topic = (last.get("topic") or "").strip()
         last_idx = int(last.get("idx", 0) or 0)
-
-        # 토픽(=레벨) 목록
         topics = sorted(list(VOCAB_DB.keys()))
 
-        def on_ad_click(e):
-            page.snack_bar = ft.SnackBar(ft.Text("광고 클릭(임시)"))
-            page.snack_bar.open = True
-            page.update()
-
         def start_study(topic_name: str, resume: bool = False):
-            if topic_name not in VOCAB_DB:
-                show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
-                return
-
+            if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
             all_words = VOCAB_DB[topic_name] or []
-            if not all_words:
-                show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
-                return
-
-            goal = int(user["progress"]["settings"].get("goal", session["goal"]))
-            pick = all_words[:goal] if len(all_words) >= goal else all_words[:]
-
-            session["today_words"] = pick[:]
-
-            # 혹시 남아있는 자동이동/카운트다운 취소 + 상태 초기화
+            if not all_words: return show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
+            
             bump_nav_token()
-            session["motivate_shown"] = False
-            session["motivate_msg"] = ""
-            session["motivate_emoji"] = ""
-            session["is_review"] = False
-            session["test_queue"] = []
-            session["test_idx"] = 0
-            session["test_score"] = 0
             reset_pron_state()
-
-            # 이어서 학습이면 last_idx 반영
-            if resume:
-                idx = max(0, min(last_idx, max(0, len(pick) - 1)))
-            else:
-                idx = 0
-
-            session.update({"topic": topic_name, "study_words": pick, "idx": idx})
-
-            # last_session 저장
-            user2 = get_user(user["id"]) or user
-            user2 = ensure_progress(user2)
-            user2["progress"]["last_session"] = {"topic": topic_name, "idx": idx}
-            update_user(user2["id"], user2)
-            session["user"] = user2
-
+            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "today_words": all_words[:goal]})
+            idx = max(0, min(last_idx, len(all_words) - 1)) if resume else 0
+            session.update({"topic": topic_name, "study_words": all_words[:goal], "idx": idx})
+            
+            user["progress"]["last_session"] = {"topic": topic_name, "idx": idx}
+            update_user(uid, user)
             go_to("/study")
 
-        def continue_last(e=None):
-            if not last_topic or last_topic not in VOCAB_DB:
-                show_snack("이어서 학습할 기록이 없습니다.", COLOR_ACCENT)
-                return
-            start_study(last_topic, resume=True)
-
-        # 홈에서 “오늘 학습 시작” 버튼: 토픽이 있으면 첫 토픽으로 시작
         def start_today(e=None):
-            if not topics:
-                show_snack("학습할 토픽(레벨)이 없습니다.", COLOR_ACCENT)
-                return
+            if not topics: return show_snack("학습할 레벨이 없습니다.", COLOR_ACCENT)
             start_study(topics[0], resume=False)
 
-        # 통계 카드 계산
-        user2 = get_user(user["id"]) or user
-        user2 = ensure_progress(user2)
-        topics_prog = user2["progress"]["topics"]
+        def build_mini_calendar():
+            days = []
+            for d in range(max(1, today_day-3), today_day + 4):
+                is_today = (d == today_day)
+                days.append(ft.Container(content=ft.Text(str(d), size=12, color="white" if is_today else COLOR_TEXT_MAIN, weight="bold" if is_today else None), width=30, height=30, bgcolor=COLOR_PRIMARY if is_today else "#f0f2f5", border_radius=15, alignment=ft.Alignment(0, 0)))
+            return ft.Row(days, alignment=ft.MainAxisAlignment.CENTER, spacing=8)
 
-        total_learned = sum(len(t.get("learned", {})) for t in topics_prog.values())
-        wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics_prog.values())
-
-        # “이어서 학습하기” 카드 (있을 때만 노출)
         continue_btn = ft.Container(height=0)
         if last_topic and last_topic in VOCAB_DB:
             continue_btn = ft.Container(
-                bgcolor="#eef5ff",
-                border_radius=18,
-                padding=14,
-                border=ft.border.all(1, "#dbeafe"),
-                content=ft.Row(
-                    [
-                        ft.Column(
-                            [
-                                ft.Text("이어서 학습하기", size=12, weight="bold", color=COLOR_PRIMARY),
-                                ft.Text(f"{last_topic} · {last_idx + 1}번째 단어부터", size=11, color=COLOR_TEXT_DESC),
-                            ],
-                            spacing=2,
-                            expand=True,
-                        ),
-                        ft.ElevatedButton("계속", on_click=continue_last, bgcolor=COLOR_PRIMARY, color="white"),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                ),
+                bgcolor="#eef5ff", border_radius=18, padding=14, border=ft.border.all(1, "#dbeafe"),
+                content=ft.Row([
+                    ft.Column([ft.Text("이어서 학습하기", size=12, weight="bold", color=COLOR_PRIMARY), ft.Text(f"{last_topic} · {last_idx + 1}번째 단어부터", size=11, color=COLOR_TEXT_DESC)], expand=True, spacing=2),
+                    ft.ElevatedButton("계속", on_click=lambda _: start_study(last_topic, True), bgcolor=COLOR_PRIMARY, color="white")
+                ])
             )
+        
+        def on_ad_click(e):
+             show_snack("오누이 한국어 광고 페이지로 이동합니다 (임시)", COLOR_PRIMARY)
 
-        # 광고 영역(홈에서 레벨 버튼 제거했으니 대체 영역으로 사용)
         ad_zone = build_ad_zone(on_click=on_ad_click)
 
-        body = ft.Column(
-            spacing=0,
+        content_body = ft.Column(
+            spacing=0, scroll="auto",
             controls=[
                 student_info_bar(),
-
-                # 상단 요약 + 시작 버튼
                 ft.Container(
-                    padding=ft.padding.only(left=20, right=20, top=14, bottom=12),
-                    content=ft.Column(
-                        [
-                            ft.Text(f"안녕하세요, {user.get('name','')}님", size=18, weight="bold", color=COLOR_TEXT_MAIN),
-                            ft.Text("오늘 학습을 시작해볼까요?", size=12, color=COLOR_TEXT_DESC),
-                            ft.Container(height=12),
-
-                            ft.Row(
-                                [
-                                    ft.Container(
-                                        expand=True,
-                                        bgcolor="#f8f9fa",
-                                        border_radius=18,
-                                        padding=14,
-                                        border=ft.border.all(1, "#eef1f4"),
-                                        content=ft.Column(
-                                            [
-                                                ft.Text("누적 학습", size=11, color=COLOR_TEXT_DESC),
-                                                ft.Text(str(total_learned), size=20, weight="bold", color=COLOR_PRIMARY),
-                                            ],
-                                            spacing=2,
-                                        ),
-                                    ),
-                                    ft.Container(
-                                        expand=True,
-                                        bgcolor="#f8f9fa",
-                                        border_radius=18,
-                                        padding=14,
-                                        border=ft.border.all(1, "#eef1f4"),
-                                        content=ft.Column(
-                                            [
-                                                ft.Text("오답", size=11, color=COLOR_TEXT_DESC),
-                                                ft.Text(str(wrong_cnt), size=20, weight="bold", color=COLOR_ACCENT),
-                                            ],
-                                            spacing=2,
-                                        ),
-                                    ),
-                                ],
-                                spacing=10,
+                    padding=20,
+                    content=ft.Column([
+                        ft.Row([ft.Container(width=50, height=50, bgcolor="#f0f2f5", border_radius=25, content=ft.Icon(ft.icons.PERSON, color=COLOR_PRIMARY)), ft.Column([ft.Text(f"{user.get('name','')}님, 안녕하세요!", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"{today_str} 학습을 시작하세요.", size=12, color=COLOR_TEXT_DESC)], spacing=2)]),
+                        ft.Container(height=10),
+                        ft.Container(
+                            bgcolor="white", padding=16, border_radius=18, border=ft.border.all(1, "#eef1f4"),
+                            content=ft.Column([
+                                ft.Row([ft.Text("오늘의 달성률", size=13, weight="bold"), ft.Text(f"{percent}%", size=13, weight="bold", color=COLOR_PRIMARY)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                                ft.ProgressBar(value=progress_value, color=COLOR_PRIMARY, bgcolor="#eeeeee", height=8, border_radius=4),
+                                # [수정] 변수명 total_learned 사용
+                                ft.Text(f"목표 {goal}개 중 {total_learned}개 학습 완료", size=11, color=COLOR_TEXT_DESC),
+                            ], spacing=8)
+                        ),
+                        
+                        # 오답 및 누적 수치 Row (변수명 수정됨)
+                        ft.Row([
+                            ft.Container(
+                                expand=True, bgcolor="#f8f9fa", padding=14, border_radius=15,
+                                content=ft.Column([ft.Text("누적", size=10), ft.Text(str(total_learned), weight="bold", size=16)], spacing=2)
                             ),
-
-                            ft.Container(height=12),
-
-                            ft.ElevatedButton(
-                                "오늘의 단어 학습 시작",
-                                on_click=start_today,
-                                bgcolor=COLOR_PRIMARY,
-                                color="white",
-                                height=44,
+                            ft.Container(
+                                expand=True, bgcolor="#f8f9fa", padding=14, border_radius=15,
+                                content=ft.Column([ft.Text("오답", size=10), ft.Text(str(wrong_cnt), weight="bold", size=16, color=COLOR_ACCENT)], spacing=2)
                             ),
+                        ], spacing=10),
 
-                            ft.Container(height=12),
-                            continue_btn,
-                        ],
-                        spacing=0,
-                    ),
+                        ft.Container(height=5),
+                        ft.ElevatedButton(
+                            "오늘의 단어 학습 시작", 
+                            on_click=start_today, 
+                            bgcolor=COLOR_PRIMARY, color="white", 
+                            width=340, height=48, 
+                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))
+                        ),
+                        continue_btn,
+                        
+                        ft.Container(height=10),
+                        ft.Text("학습 달력", size=14, weight="bold"),
+                        build_mini_calendar(),
+                        
+                        ft.Container(height=15),
+                        ad_zone,
+                        ft.Text("※ 광고 영역 — 오누이 한국어", size=10, color=COLOR_TEXT_DESC, text_align="center"),
+                        ft.Container(height=20),
+                    ], spacing=12)
                 ),
-
-                # 홈 하단: 광고(임시)
-                ft.Container(
-                    expand=True,
-                    padding=ft.padding.only(left=20, right=20, top=6, bottom=6),
-                    content=ft.Column(
-                        [
-                            ad_zone,
-                            ft.Container(height=8),
-                            ft.Text("※ 광고 영역(임시) — 추후 광고 연동 예정", size=10, color=COLOR_TEXT_DESC),
-                        ],
-                        spacing=0,
-                    ),
-                ),
-
-                student_bottom_nav(active="home"),
-            ],
+            ]
         )
 
         return mobile_shell(
             "/student_home",
-            body,
-            title="학습 홈",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/login")),
-            actions=[],
+            body=content_body, 
+            title="Just Voca", 
+            actions=[ft.IconButton(ft.icons.NOTIFICATIONS_OUTLINED, tooltip="공지사항")],
+            bottom_nav=student_bottom_nav("home")
         )
-
-    # =============================================================================
-    # View: Level Select
-    # =============================================================================
     def view_level_select():
-        if not session.get("user"):
-            return mobile_shell("/level_select", ft.Text("로그인이 필요합니다."), title="레벨 선택")
-        user = session["user"]
+        if not session.get("user"): return mobile_shell("/level_select", ft.Text("로그인이 필요합니다."), title="레벨 선택")
+        u_session = session.get("user")
+        uid = u_session.get("id") or u_session.get("uid")
+        user = get_user(uid) or u_session
         user = ensure_progress(user)
-
         topics = sorted(list(VOCAB_DB.keys()))
 
         def start_study(topic_name):
-            if topic_name not in VOCAB_DB:
-                show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
-                return
+            if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
             all_words = VOCAB_DB[topic_name]
             goal = int(user["progress"]["settings"].get("goal", session["goal"]))
             pick = all_words[:goal] if len(all_words) >= goal else all_words[:]
             session["today_words"] = pick[:]
-            bump_nav_token()          # 혹시 남아있는 자동이동 취소
-            session["motivate_shown"] = False
-            session["motivate_msg"] = ""
-            session["motivate_emoji"] = ""
-            session["is_review"] = False
-            session["test_queue"] = []
-            session["test_idx"] = 0
-            session["test_score"] = 0
+            bump_nav_token()
             reset_pron_state()
-
-            session.update({"topic": topic_name, "study_words": pick, "idx": 0})
-
-            user2 = get_user(user["id"]) or user
-            user2 = ensure_progress(user2)
-            user2["progress"]["last_session"] = {"topic": topic_name, "idx": 0}
-            update_user(user2["id"], user2)
-            session["user"] = user2
-
+            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "topic": topic_name, "study_words": pick, "idx": 0})
+            
+            user["progress"]["last_session"] = {"topic": topic_name, "idx": 0}
+            update_user(uid, user)
+            session["user"] = user
             go_to("/study")
 
-        user2 = get_user(user["id"]) or user
-        user2 = ensure_progress(user2)
-        topics_prog = user2["progress"]["topics"]
-
+        topics_prog = user["progress"]["topics"]
         level_cards = []
         for tp in topics:
             tpdata = topics_prog.get(tp, {})
@@ -1467,121 +741,40 @@ def main(page: ft.Page):
             avg = tpdata.get("stats", {}).get("avg_score", 0.0)
             level_cards.append(level_button(tp, f"누적 {studied}개 · 평균 {avg}", on_click=lambda e, tpn=tp: start_study(tpn)))
 
-        grid = ft.GridView(
-            expand=True,
-            runs_count=2,
-            max_extent=175,
-            child_aspect_ratio=1.10,
-            spacing=12,
-            run_spacing=12,
-            controls=level_cards if level_cards else [ft.Text("데이터 없음")],
-        )
+        grid = ft.GridView(expand=True, runs_count=2, max_extent=175, child_aspect_ratio=1.10, spacing=12, run_spacing=12, controls=level_cards if level_cards else [ft.Text("데이터 없음")])
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=ft.padding.only(left=20, right=20, top=14, bottom=10), content=grid)])
+        return mobile_shell("/level_select", body, title="레벨 선택", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("level"))
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=ft.padding.only(left=20, right=20, top=14, bottom=10),
-                    content=grid,
-                ),
-                student_bottom_nav(active="level"),
-            ],
-        )
-
-        return mobile_shell(
-            "/level_select",
-            body,
-            title="레벨 선택",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
-        )
-
-    # =============================================================================
-    # View: Motivate (절반 지점 격려 화면)
-    # =============================================================================
     def view_motivate():
-        if not session.get("user"):
-            return mobile_shell("/motivate", ft.Text("로그인이 필요합니다."), title="레벨 선택")
-
-        # 랜덤 문구(세션 저장값 사용)
+        if not session.get("user"): return mobile_shell("/motivate", ft.Text("로그인이 필요합니다."), title="레벨 선택")
         msg = (session.get("motivate_msg") or "").strip() or "지금처럼만 하면 충분해요 ☺️"
         emo = (session.get("motivate_emoji") or "").strip() or "🙂"
-
+        
         body = ft.Column(
             spacing=0,
             controls=[
                 student_info_bar(),
                 ft.Container(
-                    expand=True,
-                    padding=24,
-                    content=ft.Column(
-                        [
-                            ft.Container(height=18),
-
-                            # 상단 응원 문구 (랜덤 고정)
-                            ft.Text(
-                                msg,
-                                size=14,
-                                color=COLOR_TEXT_MAIN,
-                                text_align="center",
-                            ),
-
-                            ft.Container(height=22),
-
-                            # "이모티콘/그림" 영역(스크린샷의 박스)
-                            ft.Container(
-                                width=300,
-                                height=180,
-                                border_radius=26,
-                                bgcolor="#ffffff",
-                                border=ft.border.all(1, "#dfe6ee"),
-                                alignment=ft.Alignment(0, 0),
-                                content=ft.Text(emo, size=64),
-                            ),
-
-                            ft.Container(expand=True),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
+                    expand=True, padding=24,
+                    content=ft.Column([
+                        ft.Container(height=18),
+                        ft.Text(msg, size=14, color=COLOR_TEXT_MAIN, text_align="center"),
+                        ft.Container(height=22),
+                        ft.Container(width=300, height=180, border_radius=26, bgcolor="#ffffff", border=ft.border.all(1, "#dfe6ee"), alignment=ft.Alignment(0, 0), content=ft.Text(emo, size=64)),
+                        ft.Container(expand=True),
+                    ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER)
+                )
+            ]
         )
-
-        # 0.5~1초 노출 후 자동 복귀 (원하면 0.8 유지)
         schedule_go(0.8, "/study", only_if_route="/motivate")
+        return mobile_shell("/motivate", body, title="학습 격려", leading=None, bottom_nav=student_bottom_nav("home"))
 
-        return mobile_shell(
-            "/motivate",
-            body,
-            title="학습 격려",
-            # 버튼/확인 제거: leading도 없애서 "자동 화면"처럼
-            leading=None,
-        )
-
-    # =============================================================================
-    # View: Study
-    # =============================================================================
     def view_study():
-        if not session.get("user"):
-            return mobile_shell("/study", ft.Text("로그인이 필요합니다."), title="단어 학습")
+        if not session.get("user"): return mobile_shell("/study", ft.Text("로그인이 필요합니다."), title="단어 학습")
         words = session.get("study_words", [])
         topic = session.get("topic", "")
         if not words:
-            body = ft.Container(
-                padding=24,
-                content=ft.Column(
-                    [
-                        ft.Text("학습할 데이터가 없습니다.", size=14, color=COLOR_TEXT_DESC),
-                        ft.Container(height=10),
-                        ft.ElevatedButton("홈으로", on_click=lambda _: go_home(), bgcolor=COLOR_PRIMARY, color="white"),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
-            )
-            return mobile_shell("/study", body, title="학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
+            return mobile_shell("/study", ft.Container(padding=24, content=ft.Column([ft.Text("학습할 데이터가 없습니다."), ft.ElevatedButton("홈으로", on_click=lambda _: go_home())])), title="학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
 
         class StudyState:
             idx = session.get("idx", 0)
@@ -1589,29 +782,30 @@ def main(page: ft.Page):
 
         st = StudyState()
         total = len(words)
-
         status_text = ft.Text("", size=11, color="#95a5a6")
 
         def persist_position():
-            user = get_user(session["user"]["id"]) or session["user"]
+            u_session = session.get("user")
+            uid = u_session.get("id") or u_session.get("uid")
+            user = get_user(uid) or u_session
             user = ensure_progress(user)
             user["progress"]["last_session"] = {"topic": topic, "idx": st.idx}
-            update_user(user["id"], user)
+            update_user(uid, user)
             session["user"] = user
 
         def mark_seen_default(word_item):
-            user = get_user(session["user"]["id"]) or session["user"]
+            u_session = session.get("user")
+            uid = u_session.get("id") or u_session.get("uid")
+            user = get_user(uid) or u_session
             user = ensure_progress(user)
             user = ensure_topic_progress(user, topic)
             tpdata = user["progress"]["topics"].get(topic, {})
             learned = tpdata.get("learned", {})
-
             if word_item["word"] not in learned:
                 user = update_learned_word(user, topic, word_item, 90)
             else:
                 user = update_last_seen_only(user, topic, word_item)
-
-            update_user(user["id"], user)
+            update_user(uid, user)
             session["user"] = user
 
         def reset_pron_state_on_move():
@@ -1620,32 +814,18 @@ def main(page: ft.Page):
             status_text.value = ""
 
         def maybe_motivate(new_idx: int):
-            if session.get("motivate_shown", False):
-                return
-
-            total = len(session.get("study_words", []) or [])
-            if total < 2:
-                return
-
-            half_reach_idx = math.ceil(total / 2) - 1
-
+            if session.get("motivate_shown", False): return
+            if len(words) < 2: return
+            half_reach_idx = math.ceil(len(words) / 2) - 1
             if new_idx == half_reach_idx:
                 session["motivate_shown"] = True
-
-                # 랜덤 문구/이모지: "세션당 1회"로 고정 저장
-                if not session.get("motivate_msg"):
-                    session["motivate_msg"] = random.choice(MOTIVATE_MESSAGES)
-                if not session.get("motivate_emoji"):
-                    session["motivate_emoji"] = random.choice(MOTIVATE_EMOJIS)
-
+                if not session.get("motivate_msg"): session["motivate_msg"] = random.choice(MOTIVATE_MESSAGES)
+                if not session.get("motivate_emoji"): session["motivate_emoji"] = random.choice(MOTIVATE_EMOJIS)
                 go_to("/motivate")
 
         def change_card(delta):
-            try:
-                mark_seen_default(words[st.idx])
-            except:
-                pass
-
+            try: mark_seen_default(words[st.idx])
+            except: pass
             new_idx = st.idx + delta
             if 0 <= new_idx < total:
                 st.idx = new_idx
@@ -1654,8 +834,7 @@ def main(page: ft.Page):
                 reset_pron_state_on_move()
                 persist_position()
                 update_view()
-                if delta > 0:
-                    maybe_motivate(new_idx)
+                if delta > 0: maybe_motivate(new_idx)
             elif new_idx >= total:
                 persist_position()
                 go_to("/review_start")
@@ -1667,393 +846,105 @@ def main(page: ft.Page):
         def start_recording():
             session["pron_state"]["recording"] = True
             session["pron_state"]["recorded"] = False
-            status_text.value = "🎙 문장 녹음 중... (더미)"
+            status_text.value = "🎙 녹음 중... (더미)"
             page.update()
 
         def stop_recording():
             session["pron_state"]["recording"] = False
             session["pron_state"]["recorded"] = True
-            status_text.value = "⏹ 녹음 종료 (더미). 결과 보기를 눌러주세요."
+            status_text.value = "⏹ 녹음 종료."
             page.update()
 
         def open_pron_result_for_current():
             w = words[st.idx]
-            session["pron_state"]["target_word"] = w.get("word", "")
-            session["pron_state"]["target_example"] = w.get("ex", "")
-            session["pron_state"]["result_score"] = None
-            session["pron_state"]["result_comment"] = ""
-            session["pron_state"]["detail"] = []
+            session["pron_state"].update({"target_word": w.get("word", ""), "target_example": w.get("ex", ""), "result_score": None, "result_comment": "", "detail": []})
             go_to("/pron_result")
 
         def eojeol_buttons(example: str):
             parts = [p for p in (example or "").split() if p.strip()]
-            if not parts:
-                return ft.Container(height=0)
-            btns = []
-            for p in parts[:12]:
-                btns.append(ft.OutlinedButton(p, on_click=lambda e, t=p: play_tts(t), height=32))
-            return ft.Row(
-                controls=btns,
-                wrap=True,
-                spacing=6,
-                run_spacing=8,
-            )
+            if not parts: return ft.Container(height=0)
+            return ft.Row(controls=[ft.OutlinedButton(p, on_click=lambda e, t=p: play_tts(t), height=32) for p in parts[:12]], wrap=True, spacing=6, run_spacing=8)
 
         def render_card_content():
             w = words[st.idx]
-
-            right_badges = []
-            if session.get("is_review"):
-                right_badges.append(
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor="#fff5f5",
-                        border_radius=999,
-                        content=ft.Text("복습중", size=11, color=COLOR_ACCENT, weight="bold"),
-                    )
-                )
-
-            header = ft.Row(
-                [
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor="#f8f9fa",
-                        border_radius=999,
-                        content=ft.Text(f"{topic}", size=11, color=COLOR_TEXT_DESC),
-                    ),
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor="#f8f9fa",
-                        border_radius=999,
-                        content=ft.Text(f"{st.idx + 1}/{total}", size=11, color=COLOR_TEXT_DESC),
-                    ),
-                    ft.Container(expand=True),
-                    *right_badges,
-                    ft.IconButton(icon=ft.icons.HOME, icon_color=COLOR_TEXT_MAIN, on_click=lambda _: go_to("/level_select")),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            )
+            right_badges = [ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#fff5f5", border_radius=999, content=ft.Text("복습중", size=11, color=COLOR_ACCENT, weight="bold"))] if session.get("is_review") else []
+            header = ft.Row([
+                ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"{topic}", size=11, color=COLOR_TEXT_DESC)),
+                ft.Container(padding=ft.padding.symmetric(horizontal=10, vertical=6), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"{st.idx + 1}/{total}", size=11, color=COLOR_TEXT_DESC)),
+                ft.Container(expand=True), *right_badges, ft.IconButton(icon=ft.icons.HOME, icon_color=COLOR_TEXT_MAIN, on_click=lambda _: go_to("/level_select"))
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
             if st.is_front:
-                return ft.Column(
-                    [
-                        header,
-                        ft.Container(height=10),
-                        ft.Container(
-                            content=ft.Text(w.get("image", "📖"), size=54),
-                            width=110,
-                            height=110,
-                            bgcolor="#f8f9fa",
-                            border_radius=55,
-                            alignment=ft.Alignment(0, 0),
-                        ),
-                        ft.Container(height=12),
-                        ft.Text(w["word"], size=34, weight="bold", color=COLOR_TEXT_MAIN),
-                        ft.Text(w.get("pronunciation", ""), size=14, color=COLOR_SECONDARY),
-                        ft.Container(height=14),
-                        ft.Container(
-                            bgcolor="#fff9f0",
-                            padding=14,
-                            border_radius=14,
-                            content=ft.Column(
-                                [
-                                    ft.Text(w.get("mean", ""), size=14, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"),
-                                    ft.Text(w.get("desc", ""), size=11, color="#8a7e6a", italic=True, text_align="center"),
-                                ],
-                                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                spacing=4,
-                            ),
-                        ),
-                        ft.Container(height=10),
-                        ft.Row(
-                            [
-                                ft.ElevatedButton("🔊 단어 듣기", on_click=lambda e: play_tts(w["word"]), expand=True, bgcolor=COLOR_PRIMARY, color="white"),
-                            ],
-                            spacing=10,
-                        ),
-                        ft.Container(height=8),
-                        ft.Row(
-                            [
-                                ft.OutlinedButton("뒷면 보기", on_click=lambda _: flip_card(), expand=True),
-                                ft.ElevatedButton("다음 ▶", on_click=lambda e: change_card(1), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white"),
-                            ],
-                            spacing=10,
-                        ),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
+                return ft.Column([
+                    header, ft.Container(height=10),
+                    ft.Container(content=ft.Text(w.get("image", "📖"), size=54), width=110, height=110, bgcolor="#f8f9fa", border_radius=55, alignment=ft.Alignment(0, 0)),
+                    ft.Container(height=12), ft.Text(w["word"], size=34, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(w.get("pronunciation", ""), size=14, color=COLOR_SECONDARY),
+                    ft.Container(height=14),
+                    ft.Container(bgcolor="#fff9f0", padding=14, border_radius=14, content=ft.Column([ft.Text(w.get("mean", ""), size=14, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"), ft.Text(w.get("desc", ""), size=11, color="#8a7e6a", italic=True, text_align="center")], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4)),
+                    ft.Container(height=10),
+                    ft.ElevatedButton("🔊 단어 듣기", on_click=lambda e: play_tts(w["word"]), width=200, bgcolor=COLOR_PRIMARY, color="white"),
+                    ft.Container(height=8),
+                    ft.Row([ft.OutlinedButton("뒷면 보기", on_click=lambda _: flip_card(), expand=True), ft.ElevatedButton("다음 ▶", on_click=lambda e: change_card(1), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white")], spacing=10)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
             else:
-                is_rec = bool(session["pron_state"].get("recording"))
-                is_recorded = bool(session["pron_state"].get("recorded"))
+                is_rec, is_recorded = bool(session["pron_state"].get("recording")), bool(session["pron_state"].get("recorded"))
+                rec_btn = ft.ElevatedButton("⏹ 중지", on_click=lambda e: stop_recording(), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white") if is_rec else (ft.ElevatedButton("✅ 결과 보기", on_click=lambda e: open_pron_result_for_current(), expand=True, bgcolor=COLOR_EVAL, color="white") if is_recorded else ft.ElevatedButton("🎙 문장 녹음", on_click=lambda e: start_recording(), expand=True, bgcolor=COLOR_ACCENT, color="white"))
+                
+                return ft.Column([
+                    header,
+                    ft.Container(bgcolor="#eef5ff", padding=14, border_radius=16, margin=ft.margin.symmetric(vertical=12), border=ft.border.only(left=ft.BorderSide(5, COLOR_PRIMARY)), content=ft.Column([ft.Text("[Example]", size=11, color=COLOR_PRIMARY, weight="bold"), ft.Text(w.get("ex", ""), size=14, color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Text("어절별 듣기", size=11, color=COLOR_TEXT_DESC), eojeol_buttons(w.get("ex", ""))], spacing=6)),
+                    ft.Row([ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e: play_tts(w.get("ex", "")), expand=True, bgcolor=COLOR_PRIMARY, color="white"), rec_btn], spacing=10),
+                    ft.Container(height=8), status_text, ft.Container(expand=True),
+                    ft.Row([ft.OutlinedButton("앞면 보기", on_click=lambda _: flip_card(), expand=True), ft.OutlinedButton("이전", on_click=lambda e: change_card(-1), expand=True), ft.OutlinedButton("다음", on_click=lambda e: change_card(1), expand=True)], spacing=10)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
-                if not is_rec and not is_recorded:
-                    rec_btn = ft.ElevatedButton("🎙 문장 녹음", on_click=lambda e: start_recording(), expand=True, bgcolor=COLOR_ACCENT, color="white")
-                elif is_rec and not is_recorded:
-                    rec_btn = ft.ElevatedButton("⏹ 중지", on_click=lambda e: stop_recording(), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white")
-                else:
-                    rec_btn = ft.ElevatedButton("✅ 결과 보기", on_click=lambda e: open_pron_result_for_current(), expand=True, bgcolor=COLOR_EVAL, color="white")
-
-                return ft.Column(
-                    [
-                        header,
-                        ft.Container(
-                            bgcolor="#eef5ff",
-                            padding=14,
-                            border_radius=16,
-                            margin=ft.margin.symmetric(vertical=12),
-                            border=ft.border.only(left=ft.BorderSide(5, COLOR_PRIMARY)),
-                            content=ft.Column(
-                                [
-                                    ft.Text("[Example]", size=11, color=COLOR_PRIMARY, weight="bold"),
-                                    ft.Text(w.get("ex", ""), size=14, color=COLOR_TEXT_MAIN),
-                                    ft.Container(height=8),
-                                    ft.Text("어절별 듣기", size=11, color=COLOR_TEXT_DESC),
-                                    eojeol_buttons(w.get("ex", "")),
-                                ],
-                                spacing=6,
-                            ),
-                        ),
-                        ft.Row(
-                            [
-                                ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e: play_tts(w.get("ex", "")), expand=True, bgcolor=COLOR_PRIMARY, color="white"),
-                                rec_btn,
-                            ],
-                            spacing=10,
-                        ),
-                        ft.Container(height=8),
-                        status_text,
-                        ft.Container(expand=True),
-                        ft.Row(
-                            [
-                                ft.OutlinedButton("앞면 보기", on_click=lambda _: flip_card(), expand=True),
-                                ft.OutlinedButton("이전", on_click=lambda e: change_card(-1), expand=True),
-                                ft.OutlinedButton("다음", on_click=lambda e: change_card(1), expand=True),
-                            ],
-                            spacing=10,
-                        ),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                )
-
-        card_container = ft.Container(
-            content=render_card_content(),
-            width=340,
-            bgcolor=COLOR_CARD_BG,
-            border_radius=24,
-            padding=20,
-            shadow=ft.BoxShadow(blur_radius=30, color="#14000000", offset=ft.Offset(0, 14)),
-            alignment=ft.Alignment(0, 0),
-            on_click=lambda e: flip_card(e),
-        )
-
+        card_container = ft.Container(content=render_card_content(), width=340, bgcolor=COLOR_CARD_BG, border_radius=24, padding=20, shadow=ft.BoxShadow(blur_radius=30, color="#14000000", offset=ft.Offset(0, 14)), alignment=ft.Alignment(0, 0), on_click=lambda e: flip_card(e))
+        
         def update_view():
             if card_container.page:
                 card_container.content = render_card_content()
                 card_container.update()
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    content=ft.Column(
-                        [
-                            ft.Container(height=4),
-                            card_container,
-                            ft.Container(height=10),
-                            ft.Text("카드를 터치하거나 버튼으로 앞/뒤를 전환하세요", color="#bdc3c7", size=11),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        scroll="auto",
-                        expand=True,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
-        )
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Container(height=4), card_container, ft.Container(height=10), ft.Text("카드를 터치하거나 버튼으로 앞/뒤를 전환하세요", color="#bdc3c7", size=11)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))])
+        return mobile_shell("/study", body, title="단어 학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 
-        return mobile_shell(
-            "/study",
-            body,
-            title="단어 학습",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/level_select")),
-        )
-
-    # =============================================================================
-    # View: Pronunciation Result
-    # =============================================================================
     def view_pron_result():
-        if not session.get("user"):
-            return mobile_shell("/pron_result", ft.Text("로그인이 필요합니다."), title="발음 결과")
+        if not session.get("user"): return mobile_shell("/pron_result", ft.Text("로그인이 필요합니다."), title="발음 결과")
         ps = session.get("pron_state", {})
-        word = ps.get("target_word", "")
-        example_text = ps.get("target_example", "")
-        recorded = bool(ps.get("recorded", False))
-
-        score_text = ft.Text("", size=22, weight="bold", color=COLOR_EVAL)
-        comment_text = ft.Text("", size=12, color=COLOR_TEXT_DESC, text_align="center")
-        detail_col = ft.Column(scroll="auto", expand=True, spacing=6)
-
-        result_box = ft.Container(
-            visible=False,
-            bgcolor="#f8f9fa",
-            border_radius=18,
-            padding=16,
-            border=ft.border.all(1, "#eef1f4"),
-            content=ft.Column(
-                [
-                    ft.Text("평가 결과", size=13, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=8),
-                    ft.Row(
-                        [
-                            ft.Container(
-                                width=88,
-                                height=88,
-                                border_radius=44,
-                                border=ft.border.all(5, COLOR_EVAL),
-                                alignment=ft.Alignment(0, 0),
-                                content=ft.Column(
-                                    [score_text, ft.Text("점수", size=10, color="grey")],
-                                    alignment=ft.MainAxisAlignment.CENTER,
-                                    spacing=0,
-                                ),
-                            ),
-                            ft.Container(expand=True),
-                        ]
-                    ),
-                    ft.Container(height=6),
-                    comment_text,
-                    ft.Divider(height=18),
-                    ft.Text("어절별 점수(더미)", size=11, color=COLOR_TEXT_DESC),
-                    ft.Container(height=6),
-                    ft.Container(content=detail_col, height=220),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            ),
-        )
+        word, example_text, recorded = ps.get("target_word", ""), ps.get("target_example", ""), bool(ps.get("recorded", False))
+        score_text, comment_text, detail_col = ft.Text("", size=22, weight="bold", color=COLOR_EVAL), ft.Text("", size=12, color=COLOR_TEXT_DESC, text_align="center"), ft.Column(scroll="auto", expand=True, spacing=6)
+        result_box = ft.Container(visible=False, bgcolor="#f8f9fa", border_radius=18, padding=16, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("평가 결과", size=13, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Row([ft.Container(width=88, height=88, border_radius=44, border=ft.border.all(5, COLOR_EVAL), alignment=ft.Alignment(0, 0), content=ft.Column([score_text, ft.Text("점수", size=10, color="grey")], alignment=ft.MainAxisAlignment.CENTER, spacing=0)), ft.Container(expand=True)]), ft.Container(height=6), comment_text, ft.Divider(height=18), ft.Text("어절별 점수(더미)", size=11, color=COLOR_TEXT_DESC), ft.Container(height=6), ft.Container(content=detail_col, height=220)], horizontal_alignment=ft.CrossAxisAlignment.CENTER))
 
         def run_ai_eval(e=None):
-            if not recorded:
-                show_snack("먼저 문장 녹음을 완료해 주세요. (현재는 더미)", COLOR_ACCENT)
-                return
-
+            if not recorded: return show_snack("먼저 문장 녹음을 완료해 주세요. (현재는 더미)", COLOR_ACCENT)
             score, raw_comment, tag, detail = evaluate_pronunciation_dummy(example_text or word)
-            comment = post_process_comment(tag, raw_comment)
-
-            score_text.value = str(score)
-            comment_text.value = comment
-
-            detail_col.controls = []
-            for d in detail:
-                unit = d.get("unit", "")
-                sc = int(d.get("score", 0))
-                detail_col.controls.append(
-                    ft.Container(
-                        bgcolor="white",
-                        border_radius=14,
-                        padding=10,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Row(
-                            [
-                                ft.Text(unit, size=12, color=COLOR_TEXT_MAIN),
-                                ft.Text(f"{sc}점", size=12, weight="bold", color=COLOR_EVAL if sc >= 85 else COLOR_ACCENT),
-                            ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        ),
-                    )
-                )
-
+            score_text.value, comment_text.value = str(score), post_process_comment(tag, raw_comment)
+            detail_col.controls = [ft.Container(bgcolor="white", border_radius=14, padding=10, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Text(d.get("unit", ""), size=12, color=COLOR_TEXT_MAIN), ft.Text(f"{d.get('score', 0)}점", size=12, weight="bold", color=COLOR_EVAL if d.get('score', 0) >= 85 else COLOR_ACCENT)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)) for d in detail]
             result_box.visible = True
             page.update()
-
-            # 학습 로그(해당 단어 점수 저장)
+            
             try:
-                topic = session.get("topic", "")
-                wlist = session.get("study_words", [])
-                found = None
-                for it in wlist:
-                    if it.get("word") == word:
-                        found = it
-                        break
+                topic, wlist = session.get("topic", ""), session.get("study_words", [])
+                found = next((it for it in wlist if it.get("word") == word), None)
                 if found and topic:
-                    user = get_user(session["user"]["id"]) or session["user"]
-                    user = update_learned_word(user, topic, found, score)
-                    update_user(user["id"], user)
+                    u_session = session.get("user")
+                    uid = u_session.get("id") or u_session.get("uid")
+                    user = update_learned_word(ensure_progress(get_user(uid) or u_session), topic, found, score)
+                    update_user(uid, user)
                     session["user"] = user
-            except Exception as err2:
-                log_write(f"persist pron score error: {err2}")
+            except Exception as err2: log_write(f"persist pron score error: {err2}")
 
         def back_to_study(e=None):
-            session["pron_state"]["recording"] = False
-            session["pron_state"]["recorded"] = False
+            session["pron_state"].update({"recording": False, "recorded": False})
             go_to("/study")
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    content=ft.Column(
-                        [
-                            ft.Text("발음 녹음 결과", size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                            ft.Container(height=10),
-                            ft.Container(
-                                bgcolor="white",
-                                border_radius=18,
-                                padding=14,
-                                border=ft.border.all(1, "#eef1f4"),
-                                content=ft.Column(
-                                    [
-                                        ft.Text(word, size=20, weight="bold", color=COLOR_TEXT_MAIN),
-                                        ft.Text(example_text, size=13, color=COLOR_TEXT_DESC),
-                                        ft.Container(height=8),
-                                        ft.Row(
-                                            [
-                                                ft.ElevatedButton("▶ 문장 듣기", on_click=lambda _: play_tts(example_text), bgcolor=COLOR_PRIMARY, color="white", expand=True),
-                                                ft.ElevatedButton("AI 평가", on_click=run_ai_eval, bgcolor=COLOR_ACCENT, color="white", expand=True),
-                                            ],
-                                            spacing=10,
-                                        ),
-                                        ft.Container(height=10),
-                                        result_box,
-                                    ],
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                ),
-                            ),
-                            ft.Container(height=12),
-                            ft.ElevatedButton("학습 계속하기", on_click=back_to_study, bgcolor=COLOR_TEXT_MAIN, color="white", width=320),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
-        )
-
-        return mobile_shell(
-            "/pron_result",
-            body,
-            title="발음 결과",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")),
-        )
-    
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Text("발음 녹음 결과", size=16, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=10), ft.Container(bgcolor="white", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(word, size=20, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(example_text, size=13, color=COLOR_TEXT_DESC), ft.Container(height=8), ft.Row([ft.ElevatedButton("▶ 문장 듣기", on_click=lambda _: play_tts(example_text), bgcolor=COLOR_PRIMARY, color="white", expand=True), ft.ElevatedButton("AI 평가", on_click=run_ai_eval, bgcolor=COLOR_ACCENT, color="white", expand=True)], spacing=10), ft.Container(height=10), result_box], horizontal_alignment=ft.CrossAxisAlignment.CENTER)), ft.Container(height=12), ft.ElevatedButton("학습 계속하기", on_click=back_to_study, bgcolor=COLOR_TEXT_MAIN, color="white", width=320)], horizontal_alignment=ft.CrossAxisAlignment.CENTER))])
+        return mobile_shell("/pron_result", body, title="발음 결과", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")), bottom_nav=student_bottom_nav("home"))
 
     def make_test_queue(topic: str, today_words: list[dict], n_choices: int = 4) -> list[dict]:
-        """
-        사양서(p33~35)용 연습문제 생성:
-        - 질문: 뜻(mean) 기반
-        - 보기: 4개(정답 1 + 오답 3)
-        - 오답은 누적해서 빨강 유지(리트라이 강제)
-        """
-        # distractor 풀: 같은 토픽 전체 단어 우선, 부족하면 오늘 단어
         topic_pool = VOCAB_DB.get(topic, []) or []
         pool_words = [it.get("word", "").strip() for it in topic_pool if it.get("word")]
         pool_words = [w for w in pool_words if w]
-
         today_pool = [it.get("word", "").strip() for it in (today_words or []) if it.get("word")]
         today_pool = [w for w in today_pool if w]
 
@@ -2063,65 +954,30 @@ def main(page: ft.Page):
 
         for it in base:
             correct = (it.get("word", "") or "").strip()
-            if not correct:
-                continue
-
-            prompt = (it.get("mean", "") or "").strip()
-            if not prompt:
-                # mean이 비어있으면 desc -> ex 순으로 fallback
-                prompt = (it.get("desc", "") or "").strip() or (it.get("ex", "") or "").strip()
-            if not prompt:
-                prompt = "이 설명에 알맞은 단어는 무엇일까요?"
-
-            # 오답 후보 수집
+            if not correct: continue
+            prompt = (it.get("mean", "") or "").strip() or (it.get("desc", "") or "").strip() or (it.get("ex", "") or "").strip() or "이 설명에 알맞은 단어는 무엇일까요?"
+            
             candidates = [w for w in pool_words if w != correct]
-            if len(candidates) < (n_choices - 1):
-                candidates += [w for w in today_pool if w != correct and w not in candidates]
-
-            # 그래도 부족하면(아주 작은 데이터셋) 가능한 범위에서만 구성
+            if len(candidates) < (n_choices - 1): candidates += [w for w in today_pool if w != correct and w not in candidates]
             random.shuffle(candidates)
-            wrongs = candidates[: max(0, n_choices - 1)]
-            choices = [correct] + wrongs
-            # 보기 4개가 안되면 중복 없이 가능한 만큼만 사용(그래도 동작은 함)
+            choices = [correct] + candidates[: max(0, n_choices - 1)]
             choices = list(dict.fromkeys(choices))
             random.shuffle(choices)
-
-            qlist.append(
-                {
-                    "prompt": prompt,
-                    "correct": correct,
-                    "choices": choices,
-                    # 상태값(사양서 동작)
-                    "selected": None,          # 현재 선택
-                    "wrong_set": set(),        # 누적 오답(빨강 유지)
-                    "answered": False,         # 정답 처리 완료 여부
-                    "just_correct": False,     # 직전 제출이 정답인지
-                }
-            )
-
+            qlist.append({"prompt": prompt, "correct": correct, "choices": choices, "selected": None, "wrong_set": set(), "answered": False, "just_correct": False})
         return qlist
-    # =============================================================================
-    # View: Review Start
-    # =============================================================================
-    def view_review_start():
-        if not session.get("user"):
-            return mobile_shell("/review_start", ft.Text("로그인이 필요합니다."), title="복습 안내")
-        topic = session.get("topic", "")
-        user = get_user(session["user"]["id"]) or session["user"]
-        user = ensure_progress(user)
 
+    def view_review_start():
+        if not session.get("user"): return mobile_shell("/review_start", ft.Text("로그인이 필요합니다."), title="복습 안내")
+        topic = session.get("topic", "")
+        u_session = session.get("user")
+        uid = u_session.get("id") or u_session.get("uid")
+        user = ensure_progress(get_user(uid) or u_session)
         thr = int(load_system().get("review_threshold", 85))
 
         today_words = session.get("today_words", []) or session.get("study_words", [])
         tpdata = user["progress"]["topics"].get(topic, {})
         learned = tpdata.get("learned", {})
-        low_items = []
-        for it in today_words:
-            w = it.get("word", "")
-            sc = learned.get(w, {}).get("last_score", 999)
-            if sc < thr:
-                low_items.append(it)
-
+        low_items = [it for it in today_words if learned.get(it.get("word", ""), {}).get("last_score", 999) < thr]
         low_cnt = len(low_items)
 
         auto_text = ft.Text("", size=12, color=COLOR_TEXT_DESC)
@@ -2129,603 +985,218 @@ def main(page: ft.Page):
 
         def start_auto_countdown_if_needed():
             if low_cnt <= 0:
-                auto_text.value = "복습 대상이 없습니다."
-                auto_bar.visible = False
+                auto_text.value, auto_bar.visible = "복습 대상이 없습니다.", False
                 return
-
-            # UI 초기화
-            auto_bar.visible = True
-            auto_bar.value = 0.0
-
-            total_sec = 3.0
-            tick = 0.1
-
-            # 이전 예약/카운트다운 취소용 토큰
-            token = bump_nav_token()
+            auto_bar.visible, auto_bar.value = True, 0.0
+            total_sec, tick, token = 3.0, 0.1, bump_nav_token()
 
             async def _countdown():
-                err = None
                 try:
                     remain = total_sec
                     while remain > 0:
-                        # 다른 화면으로 이동/다른 예약 발생하면 취소
-                        if token != session.get("nav_token"):
-                            return
-                        # route가 review_start가 아니면 취소
-                        if ((page.route or "").split("?", 1)[0] != "/review_start"):
-                            return
-
+                        if token != session.get("nav_token") or ((page.route or "").split("?", 1)[0] != "/review_start"): return
                         auto_text.value = f"{int(remain + 0.999)}초 후 복습이 자동 시작됩니다…"
                         auto_bar.value = 1.0 - (remain / total_sec)
                         page.update()
-
                         await asyncio.sleep(tick)
                         remain -= tick
-
-                    # 마지막 0초 처리
-                    if token != session.get("nav_token"):
-                        return
-                    if ((page.route or "").split("?", 1)[0] != "/review_start"):
-                        return
-
-                    auto_text.value = "복습을 시작합니다…"
-                    auto_bar.value = 1.0
+                    if token != session.get("nav_token") or ((page.route or "").split("?", 1)[0] != "/review_start"): return
+                    auto_text.value, auto_bar.value = "복습을 시작합니다…", 1.0
                     page.update()
-
                     _prepare_review_words()
                     page.go("/study")
-
-                except Exception as err:
-                    log_write(f"auto countdown error: {repr(err)}")
-
-            try:
-                page.run_task(_countdown)
-            except Exception:
-                # run_task가 없는 환경이면 자동 카운트다운만 빠짐(버튼은 여전히 동작)
-                pass
-
+                except Exception as err: log_write(f"auto countdown error: {repr(err)}")
+            try: page.run_task(_countdown)
+            except: pass
 
         def _prepare_review_words():
-            session.update({"study_words": low_items, "idx": 0})
-            session["is_review"] = True
-
-            user2 = get_user(user["id"]) or user
-            user2 = ensure_progress(user2)
+            session.update({"study_words": low_items, "idx": 0, "is_review": True})
+            u_session = session.get("user")
+            uid = u_session.get("id") or u_session.get("uid")
+            user2 = ensure_progress(get_user(uid) or u_session)
             user2["progress"]["last_session"] = {"topic": topic, "idx": 0}
-            update_user(user2["id"], user2)
+            update_user(uid, user2)
             session["user"] = user2
 
         def start_review_today(e=None, *, silent=False):
-            if low_cnt == 0:
-                if not silent:
-                    show_snack("복습 대상이 없습니다.", COLOR_PRIMARY)
-                return
+            if low_cnt == 0: return (not silent) and show_snack("복습 대상이 없습니다.", COLOR_PRIMARY)
             _prepare_review_words()
             go_to("/study")
 
         def start_test(e=None):
-            bump_nav_token()  # 카운트다운 취소
+            bump_nav_token()
             go_to("/test_intro")
 
         start_auto_countdown_if_needed()
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=24,
-                    content=ft.Column(
-                        [
-                            ft.Container(height=6),
-                            ft.Text("오늘 학습 수고했어요 💯", size=22, weight="bold", color=COLOR_PRIMARY),
-                            ft.Container(height=10),
-                            ft.Container(
-                                bgcolor="#f8f9fa",
-                                border_radius=20,
-                                padding=18,
-                                border=ft.border.all(1, "#eef1f4"),
-                                content=ft.Column(
-                                    [
-                                        ft.Text(f"복습 기준: {thr}점 미만", size=12, color=COLOR_TEXT_DESC),
-                                        ft.Text(f"오늘 학습 중 복습 대상: {low_cnt}개", size=14, weight="bold", color=COLOR_TEXT_MAIN),
-                                        ft.Text("점수 미달 단어를 한 번 더 보고 넘어가면 더 좋아요.", size=12, color=COLOR_TEXT_DESC),
-                                    ],
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                    spacing=6,
-                                ),
-                            ),
-                            ft.Container(height=16),
-                            ft.Row(
-                                [
-                                    ft.ElevatedButton("복습하기", on_click=start_review_today, expand=True, bgcolor=COLOR_ACCENT, color="white", disabled=(low_cnt == 0)),
-                                    ft.ElevatedButton("테스트 시작", on_click=start_test, expand=True, bgcolor=COLOR_TEXT_MAIN, color="white"),
-                                ],
-                                spacing=10,
-                            ),
-                            auto_text,
-                            ft.Container(height=6),
-                            auto_bar,
-                            ft.Container(height=10),
-                            ft.OutlinedButton("홈으로", on_click=lambda _: go_home(), width=320),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
-        )
+        body = ft.Column(spacing=0, controls=[
+            student_info_bar(),
+            ft.Container(expand=True, padding=24, content=ft.Column([
+                ft.Container(height=6), ft.Text("오늘 학습 수고했어요 💯", size=22, weight="bold", color=COLOR_PRIMARY), ft.Container(height=10),
+                ft.Container(bgcolor="#f8f9fa", border_radius=20, padding=18, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(f"복습 기준: {thr}점 미만", size=12, color=COLOR_TEXT_DESC), ft.Text(f"오늘 학습 중 복습 대상: {low_cnt}개", size=14, weight="bold", color=COLOR_TEXT_MAIN), ft.Text("점수 미달 단어를 한 번 더 보고 넘어가면 더 좋아요.", size=12, color=COLOR_TEXT_DESC)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6)),
+                ft.Container(height=16),
+                ft.Row([ft.ElevatedButton("복습하기", on_click=start_review_today, expand=True, bgcolor=COLOR_ACCENT, color="white", disabled=(low_cnt == 0)), ft.ElevatedButton("테스트 시작", on_click=start_test, expand=True, bgcolor=COLOR_TEXT_MAIN, color="white")], spacing=10),
+                auto_text, ft.Container(height=6), auto_bar, ft.Container(height=10), ft.OutlinedButton("홈으로", on_click=lambda _: go_home(), width=320)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER))
+        ])
+        return mobile_shell("/review_start", body, title="복습 안내", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")), bottom_nav=student_bottom_nav("home"))
 
-        return mobile_shell(
-            "/review_start",
-            body,
-            title="복습 안내",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")),
-        )
-    
     def view_test_intro():
-        if not session.get("user"):
-            return mobile_shell("/test_intro", ft.Text("로그인이 필요합니다."), title="연습문제")
+        if not session.get("user"): return mobile_shell("/test_intro", ft.Text("로그인이 필요합니다."), title="연습문제")
         topic = session.get("topic", "")
         today_words = session.get("today_words", []) or []
-        user = get_user(session["user"]["id"]) or session["user"]
-        user = ensure_progress(user)
+        u_session = session.get("user")
+        uid = u_session.get("id") or u_session.get("uid")
+        user = ensure_progress(get_user(uid) or u_session)
         thr = int(load_system().get("review_threshold", 85))
-
-        # 복습 단어 섞기(사양: 오늘+복습)
         tpdata = user["progress"]["topics"].get(topic, {})
         learned = tpdata.get("learned", {})
-        low_items = []
-        for it in today_words:
-            w = it.get("word", "")
-            sc = learned.get(w, {}).get("last_score", 999)
-            if sc < thr:
-                low_items.append(it)
+        low_items = [it for it in today_words if learned.get(it.get("word", ""), {}).get("last_score", 999) < thr]
 
         def start_test_now(e=None):
-            # 오늘단어 + 복습단어(중복 제거)
-            combined = []
-            seen = set()
+            combined, seen = [], set()
             for it in (today_words + low_items):
                 w = (it.get("word", "") or "").strip()
-                if not w or w in seen:
-                    continue
-                seen.add(w)
-                combined.append(it)
-
-            qlist = make_test_queue(topic, combined, n_choices=4)
-            session["test_queue"] = qlist
-            session["test_idx"] = 0
-            session["test_score"] = 0
-            session["is_review"] = False
+                if w and w not in seen:
+                    seen.add(w)
+                    combined.append(it)
+            session.update({"test_queue": make_test_queue(topic, combined, n_choices=4), "test_idx": 0, "test_score": 0, "is_review": False})
             go_to("/test?i=0")
 
         def stamp_widget():
-            # assets_dir="assets" 기준: assets/stamps/stamp_ok.png
-            stamp_path = "stamps/stamp_ok.png"
-            abs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", stamp_path)
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stamps/stamp_ok.png")
+            return ft.Image(src="stamps/stamp_ok.png", width=120, height=120, fit=ft.ImageFit.CONTAIN) if os.path.exists(path) else ft.Text("💮", size=70)
 
-            if os.path.exists(abs_path):
-                kwargs = dict(src=stamp_path, width=120, height=120)
+        body = ft.Column(spacing=0, controls=[
+            student_info_bar(),
+            ft.Container(expand=True, padding=24, content=ft.Column([
+                ft.Container(height=10), ft.Text("오늘 학습 완료!", size=22, weight="bold", color=COLOR_PRIMARY), ft.Container(height=10), ft.Text("✅ 연습문제를 풀어볼까요?", size=13, color=COLOR_TEXT_DESC),
+                ft.Container(height=18), ft.Container(width=140, height=140, border_radius=26, bgcolor="#f8f9fa", alignment=ft.Alignment(0, 0), content=stamp_widget()),
+                ft.Container(height=18), ft.ElevatedButton("시작하기", on_click=start_test_now, bgcolor=COLOR_TEXT_MAIN, color="white", width=320, height=48),
+                ft.Container(height=10), ft.OutlinedButton("나중에", on_click=lambda _: go_home(), width=320)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER))
+        ])
+        return mobile_shell("/test_intro", body, title="연습문제", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/review_start")), bottom_nav=student_bottom_nav("home"))
 
-                # Flet 버전별 호환: ImageFit이 있으면 사용
-                try:
-                    kwargs["fit"] = ft.ImageFit.CONTAIN
-                except Exception:
-                    # 구버전은 fit을 문자열로 받는 경우도 있음(또는 아예 없음)
-                    try:
-                        kwargs["fit"] = "contain"
-                    except Exception:
-                        pass
-
-                return ft.Image(**kwargs)
-
-            # 파일 없으면 fallback
-            return ft.Text("💮", size=70)
-
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=24,
-                    content=ft.Column(
-                        [
-                            ft.Container(height=10),
-                            ft.Text("오늘 학습 완료!", size=22, weight="bold", color=COLOR_PRIMARY),
-                            ft.Container(height=10),
-                            ft.Text("✅ 연습문제를 풀어볼까요?", size=13, color=COLOR_TEXT_DESC),
-                            ft.Container(height=18),
-                            ft.Container(
-                                width=140,
-                                height=140,
-                                border_radius=26,
-                                bgcolor="#f8f9fa",
-                                alignment=ft.Alignment(0, 0),
-                                content=stamp_widget(),
-                            ),
-                            ft.Container(height=18),
-                            ft.ElevatedButton(
-                                "시작하기",
-                                on_click=start_test_now,
-                                bgcolor=COLOR_TEXT_MAIN,
-                                color="white",
-                                width=320,
-                                height=48,
-                            ),
-                            ft.Container(height=10),
-                            ft.OutlinedButton("나중에", on_click=lambda _: go_home(), width=320),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
-        )
-        return mobile_shell(
-            "/test_intro",
-            body,
-            title="연습문제",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/review_start")),
-        )
-
-    # =============================================================================
-    # View: Test
-    # =============================================================================
     def view_test():
-        if not session.get("user"):
-            return mobile_shell("/test", ft.Text("로그인이 필요합니다."), title="연습문제")
+        if not session.get("user"): return mobile_shell("/test", ft.Text("로그인이 필요합니다."), title="연습문제")
         qlist = session.get("test_queue", [])
-        if not qlist:
-            body = ft.Container(
-                padding=24,
-                content=ft.Column(
-                    [
-                        ft.Text("테스트 데이터가 없습니다.", size=13, color=COLOR_TEXT_DESC),
-                        ft.Container(height=10),
-                        ft.ElevatedButton("홈", on_click=lambda _: go_home(), bgcolor=COLOR_PRIMARY, color="white"),
-                    ],
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                ),
-            )
-            return mobile_shell(
-                "/test", body, title="연습문제",
-                leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home())
-            )
+        if not qlist: return mobile_shell("/test", ft.Container(padding=24, content=ft.Column([ft.Text("테스트 데이터가 없습니다.", size=13, color=COLOR_TEXT_DESC), ft.Container(height=10), ft.ElevatedButton("홈", on_click=lambda _: go_home(), bgcolor=COLOR_PRIMARY, color="white")], horizontal_alignment=ft.CrossAxisAlignment.CENTER)), title="연습문제", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
 
-        idx = int(session.get("test_idx", 0) or 0)
-        idx = max(0, min(idx, len(qlist) - 1))
-        q = qlist[idx]
-        total = len(qlist)
-
+        idx = max(0, min(int(session.get("test_idx", 0) or 0), len(qlist) - 1))
+        q, total = qlist[idx], len(qlist)
         feedback = ft.Text("", size=12, weight="bold")
-
-        # 옵션 컨테이너들을 참조로 들고 있다가 스타일을 직접 바꿔준다
-        option_boxes: list[ft.Container] = []
+        option_boxes = []
 
         def _ensure_wrong_set():
-            ws = q.get("wrong_set")
-            if not isinstance(ws, set):
-                ws = set()
-                q["wrong_set"] = ws
-            return ws
+            if not isinstance(q.get("wrong_set"), set): q["wrong_set"] = set()
+            return q["wrong_set"]
 
-        def apply_styles(do_update: bool = True):
-            selected = q.get("selected")
-            answered = bool(q.get("answered"))
-            correct = q.get("correct")
-            wrong_set = _ensure_wrong_set()
-
+        def apply_styles(do_update=True):
+            selected, answered, correct, wrong_set = q.get("selected"), bool(q.get("answered")), q.get("correct"), _ensure_wrong_set()
             for box in option_boxes:
                 word = box.data
+                border_color, bg, txt_color = "#dfe6ee", "white", COLOR_TEXT_MAIN
+                if word in wrong_set: border_color, bg, txt_color = COLOR_ACCENT, "#fff5f5", COLOR_ACCENT
+                if answered and word == correct: border_color, bg, txt_color = COLOR_EVAL, "#f0fdf4", COLOR_EVAL
+                if (not answered) and selected == word: border_color, bg, txt_color = COLOR_PRIMARY, "#eef5ff", COLOR_PRIMARY
+                box.border, box.bgcolor = ft.border.all(2, border_color), bg
+                if isinstance(box.content, ft.Text): box.content.color = txt_color
+                if do_update and box.page: box.update()
 
-                border_color = "#dfe6ee"
-                bg = "white"
-                txt_color = COLOR_TEXT_MAIN
-
-                # 오답 누적(빨강 유지)
-                if word in wrong_set:
-                    border_color = COLOR_ACCENT
-                    bg = "#fff5f5"
-                    txt_color = COLOR_ACCENT
-
-                # 정답 처리 후 정답만 초록
-                if answered and word == correct:
-                    border_color = COLOR_EVAL
-                    bg = "#f0fdf4"
-                    txt_color = COLOR_EVAL
-
-                # 제출 전 선택 표시(파랑)
-                if (not answered) and selected == word:
-                    border_color = COLOR_PRIMARY
-                    bg = "#eef5ff"
-                    txt_color = COLOR_PRIMARY
-
-                box.border = ft.border.all(2, border_color)
-                box.bgcolor = bg
-                if isinstance(box.content, ft.Text):
-                    box.content.color = txt_color
-
-                if do_update and box.page:
-                    box.update()
-
-        def pick(word: str):
-            if q.get("answered"):
-                return
+        def pick(word):
+            if q.get("answered"): return
             q["selected"] = word
             feedback.value = ""
             feedback.update()
             apply_styles()
 
-        def save_wrong_once(user_ans: str, correct: str, prompt: str):
-            user = get_user(session["user"]["id"]) or session["user"]
-            user = add_wrong_note(user, session.get("topic", ""), prompt, correct, user_ans)
-            update_user(user["id"], user)
+        def save_wrong_once(user_ans, correct, prompt):
+            u_session = session.get("user")
+            uid = u_session.get("id") or u_session.get("uid")
+            user = add_wrong_note(ensure_progress(get_user(uid) or u_session), session.get("topic", ""), prompt, correct, user_ans)
+            update_user(uid, user)
             session["user"] = user
 
         def on_next(e=None):
             session["test_idx"] = idx + 1
-            if session["test_idx"] >= total:
-                go_to("/study_complete")
-            else:
-                go_to(f"/test?i={session['test_idx']}")
-
-
-        def on_primary(e=None):
-            if q.get("answered"):
-                on_next()
-            else:
-                on_confirm()
+            go_to("/study_complete" if session["test_idx"] >= total else f"/test?i={session['test_idx']}")
 
         def on_confirm(e=None):
-            if q.get("answered"):
-                on_next()
-                return
-
+            if q.get("answered"): return on_next()
             selected = (q.get("selected") or "").strip()
-            if not selected:
-                show_snack("보기를 선택해주세요.", COLOR_ACCENT)
-                return
-
-            correct = (q.get("correct") or "").strip()
-            prompt = (q.get("prompt") or "").strip()
+            if not selected: return show_snack("보기를 선택해주세요.", COLOR_ACCENT)
+            correct, prompt = (q.get("correct") or "").strip(), (q.get("prompt") or "").strip()
 
             if selected == correct:
                 q["answered"] = True
                 session["test_score"] = int(session.get("test_score", 0) or 0) + 1
-
-                feedback.value = "✨ 정답입니다!"
-                feedback.color = COLOR_EVAL
-                feedback.update()
-
-                # 버튼을 “다음 문제”로 바꾸고 handler도 변경
-                primary_btn.text = "다음 문제"
-                primary_btn.on_click = on_next
-                primary_btn.update()
-
-                apply_styles()
+                feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
+                primary_btn.text, primary_btn.on_click = "다음 문제", on_next
             else:
-                # 오답: 정답 공개 X, 오답만 빨강 누적 유지, 리트라이
                 ws = _ensure_wrong_set()
                 if selected not in ws:
                     ws.add(selected)
                     save_wrong_once(selected, correct, prompt)
-
-                # 다시 풀도록 선택 해제(선택 파랑 제거)
                 q["selected"] = None
+                feedback.value, feedback.color = "오답입니다. 다시 풀어보세요.", COLOR_ACCENT
+            
+            feedback.update()
+            primary_btn.update()
+            apply_styles()
 
-                feedback.value = "오답입니다. 다시 풀어보세요."
-                feedback.color = COLOR_ACCENT
-                feedback.update()
-
-                apply_styles()
-
-        # 보기 만들기
         for w in (q.get("choices") or []):
-            box = ft.Container(
-                width=320,
-                padding=ft.padding.symmetric(horizontal=14, vertical=12),
-                border_radius=12,
-                border=ft.border.all(2, "#dfe6ee"),
-                bgcolor="white",
-                ink=True,
-                data=w,  # 옵션 단어 저장
-                on_click=lambda e, ww=w: pick(ww),
-                content=ft.Text(w, size=13, color=COLOR_TEXT_MAIN, weight="bold"),
-            )
-            option_boxes.append(box)
+            option_boxes.append(ft.Container(width=320, padding=ft.padding.symmetric(horizontal=14, vertical=12), border_radius=12, border=ft.border.all(2, "#dfe6ee"), bgcolor="white", ink=True, data=w, on_click=lambda e, ww=w: pick(ww), content=ft.Text(w, size=13, color=COLOR_TEXT_MAIN, weight="bold")))
 
-        # 하단 버튼(초기 상태 반영)
         is_answered = bool(q.get("answered"))
-        primary_btn = ft.ElevatedButton(
-            "다음 문제" if is_answered else "확인",
-            on_click=on_primary,
-            width=320,
-            height=48,
-            style=ft.ButtonStyle(
-                bgcolor=COLOR_PRIMARY,
-                color="white",
-                shape=ft.RoundedRectangleBorder(radius=14),
-            ),
-        )
+        primary_btn = ft.ElevatedButton("다음 문제" if is_answered else "확인", on_click=on_next if is_answered else on_confirm, width=320, height=48, style=ft.ButtonStyle(bgcolor=COLOR_PRIMARY, color="white", shape=ft.RoundedRectangleBorder(radius=14)))
+        if is_answered: feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
 
-        # 초기 스타일/피드백 세팅
-        if is_answered:
-            feedback.value = "✨ 정답입니다!"
-            feedback.color = COLOR_EVAL
+        body = ft.Column(spacing=0, controls=[
+            student_info_bar(),
+            ft.Container(expand=True, padding=20, content=ft.Column([
+                ft.Container(bgcolor="#ffffff", border_radius=20, padding=18, border=ft.border.all(1, "#eef1f4"), content=ft.Column([
+                    ft.Text(f"문제 {idx+1}/{total}", size=12, color=COLOR_PRIMARY, weight="bold"), ft.Container(height=8),
+                    ft.Container(bgcolor="#f8f9fa", border_radius=14, padding=14, content=ft.Column([ft.Text(f"“{q.get('prompt','')}”", size=13, color=COLOR_TEXT_MAIN), ft.Container(height=6), ft.Text("이 설명에 알맞은 단어는 무엇일까요?", size=12, color=COLOR_TEXT_DESC)], spacing=0)),
+                    ft.Container(height=12), ft.Column(option_boxes, spacing=10), ft.Container(height=10), feedback, ft.Container(height=18), primary_btn
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER))
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))
+        ])
+        apply_styles(False)
+        return mobile_shell("/test", body, title="연습문제", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    content=ft.Column(
-                        [
-                            ft.Container(
-                                bgcolor="#ffffff",
-                                border_radius=20,
-                                padding=18,
-                                border=ft.border.all(1, "#eef1f4"),
-                                content=ft.Column(
-                                    [
-                                        ft.Text(f"문제 {idx+1}/{total}", size=12, color=COLOR_PRIMARY, weight="bold"),
-                                        ft.Container(height=8),
-                                        ft.Container(
-                                            bgcolor="#f8f9fa",
-                                            border_radius=14,
-                                            padding=14,
-                                            content=ft.Column(
-                                                [
-                                                    ft.Text(f"“{q.get('prompt','')}”", size=13, color=COLOR_TEXT_MAIN),
-                                                    ft.Container(height=6),
-                                                    ft.Text("이 설명에 알맞은 단어는 무엇일까요?", size=12, color=COLOR_TEXT_DESC),
-                                                ],
-                                                spacing=0,
-                                            ),
-                                        ),
-                                        ft.Container(height=12),
-                                        ft.Column(option_boxes, spacing=10),
-                                        ft.Container(height=10),
-                                        feedback,
-                                        ft.Container(height=18),
-                                        primary_btn,
-                                    ],
-                                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                                ),
-                            )
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        scroll="auto",
-                        expand=True,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
-        )
-
-        apply_styles(do_update=False)  # 초기 렌더용(업데이트 호출 없이)
-
-        return mobile_shell(
-            "/test",
-            body,
-            title="연습문제",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
-        )
-
-    # =============================================================================
-    # View: Study Complete
-    # =============================================================================
     def view_study_complete():
-        if not session.get("user"):
-            return mobile_shell("/study_complete", ft.Text("로그인이 필요합니다."), title="학습 결과")
-
-        qlist = session.get("test_queue", [])
-        total = len(qlist) if qlist else 0
-        score = int(session.get("test_score", 0) or 0)
-
-        # 사양서 예시: 3문제 중 2문제도 통과 → 기준을 2/3로 설정
-        required = math.ceil((2 * max(1, total)) / 3)
-        passed = (score >= required)
-
-        def go_continue(e=None):
-            # “이어서 학습하기”는 토픽 선택으로 연결(원하면 /study로 이어도 됨)
-            go_to("/level_select")
-
-        def go_done(e=None):
-            # “오늘 학습 완료”
-            go_to("/student_home")
+        if not session.get("user"): return mobile_shell("/study_complete", ft.Text("로그인이 필요합니다."), title="학습 결과")
+        qlist, total, score = session.get("test_queue", []), len(session.get("test_queue", [])), int(session.get("test_score", 0) or 0)
+        passed = (score >= math.ceil((2 * max(1, total)) / 3))
 
         def retry_test(e=None):
-            # 다시 풀기: 상태 초기화
-            for q in (session.get("test_queue", []) or []):
-                q["selected"] = None
-                q["wrong_set"] = set()
-                q["answered"] = False
-                q["just_correct"] = False
-            session["test_idx"] = 0
-            session["test_score"] = 0
+            for q in qlist: q.update({"selected": None, "wrong_set": set(), "answered": False, "just_correct": False})
+            session.update({"test_idx": 0, "test_score": 0})
             go_to("/test")
 
-        result_text = f"총 {total}문제 중 {score}문제를 맞혔습니다."
+        buttons = [ft.ElevatedButton("이어서 학습하기", on_click=lambda _: go_to("/level_select"), width=320, height=48, bgcolor=COLOR_EVAL if passed else COLOR_PRIMARY, color="white")]
+        if not passed: buttons.append(ft.ElevatedButton("다시 풀기", on_click=retry_test, width=320, height=48, bgcolor=COLOR_SECONDARY, color="white"))
+        buttons.append(ft.ElevatedButton("오늘 학습 완료", on_click=lambda _: go_to("/student_home"), width=320, height=48, bgcolor=COLOR_EVAL, color="white"))
 
-        buttons = []
-        if passed:
-            # p36: 통과 → 2개(둘 다 초록)
-            buttons = [
-                ft.ElevatedButton("이어서 학습하기", on_click=go_continue, width=320, height=48, bgcolor=COLOR_EVAL, color="white"),
-                ft.ElevatedButton("오늘 학습 완료", on_click=go_done, width=320, height=48, bgcolor=COLOR_EVAL, color="white"),
-            ]
-        else:
-            # p37: 미달 → 3개(파랑/주황/초록)
-            buttons = [
-                ft.ElevatedButton("이어서 학습하기", on_click=go_continue, width=320, height=48, bgcolor=COLOR_PRIMARY, color="white"),
-                ft.ElevatedButton("다시 풀기", on_click=retry_test, width=320, height=48, bgcolor=COLOR_SECONDARY, color="white"),
-                ft.ElevatedButton("오늘 학습 완료", on_click=go_done, width=320, height=48, bgcolor=COLOR_EVAL, color="white"),
-            ]
+        body = ft.Column(spacing=0, controls=[
+            student_info_bar(),
+            ft.Container(expand=True, padding=24, content=ft.Column([
+                ft.Container(height=10), ft.Text("🎉", size=42), ft.Container(height=6), ft.Text("학습 결과", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8),
+                ft.Text(f"총 {total}문제 중 {score}문제를 맞혔습니다.", size=12, color=COLOR_TEXT_DESC), ft.Container(height=22),
+                ft.Column(buttons, spacing=12, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.START))
+        ])
+        return mobile_shell("/study_complete", body, title="학습 결과", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=24,
-                    content=ft.Column(
-                        [
-                            ft.Container(height=10),
-                            ft.Text("🎉", size=42),
-                            ft.Container(height=6),
-                            ft.Text("학습 결과", size=18, weight="bold", color=COLOR_TEXT_MAIN),
-                            ft.Container(height=8),
-                            ft.Text(result_text, size=12, color=COLOR_TEXT_DESC),
-                            ft.Container(height=22),
-                            ft.Column(buttons, spacing=12, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        alignment=ft.MainAxisAlignment.START,
-                    ),
-                ),
-                student_bottom_nav(active="home"),
-            ],
-        )
-
-        return mobile_shell(
-            "/study_complete",
-            body,
-            title="학습 결과",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
-        )
-
-    # =============================================================================
-    # View: Cumulative
-    # =============================================================================
     def view_cumulative():
-        if not session.get("user"):
-            return mobile_shell("/cumulative", ft.Text("로그인이 필요합니다."), title="누적 학습")
-        user = get_user(session["user"]["id"]) or session["user"]
-        user = ensure_progress(user)
+        if not session.get("user"): return mobile_shell("/cumulative", ft.Text("로그인이 필요합니다."), title="누적 학습")
+        u_session = session.get("user")
+        uid = u_session.get("id") or u_session.get("uid")
+        user = ensure_progress(get_user(uid) or u_session)
 
-        topic_dd = ft.Dropdown(
-            width=220,
-            options=[ft.dropdown.Option(t) for t in sorted(VOCAB_DB.keys())],
-            value=session.get("topic") or (sorted(VOCAB_DB.keys())[0] if VOCAB_DB else None),
-        )
-
-        mask_dd = ft.Dropdown(
-            width=120,
-            options=[
-                ft.dropdown.Option("none", "가리기 없음"),
-                ft.dropdown.Option("word", "단어 가리기"),
-                ft.dropdown.Option("mean", "뜻 가리기"),
-            ],
-            value=session.get("mask_mode", "none"),
-        )
-
+        topic_dd = ft.Dropdown(width=220, options=[ft.dropdown.Option(t) for t in sorted(VOCAB_DB.keys())], value=session.get("topic") or (sorted(VOCAB_DB.keys())[0] if VOCAB_DB else None))
+        mask_dd = ft.Dropdown(width=120, options=[ft.dropdown.Option("none", "가리기 없음"), ft.dropdown.Option("word", "단어 가리기"), ft.dropdown.Option("mean", "뜻 가리기")], value=session.get("mask_mode", "none"))
         list_col = ft.Column(scroll="auto", expand=True)
 
         def render():
@@ -2737,90 +1208,32 @@ def main(page: ft.Page):
                 return
 
             tpdata = user["progress"]["topics"].get(tp, {})
-            learned = tpdata.get("learned", {})
-            items = sorted(learned.items(), key=lambda x: x[1].get("last_seen", ""), reverse=True)
+            items = sorted(tpdata.get("learned", {}).items(), key=lambda x: x[1].get("last_seen", ""), reverse=True)
 
             controls = []
             for w, info in items:
                 word_txt = "••••" if mask_dd.value == "word" else w
                 mean_txt = "••••" if mask_dd.value == "mean" else info.get("mean", "")
                 sc = info.get("last_score", 0)
-                controls.append(
-                    ft.Container(
-                        bgcolor="white",
-                        border_radius=16,
-                        padding=12,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Row(
-                            [
-                                ft.Column(
-                                    [
-                                        ft.Text(word_txt, size=15, weight="bold", color=COLOR_TEXT_MAIN),
-                                        ft.Text(mean_txt, size=11, color=COLOR_TEXT_DESC),
-                                        ft.Text(info.get("last_seen", ""), size=10, color="#95a5a6"),
-                                    ],
-                                    expand=True,
-                                    spacing=2,
-                                ),
-                                ft.Container(
-                                    padding=8,
-                                    border_radius=12,
-                                    bgcolor="#f0fdf4" if sc >= 85 else "#fff5f5",
-                                    content=ft.Text(f"{sc}점", weight="bold", color=COLOR_EVAL if sc >= 85 else COLOR_ACCENT),
-                                ),
-                            ]
-                        ),
-                    )
-                )
-
-            if not controls:
-                controls = [ft.Text("아직 누적 학습 데이터가 없습니다.", color=COLOR_TEXT_DESC)]
-            list_col.controls = controls
+                controls.append(ft.Container(bgcolor="white", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Column([ft.Text(word_txt, size=15, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(mean_txt, size=11, color=COLOR_TEXT_DESC), ft.Text(info.get("last_seen", ""), size=10, color="#95a5a6")], expand=True, spacing=2), ft.Container(padding=8, border_radius=12, bgcolor="#f0fdf4" if sc >= 85 else "#fff5f5", content=ft.Text(f"{sc}점", weight="bold", color=COLOR_EVAL if sc >= 85 else COLOR_ACCENT)) ])))
+            
+            list_col.controls = controls if controls else [ft.Text("아직 누적 학습 데이터가 없습니다.", color=COLOR_TEXT_DESC)]
             page.update()
 
         topic_dd.on_change = lambda e: render()
         mask_dd.on_change = lambda e: render()
         render()
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    content=ft.Column(
-                        [
-                            ft.Row([topic_dd, mask_dd], spacing=10),
-                            ft.Container(height=10),
-                            list_col,
-                        ]
-                    ),
-                ),
-                student_bottom_nav(active="stats"),
-            ],
-        )
-        return mobile_shell(
-            "/cumulative",
-            body,
-            title="누적 학습",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")),
-        )
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Row([topic_dd, mask_dd], spacing=10), ft.Container(height=10), list_col]))])
+        return mobile_shell("/cumulative", body, title="누적 학습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")), bottom_nav=student_bottom_nav("stats"))
 
-    # =============================================================================
-    # View: Wrong Notes
-    # =============================================================================
     def view_wrong_notes():
-        if not session.get("user"):
-            return mobile_shell("/wrong_notes", ft.Text("로그인이 필요합니다."), title="오답노트")
-        user = get_user(session["user"]["id"]) or session["user"]
-        user = ensure_progress(user)
+        if not session.get("user"): return mobile_shell("/wrong_notes", ft.Text("로그인이 필요합니다."), title="오답노트")
+        u_session = session.get("user")
+        uid = u_session.get("id") or u_session.get("uid")
+        user = ensure_progress(get_user(uid) or u_session)
 
-        topic_dd = ft.Dropdown(
-            width=260,
-            options=[ft.dropdown.Option(t) for t in sorted(VOCAB_DB.keys())],
-            value=session.get("topic") or (sorted(VOCAB_DB.keys())[0] if VOCAB_DB else None),
-        )
+        topic_dd = ft.Dropdown(width=260, options=[ft.dropdown.Option(t) for t in sorted(VOCAB_DB.keys())], value=session.get("topic") or (sorted(VOCAB_DB.keys())[0] if VOCAB_DB else None))
         col = ft.Column(scroll="auto", expand=True)
 
         def render():
@@ -2829,96 +1242,31 @@ def main(page: ft.Page):
                 col.controls = [ft.Text("토픽이 없습니다.")]
                 page.update()
                 return
-
-            tpdata = user["progress"]["topics"].get(tp, {})
-            wrongs = list(reversed(tpdata.get("wrong_notes", [])))
-            controls = []
-
-            for it in wrongs:
-                controls.append(
-                    ft.Container(
-                        bgcolor="white",
-                        border_radius=16,
-                        padding=12,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Column(
-                            [
-                                ft.Text(f"문제: {it.get('q','')}", weight="bold", color=COLOR_TEXT_MAIN),
-                                ft.Text(f"정답: {it.get('a','')}", color=COLOR_EVAL),
-                                ft.Text(f"내 답: {it.get('user','')}", color=COLOR_ACCENT),
-                                ft.Text(it.get("ts", ""), size=10, color="#95a5a6"),
-                            ],
-                            spacing=4,
-                        ),
-                    )
-                )
-
-            if not controls:
-                controls = [ft.Text("오답노트가 비어 있습니다.", color=COLOR_TEXT_DESC)]
-            col.controls = controls
+            wrongs = list(reversed(user["progress"]["topics"].get(tp, {}).get("wrong_notes", [])))
+            col.controls = [ft.Container(bgcolor="white", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(f"문제: {it.get('q','')}", weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"정답: {it.get('a','')}", color=COLOR_EVAL), ft.Text(f"내 답: {it.get('user','')}", color=COLOR_ACCENT), ft.Text(it.get("ts", ""), size=10, color="#95a5a6")], spacing=4)) for it in wrongs] if wrongs else [ft.Text("오답노트가 비어 있습니다.", color=COLOR_TEXT_DESC)]
             page.update()
 
         topic_dd.on_change = lambda e: render()
         render()
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Row([topic_dd], spacing=10), ft.Container(height=10), col]))])
+        return mobile_shell("/wrong_notes", body, title="오답노트", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")), bottom_nav=student_bottom_nav("stats"))
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    content=ft.Column(
-                        [
-                            ft.Row([topic_dd], spacing=10),
-                            ft.Container(height=10),
-                            col,
-                        ]
-                    ),
-                ),
-                student_bottom_nav(active="stats"),
-            ],
-        )
-        return mobile_shell(
-            "/wrong_notes",
-            body,
-            title="오답노트",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")),
-        )
-
-    # =============================================================================
-    # View: Review
-    # =============================================================================
     def view_review():
-        if not session.get("user"):
-            return mobile_shell("/review", ft.Text("로그인이 필요합니다."), title="복습")
-        user = get_user(session["user"]["id"]) or session["user"]
-        user = ensure_progress(user)
+        if not session.get("user"): return mobile_shell("/review", ft.Text("로그인이 필요합니다."), title="복습")
+        u_session = session.get("user")
+        uid = u_session.get("id") or u_session.get("uid")
+        user = ensure_progress(get_user(uid) or u_session)
+        thr = int(load_system().get("review_threshold", 85))
 
-        sysdata2 = load_system()
-        thr = int(sysdata2.get("review_threshold", 85))
-
-        topic_dd = ft.Dropdown(
-            width=260,
-            options=[ft.dropdown.Option(t) for t in sorted(VOCAB_DB.keys())],
-            value=session.get("topic") or (sorted(VOCAB_DB.keys())[0] if VOCAB_DB else None),
-        )
+        topic_dd = ft.Dropdown(width=260, options=[ft.dropdown.Option(t) for t in sorted(VOCAB_DB.keys())], value=session.get("topic") or (sorted(VOCAB_DB.keys())[0] if VOCAB_DB else None))
         col = ft.Column(scroll="auto", expand=True)
 
         def start_review(tp):
-            tpdata = user["progress"]["topics"].get(tp, {})
-            learned = tpdata.get("learned", {})
-            items = []
-            vocab = VOCAB_DB.get(tp, [])
-            vocab_map = {it["word"]: it for it in vocab if it.get("word")}
-            for w, info in learned.items():
-                if info.get("last_score", 100) < thr and w in vocab_map:
-                    items.append(vocab_map[w])
-            if not items:
-                show_snack("복습 대상 단어가 없습니다.", COLOR_PRIMARY)
-                return
-            session.update({"topic": tp, "study_words": items, "idx": 0})
-            session["is_review"] = True
+            learned = user["progress"]["topics"].get(tp, {}).get("learned", {})
+            vocab_map = {it["word"]: it for it in VOCAB_DB.get(tp, []) if it.get("word")}
+            items = [vocab_map[w] for w, info in learned.items() if info.get("last_score", 100) < thr and w in vocab_map]
+            if not items: return show_snack("복습 대상 단어가 없습니다.", COLOR_PRIMARY)
+            session.update({"topic": tp, "study_words": items, "idx": 0, "is_review": True})
             go_to("/study")
 
         def render():
@@ -2927,548 +1275,156 @@ def main(page: ft.Page):
                 col.controls = [ft.Text("토픽이 없습니다.")]
                 page.update()
                 return
-            tpdata = user["progress"]["topics"].get(tp, {})
-            learned = tpdata.get("learned", {})
-            low = [(w, info) for w, info in learned.items() if info.get("last_score", 100) < thr]
-            low.sort(key=lambda x: x[1].get("last_score", 0))
-
-            controls = [
-                ft.Container(
-                    bgcolor="#f8f9fa",
-                    border_radius=16,
-                    padding=12,
-                    border=ft.border.all(1, "#eef1f4"),
-                    content=ft.Row(
-                        [
-                            ft.Text(f"복습 기준: {thr}점 미만", color=COLOR_TEXT_DESC, size=12),
-                            ft.ElevatedButton("복습 시작", on_click=lambda _: start_review(tp), bgcolor=COLOR_ACCENT, color="white"),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    ),
-                )
-            ]
-            for w, info in low[:200]:
-                controls.append(
-                    ft.Container(
-                        bgcolor="white",
-                        border_radius=16,
-                        padding=12,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Row(
-                            [
-                                ft.Column(
-                                    [
-                                        ft.Text(w, weight="bold", color=COLOR_TEXT_MAIN),
-                                        ft.Text(info.get("mean", ""), size=11, color=COLOR_TEXT_DESC),
-                                    ],
-                                    expand=True,
-                                ),
-                                ft.Text(f"{info.get('last_score',0)}점", color=COLOR_ACCENT, weight="bold"),
-                            ]
-                        ),
-                    )
-                )
-            if len(controls) == 1:
-                controls.append(ft.Text("복습 대상이 없습니다.", color=COLOR_TEXT_DESC))
+            learned = user["progress"]["topics"].get(tp, {}).get("learned", {})
+            low = sorted([(w, info) for w, info in learned.items() if info.get("last_score", 100) < thr], key=lambda x: x[1].get("last_score", 0))
+            
+            controls = [ft.Container(bgcolor="#f8f9fa", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Text(f"복습 기준: {thr}점 미만", color=COLOR_TEXT_DESC, size=12), ft.ElevatedButton("복습 시작", on_click=lambda _: start_review(tp), bgcolor=COLOR_ACCENT, color="white")], alignment=ft.MainAxisAlignment.SPACE_BETWEEN))]
+            controls += [ft.Container(bgcolor="white", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Column([ft.Text(w, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(info.get("mean", ""), size=11, color=COLOR_TEXT_DESC)], expand=True), ft.Text(f"{info.get('last_score',0)}점", color=COLOR_ACCENT, weight="bold")])) for w, info in low[:200]]
+            if len(controls) == 1: controls.append(ft.Text("복습 대상이 없습니다.", color=COLOR_TEXT_DESC))
             col.controls = controls
             page.update()
 
         topic_dd.on_change = lambda e: render()
         render()
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Row([topic_dd], spacing=10), ft.Container(height=10), col]))])
+        return mobile_shell("/review", body, title="복습", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")), bottom_nav=student_bottom_nav("stats"))
 
-        body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    content=ft.Column([ft.Row([topic_dd], spacing=10), ft.Container(height=10), col]),
-                ),
-                student_bottom_nav(active="stats"),
-            ],
-        )
-        return mobile_shell(
-            "/review",
-            body,
-            title="복습",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/stats")),
-        )
-
-    # =============================================================================
-    # View: Teacher Dashboard stop_propagation 제거/우회(구조 개선)
-    # =============================================================================
     def view_teacher_dash():
         u = session.get("user")
-        if not u:
-            return mobile_shell("/teacher_dash", ft.Text("로그인이 필요합니다."), title="선생님 대시보드")
-        if u.get("role") != "teacher":
-            return mobile_shell("/teacher_dash", ft.Text("접근 권한이 없습니다."), title="선생님 대시보드")
+        if not u or u.get("role") != "teacher": return mobile_shell("/teacher_dash", ft.Text("접근 권한이 없습니다."), title="선생님 대시보드")
         users = load_users()
         rows = []
         for uid, u in users.items():
-            if u.get("role") != "student":
-                continue
+            if u.get("role") != "student": continue
             u = ensure_progress(u)
-            goal = int(u["progress"]["settings"].get("goal", sysdata.get("default_goal", 10)))
+            goal = int(u["progress"]["settings"].get("goal", 10))
             topics = u["progress"]["topics"]
             total_learned = sum(len(t.get("learned", {})) for t in topics.values())
             avgs = [t.get("stats", {}).get("avg_score", 0) for t in topics.values() if t.get("learned")]
-            avg_score = round(sum(avgs) / max(1, len(avgs)), 2) if avgs else 0.0
-            wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics.values())
-            ratio = int((min(total_learned, goal) / max(1, goal)) * 100) if goal else 0
-
-            rows.append({"uid": uid, "name": u.get("name", uid), "goal": goal, "learned": total_learned, "ratio": ratio, "avg": avg_score, "wrong": wrong_cnt})
-
+            rows.append({"uid": uid, "name": u.get("name", uid), "goal": goal, "learned": total_learned, "ratio": int((min(total_learned, goal) / max(1, goal)) * 100) if goal else 0, "avg": round(sum(avgs) / max(1, len(avgs)), 2) if avgs else 0.0, "wrong": sum(len(t.get("wrong_notes", [])) for t in topics.values())})
         rows.sort(key=lambda x: (-x["ratio"], -x["avg"], x["name"]))
 
-        def open_student(uid: str):
+        def open_student(uid):
             session["selected_student_id"] = uid
             go_to("/teacher_student")
-
-        def reset_pw(uid: str):
+        
+        def reset_pw(uid):
             users2 = load_users()
-            if uid not in users2:
-                show_snack("학생을 찾을 수 없습니다.", COLOR_ACCENT)
-                return
-            users2[uid]["pw"] = hash_password("1111")
-            save_users(users2)
-            show_snack(f"{users2[uid].get('name', uid)} 비밀번호를 1111로 초기화했습니다.", COLOR_PRIMARY)
+            if uid in users2:
+                users2[uid]["pw"] = hash_password("1111")
+                save_users(users2)
+                show_snack(f"{users2[uid].get('name', uid)} 비밀번호를 1111로 초기화했습니다.", COLOR_PRIMARY)
 
-        cards = []
-        for s in rows:
-            # 카드 전체를 클릭 영역 + 오른쪽 아이콘은 독립 클릭(전파 차단 API 불필요)
-            clickable = ft.Container(
-                expand=True,
-                ink=True,
-                on_click=lambda e, uid=s["uid"]: open_student(uid),
-                content=ft.Row(
-                    [
-                        ft.Column(
-                            [
-                                ft.Text(s["name"], weight="bold", size=15, color=COLOR_TEXT_MAIN),
-                                ft.Text(f"목표 {s['goal']} · 누적 {s['learned']}", size=11, color=COLOR_TEXT_DESC),
-                                ft.Text(f"평균 {s['avg']} · 오답 {s['wrong']}", size=11, color=COLOR_TEXT_DESC),
-                            ],
-                            spacing=2,
-                            expand=True,
-                        ),
-                        ft.Container(
-                            padding=8,
-                            border_radius=12,
-                            bgcolor="#eef5ff",
-                            content=ft.Text(f"{s['ratio']}%", weight="bold", color=COLOR_PRIMARY),
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                ),
-            )
+        cards = [ft.Container(bgcolor="white", padding=14, border_radius=16, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Container(expand=True, ink=True, on_click=lambda e, u=s["uid"]: open_student(u), content=ft.Row([ft.Column([ft.Text(s["name"], weight="bold", size=15, color=COLOR_TEXT_MAIN), ft.Text(f"목표 {s['goal']} · 누적 {s['learned']}", size=11, color=COLOR_TEXT_DESC), ft.Text(f"평균 {s['avg']} · 오답 {s['wrong']}", size=11, color=COLOR_TEXT_DESC)], spacing=2, expand=True), ft.Container(padding=8, border_radius=12, bgcolor="#eef5ff", content=ft.Text(f"{s['ratio']}%", weight="bold", color=COLOR_PRIMARY))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)), ft.IconButton(icon=ft.icons.RESTART_ALT, tooltip="비밀번호 초기화(1111)", on_click=lambda e, u=s["uid"]: reset_pw(u))], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)) for s in rows]
+        if not cards: cards = [ft.Text("학생 계정이 없습니다.", color=COLOR_TEXT_DESC)]
 
-            card = ft.Container(
-                bgcolor="white",
-                padding=14,
-                border_radius=16,
-                border=ft.border.all(1, "#eef1f4"),
-                content=ft.Row(
-                    [
-                        clickable,
-                        ft.IconButton(
-                            icon=ft.icons.RESTART_ALT,
-                            tooltip="비밀번호 초기화(1111)",
-                            on_click=lambda e, uid=s["uid"]: reset_pw(uid),
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                ),
-            )
-            cards.append(card)
-
-        if not cards:
-            cards = [ft.Text("학생 계정이 없습니다.", color=COLOR_TEXT_DESC)]
-
-        body = ft.Container(
-            padding=20,
-            content=ft.Column(
-                [
-                    ft.Row(
-                        [
-                            ft.Container(
-                                expand=True,
-                                bgcolor=COLOR_PRIMARY,
-                                padding=16,
-                                border_radius=18,
-                                content=ft.Column(
-                                    [
-                                        ft.Text("학생 수", color="white", size=11),
-                                        ft.Text(str(len(rows)), size=22, weight="bold", color="white"),
-                                    ],
-                                    spacing=2,
-                                ),
-                            ),
-                            ft.Container(
-                                expand=True,
-                                bgcolor="#f8f9fa",
-                                padding=16,
-                                border_radius=18,
-                                border=ft.border.all(1, "#eef1f4"),
-                                content=ft.Column(
-                                    [
-                                        ft.Text("관리 지표", color=COLOR_TEXT_DESC, size=11),
-                                        ft.Text("진도/평균/오답", size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                                    ],
-                                    spacing=2,
-                                ),
-                            ),
-                        ],
-                        spacing=10,
-                    ),
-                    ft.Container(height=14),
-                    ft.Text("학생 목록", size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=8),
-                    ft.Column(cards, spacing=10, scroll="auto"),
-                ],
-                spacing=0,
-            ),
-        )
-
-        return mobile_shell(
-            "/teacher_dash",
-            body,
-            title="선생님 대시보드",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()),
-            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())],
-        )
+        body = ft.Container(padding=20, content=ft.Column([ft.Row([ft.Container(expand=True, bgcolor=COLOR_PRIMARY, padding=16, border_radius=18, content=ft.Column([ft.Text("학생 수", color="white", size=11), ft.Text(str(len(rows)), size=22, weight="bold", color="white")], spacing=2)), ft.Container(expand=True, bgcolor="#f8f9fa", padding=16, border_radius=18, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("관리 지표", color=COLOR_TEXT_DESC, size=11), ft.Text("진도/평균/오답", size=16, weight="bold", color=COLOR_TEXT_MAIN)], spacing=2))], spacing=10), ft.Container(height=14), ft.Text("학생 목록", size=16, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Column(cards, spacing=10, scroll="auto")], spacing=0))
+        return mobile_shell("/teacher_dash", body, title="선생님 대시보드", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()), actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())])
 
     def view_teacher_student():
         me = session.get("user")
-        if not me:
-            return mobile_shell("/teacher_student", ft.Text("로그인이 필요합니다."), title="학생 상세")
-
-        if me.get("role") not in ("teacher", "admin"):
-            return mobile_shell("/teacher_student", ft.Text("접근 권한이 없습니다."), title="학생 상세")
-
+        if not me or me.get("role") not in ("teacher", "admin"): return mobile_shell("/teacher_student", ft.Text("접근 권한이 없습니다."), title="학생 상세")
         uid = session.get("selected_student_id")
-        if not uid:
-            return mobile_shell("/teacher_student", ft.Text("학생 선택이 필요합니다."), title="학생 상세")
+        u = ensure_progress(get_user(uid)) if uid else None
+        if not u: return mobile_shell("/teacher_student", ft.Text("학생 정보를 찾을 수 없습니다."), title="학생 상세")
 
-        u = get_user(uid)
-        if not u:
-            return mobile_shell("/teacher_student", ft.Text("학생 정보를 찾을 수 없습니다."), title="학생 상세")
-
-        u = ensure_progress(u)
         topics = u["progress"]["topics"]
-        total_learned = sum(len(t.get("learned", {})) for t in topics.values())
-        wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics.values())
         last = u["progress"].get("last_session", {"topic": "", "idx": 0})
-
         topic_cards = []
         for tp in sorted(VOCAB_DB.keys()):
             tpdata = topics.get(tp, {})
-            studied = len(tpdata.get("learned", {}))
-            avg = tpdata.get("stats", {}).get("avg_score", 0.0)
-            wcnt = len(tpdata.get("wrong_notes", []))
-            topic_cards.append(
-                ft.Container(
-                    bgcolor="white",
-                    border_radius=16,
-                    padding=12,
-                    border=ft.border.all(1, "#eef1f4"),
-                    content=ft.Row(
-                        [
-                            ft.Column(
-                                [
-                                    ft.Text(tp, weight="bold", color=COLOR_TEXT_MAIN),
-                                    ft.Text(f"누적 {studied} · 평균 {avg} · 오답 {wcnt}", size=11, color=COLOR_TEXT_DESC),
-                                ],
-                                expand=True,
-                                spacing=2,
-                            ),
-                        ]
-                    ),
-                )
-            )
+            studied, avg, wcnt = len(tpdata.get("learned", {})), tpdata.get("stats", {}).get("avg_score", 0.0), len(tpdata.get("wrong_notes", []))
+            topic_cards.append(ft.Container(bgcolor="white", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Column([ft.Text(tp, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"누적 {studied} · 평균 {avg} · 오답 {wcnt}", size=11, color=COLOR_TEXT_DESC)], expand=True, spacing=2)])))
 
         def reset_pw():
             users2 = load_users()
-            if uid not in users2:
-                show_snack("학생을 찾을 수 없습니다.", COLOR_ACCENT)
-                return
-            users2[uid]["pw"] = hash_password("1111")
-            save_users(users2)
-            show_snack("비밀번호를 1111로 초기화했습니다.", COLOR_PRIMARY)
+            if uid in users2:
+                users2[uid]["pw"] = hash_password("1111")
+                save_users(users2)
+                show_snack("비밀번호를 1111로 초기화했습니다.", COLOR_PRIMARY)
 
-        body = ft.Container(
-            padding=20,
-            content=ft.Column(
-                [
-                    ft.Container(
-                        bgcolor="#f8f9fa",
-                        border_radius=18,
-                        padding=16,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Column(
-                            [
-                                ft.Text(f"{u.get('name', uid)} ({uid})", size=18, weight="bold", color=COLOR_TEXT_MAIN),
-                                ft.Text(f"국적: {country_label(u.get('country','KR'))}", size=12, color=COLOR_TEXT_DESC),
-                                ft.Text(f"누적 학습: {total_learned} · 오답: {wrong_cnt}", size=12, color=COLOR_TEXT_DESC),
-                                ft.Text(f"마지막 학습: {last.get('topic','')} / idx {int(last.get('idx',0))+1}", size=12, color=COLOR_TEXT_DESC),
-                                ft.Container(height=10),
-                                ft.Row(
-                                    [
-                                        ft.ElevatedButton("비밀번호 초기화(1111)", on_click=lambda e: reset_pw(), bgcolor=COLOR_ACCENT, color="white", expand=True),
-                                        ft.OutlinedButton("목록", on_click=lambda e: go_to("/teacher_dash"), expand=True),
-                                    ],
-                                    spacing=10,
-                                ),
-                            ],
-                            spacing=4,
-                        ),
-                    ),
-                    ft.Container(height=12),
-                    ft.Text("토픽별 현황", weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=8),
-                    ft.Column(topic_cards, spacing=10, scroll="auto"),
-                ],
-                scroll="auto",
-            ),
-        )
+        body = ft.Container(padding=20, content=ft.Column([ft.Container(bgcolor="#f8f9fa", border_radius=18, padding=16, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(f"{u.get('name', uid)} ({uid})", size=18, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"국적: {country_label(u.get('country','KR'))}", size=12, color=COLOR_TEXT_DESC), ft.Text(f"누적 학습: {sum(len(t.get('learned', {})) for t in topics.values())} · 오답: {sum(len(t.get('wrong_notes', [])) for t in topics.values())}", size=12, color=COLOR_TEXT_DESC), ft.Text(f"마지막 학습: {last.get('topic','')} / idx {int(last.get('idx',0))+1}", size=12, color=COLOR_TEXT_DESC), ft.Container(height=10), ft.Row([ft.ElevatedButton("비밀번호 초기화(1111)", on_click=lambda e: reset_pw(), bgcolor=COLOR_ACCENT, color="white", expand=True), ft.OutlinedButton("목록", on_click=lambda e: go_to("/teacher_dash"), expand=True)], spacing=10)], spacing=4)), ft.Container(height=12), ft.Text("토픽별 현황", weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Column(topic_cards, spacing=10, scroll="auto")], scroll="auto"))
+        return mobile_shell("/teacher_student", body, title="학생 상세", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/teacher_dash")))
 
-        return mobile_shell(
-            "/teacher_student",
-            body,
-            title="학생 상세",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/teacher_dash")),
-        )
-
-    # =============================================================================
-    # View: System Dashboard (admin)
-    # =============================================================================
     def view_system_dash():
         u = session.get("user")
-        if not u:
-            return mobile_shell("/system_dash", ft.Text("로그인이 필요합니다."), title="시스템 대시보드")
-        if u.get("role") != "admin":
-            return mobile_shell("/system_dash", ft.Text("접근 권한이 없습니다."), title="시스템 대시보드")
+        if not u or u.get("role") != "admin": return mobile_shell("/system_dash", ft.Text("접근 권한이 없습니다."), title="시스템 대시보드")
         sysdata_local = load_system()
+        default_goal_field = ft.TextField(label="기본 목표량", value=str(sysdata_local.get("default_goal", 10)), width=320)
+        review_thr_field = ft.TextField(label="복습 기준", value=str(sysdata_local.get("review_threshold", 85)), width=320)
+        api_key_field = ft.TextField(label="API Key", value=str(sysdata_local.get("api", {}).get("openai_api_key", "")), width=320, password=True, can_reveal_password=True)
+        stt_provider_field = ft.Dropdown(label="STT", width=320, value=str(sysdata_local.get("api", {}).get("stt_provider", "none")), options=[ft.dropdown.Option("none"), ft.dropdown.Option("openai"), ft.dropdown.Option("google")])
+        log_box = ft.TextField(label="로그", value="", multiline=True, read_only=True, min_lines=5, max_lines=10, width=320)
+        approval_list_col = ft.Column(spacing=10)
 
-        default_goal_field = ft.TextField(
-            label="기본 목표량(default_goal)",
-            value=str(sysdata_local.get("default_goal", 10)),
-            width=320,
-            keyboard_type=ft.KeyboardType.NUMBER,
-            bgcolor="white",
-            border_radius=12,
-        )
-        review_thr_field = ft.TextField(
-            label="복습 기준(review_threshold)",
-            value=str(sysdata_local.get("review_threshold", 85)),
-            width=320,
-            keyboard_type=ft.KeyboardType.NUMBER,
-            bgcolor="white",
-            border_radius=12,
-        )
-        api_key_field = ft.TextField(
-            label="OpenAI API Key(저장만)",
-            value=str(sysdata_local.get("api", {}).get("openai_api_key", "")),
-            width=320,
-            password=True,
-            can_reveal_password=True,
-            bgcolor="white",
-            border_radius=12,
-        )
-        stt_provider_field = ft.Dropdown(
-            label="STT Provider",
-            width=320,
-            value=str(sysdata_local.get("api", {}).get("stt_provider", "none")),
-            options=[ft.dropdown.Option("none"), ft.dropdown.Option("openai"), ft.dropdown.Option("google"), ft.dropdown.Option("aws")],
-        )
+        def load_pending_teachers():
+            pending_rows = []
+            for uid, u in load_users().items():
+                if u.get("role") == "teacher" and not u.get("is_approved", False):
+                    pending_rows.append(ft.Container(bgcolor="white", padding=12, border_radius=12, border=ft.border.all(1, "#eef1f4"), content=ft.Row([ft.Column([ft.Text(f"{u.get('name')} ({uid})", weight="bold"), ft.Text(f"ID: {uid} | 국적: {u.get('country')}", size=11, color=COLOR_TEXT_DESC)], expand=True), ft.ElevatedButton("승인", bgcolor=COLOR_PRIMARY, color="white", on_click=lambda e, t=uid: (update_user_approval(t, True), show_snack(f"{t} 승인됨", COLOR_PRIMARY), load_pending_teachers()))])))
+            approval_list_col.controls = pending_rows if pending_rows else [ft.Text("대기 중인 선생님 없음", size=12, color=COLOR_TEXT_DESC)]
+            if page: page.update()
 
-        log_box = ft.TextField(
-            label="최근 로그(읽기 전용)",
-            value="",
-            multiline=True,
-            read_only=True,
-            min_lines=10,
-            max_lines=18,
-            width=320,
-            bgcolor="white",
-            border_radius=12,
-        )
+        load_pending_teachers()
+        
+        def save_admin_settings(e):
+            sysdata_local.update({"default_goal": int(default_goal_field.value), "review_threshold": int(review_thr_field.value), "api": {"openai_api_key": api_key_field.value, "stt_provider": stt_provider_field.value}})
+            save_system(sysdata_local)
+            session["goal"] = int(default_goal_field.value)
+            show_snack("저장되었습니다.", COLOR_PRIMARY)
 
         def refresh_log(e=None):
-            err = None
-            try:
-                if not os.path.exists(LOG_FILE):
-                    log_box.value = "(로그 없음)"
-                else:
-                    with open(LOG_FILE, "r", encoding="utf-8") as f:
-                        lines = f.readlines()
-                    log_box.value = "".join(lines[-200:]) if lines else "(로그 없음)"
-            except Exception as err:
-                log_box.value = f"(로그 읽기 실패: {err})"
+            if os.path.exists(LOG_FILE):
+                with open(LOG_FILE, "r", encoding="utf-8") as f: log_box.value = "".join(f.readlines()[-50:])
             page.update()
-
-        def save_admin_settings(e=None):
-            try:
-                dg = int(default_goal_field.value)
-                dg = max(1, min(100, dg))
-            except:
-                dg = 10
-            try:
-                rt = int(review_thr_field.value)
-                rt = max(0, min(100, rt))
-            except:
-                rt = 85
-
-            sysdata_local["default_goal"] = dg
-            sysdata_local["review_threshold"] = rt
-            if "api" not in sysdata_local:
-                sysdata_local["api"] = {}
-            sysdata_local["api"]["openai_api_key"] = api_key_field.value or ""
-            sysdata_local["api"]["stt_provider"] = stt_provider_field.value or "none"
-            save_system(sysdata_local)
-
-            session["goal"] = session["goal"] or dg
-            show_snack("시스템 설정이 저장되었습니다.", COLOR_PRIMARY)
-            log_write("admin saved system settings")
 
         refresh_log()
 
-        body = ft.Container(
-            padding=20,
-            content=ft.Column(
-                [
-                    ft.Container(
-                        bgcolor="#f8f9fa",
-                        border_radius=18,
-                        padding=16,
-                        border=ft.border.all(1, "#eef1f4"),
-                        content=ft.Column(
-                            [
-                                ft.Text("시스템 설정", size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                                ft.Container(height=10),
-                                default_goal_field,
-                                ft.Container(height=10),
-                                review_thr_field,
-                                ft.Divider(height=18),
-                                ft.Text("API 설정(저장만 / 기능 연결은 별도)", size=11, color=COLOR_TEXT_DESC),
-                                ft.Container(height=8),
-                                stt_provider_field,
-                                ft.Container(height=10),
-                                api_key_field,
-                                ft.Container(height=12),
-                                ft.ElevatedButton("저장", on_click=save_admin_settings, bgcolor=COLOR_PRIMARY, color="white", width=320),
-                            ],
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        ),
-                    ),
-                    ft.Container(height=14),
-                    ft.Text("로그", size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=8),
-                    ft.Row(
-                        [ft.ElevatedButton("새로고침", on_click=refresh_log, bgcolor=COLOR_TEXT_MAIN, color="white")],
-                        alignment=ft.MainAxisAlignment.END,
-                    ),
-                    ft.Container(height=8),
-                    log_box,
-                ],
-                scroll="auto",
-            ),
-        )
+        body = ft.Container(padding=20, content=ft.Column([ft.Text("시스템 설정", size=16, weight="bold"), ft.Container(height=10), default_goal_field, review_thr_field, stt_provider_field, api_key_field, ft.ElevatedButton("저장", on_click=save_admin_settings, width=320), ft.Container(height=20), ft.Text("선생님 승인 관리", size=16, weight="bold"), ft.Container(height=8), approval_list_col, ft.Container(height=20), ft.Text("로그", size=16, weight="bold"), ft.ElevatedButton("새로고침", on_click=refresh_log), log_box], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto"))
+        return mobile_shell("/system_dash", body, title="시스템 대시보드", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()), actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())])
 
-        return mobile_shell(
-            "/system_dash",
-            body,
-            title="시스템 대시보드",
-            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: do_logout()),
-            actions=[ft.IconButton(icon=ft.icons.LOGOUT, on_click=lambda _: do_logout())],
-        )
-
-    # =============================================================================
-    # Routing
-    # =============================================================================
     def route_change(e: ft.RouteChangeEvent):
-
-        log_write(f"route_change: {page.route}")
         page.views.clear()
-
         r_full = page.route
-        r = (r_full or "").split("?", 1)[0] 
-
-        def _get_query_param(route: str, key: str) -> str | None:
-            try:
-                if "?" not in route:
-                    return None
-                q = route.split("?", 1)[1]
+        r = (r_full or "").split("?", 1)[0]
+        
+        # 쿼리 파라미터 파싱
+        qi = None
+        try:
+            if "?" in r_full:
+                q = r_full.split("?", 1)[1]
                 for part in q.split("&"):
-                    if "=" in part:
-                        k, v = part.split("=", 1)
-                        if k == key:
-                            return v
-            except:
-                pass
-            return None
+                    if part.startswith("i="):
+                        qi = part.split("=")[1]
+        except: pass
 
-
-
-        if r == "/":
-            page.views.append(view_landing())
-        elif r == "/login":
-            page.views.append(view_login())
-        elif r == "/signup":
-            page.views.append(view_signup())
-
-        elif r == "/student_home":
-            page.views.append(view_student_home())
-        elif r == "/level_select":
-            page.views.append(view_level_select())
-        elif r == "/settings":
-            page.views.append(view_settings())
-        elif r == "/stats":
-            page.views.append(view_stats())
-        elif r == "/profile":
-            page.views.append(view_profile())
-
-        elif r == "/study":
-            page.views.append(view_study())
-        elif r == "/motivate":
-            page.views.append(view_motivate())
-        elif r == "/pron_result":
-            page.views.append(view_pron_result())
-        elif r == "/review_start":
-            page.views.append(view_review_start())
-
-        elif r == "/test_intro":
-            page.views.append(view_test_intro())
+        if r == "/": page.views.append(view_landing())
+        elif r == "/login": page.views.append(view_login())
+        elif r == "/signup": page.views.append(view_signup())
+        elif r == "/student_home": page.views.append(view_student_home())
+        elif r == "/level_select": page.views.append(view_level_select())
+        elif r == "/settings": page.views.append(view_settings())
+        elif r == "/stats": page.views.append(view_stats())
+        elif r == "/profile": page.views.append(view_profile())
+        elif r == "/study": page.views.append(view_study())
+        elif r == "/motivate": page.views.append(view_motivate())
+        elif r == "/pron_result": page.views.append(view_pron_result())
+        elif r == "/review_start": page.views.append(view_review_start())
+        elif r == "/test_intro": page.views.append(view_test_intro())
         elif r == "/test":
-            qi = _get_query_param(r_full or "", "i")
-            if qi is not None:
-                try:
-                    session["test_idx"] = max(0, int(qi))
-                except:
-                    pass
+            if qi: 
+                try: session["test_idx"] = max(0, int(qi))
+                except: pass
             page.views.append(view_test())
-        elif r == "/study_complete":
-            page.views.append(view_study_complete())
-
-        elif r == "/cumulative":
-            page.views.append(view_cumulative())
-        elif r == "/wrong_notes":
-            page.views.append(view_wrong_notes())
-        elif r == "/review":
-            page.views.append(view_review())
-
-        elif r in ("/teacher_dash", "/teacher_dashboard"):
-            page.views.append(view_teacher_dash())
-        elif r == "/teacher_student":
-            page.views.append(view_teacher_student())
-
-        elif r in ("/system_dash", "/admin_dash", "/system_dashboard"):
-            page.views.append(view_system_dash())
-
-        else:
-            page.views.append(view_login())
-
+        elif r == "/study_complete": page.views.append(view_study_complete())
+        elif r == "/cumulative": page.views.append(view_cumulative())
+        elif r == "/wrong_notes": page.views.append(view_wrong_notes())
+        elif r == "/review": page.views.append(view_review())
+        elif r in ("/teacher_dash", "/teacher_dashboard"): page.views.append(view_teacher_dash())
+        elif r == "/teacher_student": page.views.append(view_teacher_student())
+        elif r in ("/system_dash", "/admin_dash", "/system_dashboard"): page.views.append(view_system_dash())
+        else: page.views.append(view_login())
+        
         page.update()
 
     def view_pop(e: ft.ViewPopEvent):

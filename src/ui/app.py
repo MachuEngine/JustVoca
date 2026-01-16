@@ -328,8 +328,7 @@ def main(page: ft.Page):
                 nav_btn("🏠", t("home"), "/student_home", "home"),
                 nav_btn("🗂", t("level_select"), "/level_select", "level"),
                 nav_btn("⚙️", t("settings"), "/settings", "settings"),
-                # [수정] t("stats") 대신 "통계" 직접 입력하여 레이블 변경
-                nav_btn("📊", "통계", "/stats", "stats"),
+                nav_btn("📊", t("stats"), "/stats", "stats"),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
@@ -1253,46 +1252,110 @@ def main(page: ft.Page):
         return mobile_shell("/review_intro", body, title="")
     
     def view_level_select():
-        if not session.get("user"): return mobile_shell("/level_select", ft.Text("로그인이 필요합니다."), title="레벨 선택")
+        if not session.get("user"):
+            return mobile_shell("/level_select", ft.Text("로그인이 필요합니다."), title="레벨 선택")
+
         u_session = session.get("user")
         uid = u_session.get("id") or u_session.get("uid")
-        user = get_user(uid) or u_session
-        user = ensure_progress(user)
-        topics = sorted(list(VOCAB_DB.keys()))
+        user = ensure_progress(get_user(uid) or u_session)
 
-        def start_study(topic_name):
-            if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
-            all_words = VOCAB_DB[topic_name]
+        # 이미지처럼 고정 레벨(있으면 활성, 없으면 비활성)
+        LEVELS = ["초급1", "초급2", "중급1", "중급2", "고급"]
+
+        def start_study(topic_name: str):
+            if topic_name not in VOCAB_DB:
+                return show_snack("아직 준비 중인 레벨입니다.", COLOR_ACCENT)
+
+            all_words = VOCAB_DB[topic_name] or []
+            if not all_words:
+                return show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
+
             goal = int(user["progress"]["settings"].get("goal", session["goal"]))
-            
-            # [추가됨] 학습한 단어 필터링 로직 적용
+
             learned_set = set(user["progress"]["topics"].get(topic_name, {}).get("learned", {}).keys())
-            unlearned = [w for w in all_words if w["word"] not in learned_set]
-            
+            unlearned = [w for w in all_words if w.get("word") and w["word"] not in learned_set]
             target_source = unlearned if unlearned else all_words
             pick = target_source[:goal]
 
             session["today_words"] = pick[:]
             bump_nav_token()
             reset_pron_state()
-            session.update({"motivate_shown": False, "is_review": False, "test_queue": [], "topic": topic_name, "study_words": pick, "idx": 0})
-            
+            session.update(
+                {
+                    "motivate_shown": False,
+                    "is_review": False,
+                    "test_queue": [],
+                    "topic": topic_name,
+                    "study_words": pick,
+                    "idx": 0,
+                }
+            )
+
             user["progress"]["last_session"] = {"topic": topic_name, "idx": 0}
             update_user(uid, user)
             session["user"] = user
             go_to("/study")
 
-        topics_prog = user["progress"]["topics"]
-        level_cards = []
-        for tp in topics:
-            tpdata = topics_prog.get(tp, {})
-            studied = len(tpdata.get("learned", {}))
-            avg = tpdata.get("stats", {}).get("avg_score", 0.0)
-            level_cards.append(level_button(tp, f"누적 {studied}개 · 평균 {avg}", on_click=lambda e, tpn=tp: start_study(tpn)))
+        def level_btn(label: str, enabled: bool):
+            # 이미지 느낌: 흰 배경 + 연한 보더 + 둥근 모서리 + 가운데 정렬
+            bg = "white"
+            border_color = "#e9ecef"
+            txt_color = COLOR_TEXT_MAIN if enabled else "#c0c6cf"
 
-        grid = ft.GridView(expand=True, runs_count=2, max_extent=175, child_aspect_ratio=1.10, spacing=12, run_spacing=12, controls=level_cards if level_cards else [ft.Text("데이터 없음")])
-        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=ft.padding.only(left=20, right=20, top=14, bottom=10), content=grid)])
-        return mobile_shell("/level_select", body, title="레벨 선택", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("level"))
+            return ft.Container(
+                height=54,
+                border_radius=14,
+                bgcolor=bg,
+                border=ft.border.all(1, border_color),
+                alignment=ft.Alignment(0, 0),
+                ink=enabled,
+                on_click=(lambda e, lv=label: start_study(lv)) if enabled else None,
+                opacity=1.0 if enabled else 0.55,
+                content=ft.Text(label, size=13, weight="bold", color=txt_color),
+            )
+
+        # 버튼 6개(2열) 구성
+        # GridView 말고 Column+Row로 고정 배치하면 이미지처럼 안정적으로 나옵니다.
+        rows = []
+        for i in range(0, len(LEVELS), 2):
+            left = LEVELS[i]
+            right = LEVELS[i + 1] if i + 1 < len(LEVELS) else None
+
+            rows.append(
+                ft.Row(
+                    spacing=12,
+                    controls=[
+                        ft.Container(expand=True, content=level_btn(left, left in VOCAB_DB)),
+                        ft.Container(expand=True, content=level_btn(right, right in VOCAB_DB)) if right else ft.Container(expand=True),
+                    ],
+                )
+            )
+
+        body = ft.Container(
+            expand=True,
+            alignment=ft.Alignment(0, 0),
+            padding=ft.padding.only(left=24, right=24, top=28, bottom=16),
+            content=ft.Column(
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(height=6),
+                    ft.Text("Pronunciation Master", size=16, weight="bold", color=COLOR_PRIMARY),
+                    ft.Container(height=6),
+                    ft.Text("학습할 레벨을 선택해 주세요", size=11, color=COLOR_TEXT_DESC),
+                    ft.Container(height=20),
+                    ft.Column(rows, spacing=12, width=340),
+                    ft.Container(expand=True),
+                ],
+            ),
+        )
+
+        return mobile_shell(
+            "/level_select",
+            body,
+            title="",  # 이미지처럼 상단바 타이틀 비움
+            leading=None,
+            bottom_nav=student_bottom_nav("level"),
+        )
 
     def view_motivate():
         if not session.get("user"): return mobile_shell("/motivate", ft.Text("로그인이 필요합니다."), title="레벨 선택")

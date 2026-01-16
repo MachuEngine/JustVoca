@@ -1714,8 +1714,11 @@ def main(page: ft.Page):
 
     def view_test_intro():
         if not session.get("user"): return mobile_shell("/test_intro", ft.Text("로그인이 필요합니다."), title="연습문제")
+        
         topic = session.get("topic", "")
         today_words = session.get("today_words", []) or []
+        
+        # 데이터 준비 (테스트 문제 출제용)
         u_session = session.get("user")
         uid = u_session.get("id") or u_session.get("uid")
         user = ensure_progress(get_user(uid) or u_session)
@@ -1725,6 +1728,7 @@ def main(page: ft.Page):
         low_items = [it for it in today_words if learned.get(it.get("word", ""), {}).get("last_score", 999) < thr]
 
         def start_test_now(e=None):
+            # 문제 생성 로직
             combined, seen = [], set()
             for it in (today_words + low_items):
                 w = (it.get("word", "") or "").strip()
@@ -1732,27 +1736,71 @@ def main(page: ft.Page):
                     seen.add(w)
                     combined.append(it)
             
-            # [수정] 전체 문제를 생성한 뒤 3개로 제한
             full_queue = make_test_queue(topic, combined, n_choices=4)
-            final_queue = full_queue[:3]  # 최대 3문제만 출제
+            final_queue = full_queue[:3] # 3문제만 출제
             
             session.update({"test_queue": final_queue, "test_idx": 0, "test_score": 0, "is_review": False})
             go_to("/test?i=0")
 
-        def stamp_widget():
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "stamps/stamp_ok.png")
-            return ft.Image(src="stamps/stamp_ok.png", width=120, height=120, fit=ft.ImageFit.CONTAIN) if os.path.exists(path) else ft.Text("💮", size=70)
+        # [수정] 도장 이미지 위젯 (오류 해결: fit="contain" 문자열 사용)
+        stamp_img = ft.Image(
+            src="stamps/stamp_ok.png", 
+            width=110, height=110, 
+            fit="contain", # [수정됨] ft.ImageFit.CONTAIN -> "contain"
+            rotate=ft.Rotate(angle=-0.15), 
+            opacity=0.9,
+            error_content=ft.Text("💮", size=60) 
+        )
+
+        # 중앙 컨텐츠
+        center_content = ft.Column([
+            ft.Container(height=40), 
+            ft.Text("오늘 학습 완료!", size=24, weight="bold", color=COLOR_PRIMARY), 
+            ft.Container(height=8), 
+            ft.Text("학습 내용을 확인해볼까요?", size=14, color=COLOR_TEXT_DESC),
+            ft.Container(height=50), 
+            
+            ft.ElevatedButton(
+                "연습문제 시작하기", 
+                on_click=start_test_now, 
+                bgcolor=COLOR_TEXT_MAIN, color="white", 
+                width=300, height=52, 
+                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16))
+            ),
+            ft.Container(height=12), 
+            ft.OutlinedButton(
+                "나중에 하기", 
+                on_click=lambda _: go_home(), 
+                width=300, height=48, 
+                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16))
+            )
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER)
+
+        # Stack 레이아웃
+        stack_layout = ft.Stack(
+            expand=True,
+            controls=[
+                ft.Container(expand=True, alignment=ft.Alignment(0, 0), content=center_content),
+                ft.Container(
+                    content=stamp_img,
+                    right=20,  
+                    top=10,    
+                )
+            ]
+        )
 
         body = ft.Column(spacing=0, controls=[
             student_info_bar(),
-            ft.Container(expand=True, padding=24, content=ft.Column([
-                ft.Container(height=10), ft.Text("오늘 학습 완료!", size=22, weight="bold", color=COLOR_PRIMARY), ft.Container(height=10), ft.Text("✅ 연습문제를 풀어볼까요?", size=13, color=COLOR_TEXT_DESC),
-                ft.Container(height=18), ft.Container(width=140, height=140, border_radius=26, bgcolor="#f8f9fa", alignment=ft.Alignment(0, 0), content=stamp_widget()),
-                ft.Container(height=18), ft.ElevatedButton("시작하기", on_click=start_test_now, bgcolor=COLOR_TEXT_MAIN, color="white", width=320, height=48),
-                ft.Container(height=10), ft.OutlinedButton("나중에", on_click=lambda _: go_home(), width=320)
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER))
+            ft.Container(expand=True, padding=20, content=stack_layout)
         ])
-        return mobile_shell("/test_intro", body, title="연습문제", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/review_start")), bottom_nav=student_bottom_nav("home"))
+        
+        return mobile_shell(
+            "/test_intro", 
+            body, 
+            title="연습문제", 
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/review_start")), 
+            bottom_nav=student_bottom_nav("home")
+        )
 
     def view_test():
         if not session.get("user"): return mobile_shell("/test", ft.Text("로그인이 필요합니다."), title="연습문제")

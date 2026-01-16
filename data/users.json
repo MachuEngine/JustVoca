@@ -1967,10 +1967,160 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-16 10:15:12"
+            },
+            "셋": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:38:57"
+            },
+            "넷": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:38:58"
+            },
+            "다섯": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:38:58"
+            },
+            "이": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:38:58"
+            },
+            "삼": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:39:07"
+            },
+            "사": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:39:00"
+            },
+            "오": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:39:07"
+            },
+            "가격": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:39:08"
+            },
+            "얼마": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:39:02"
+            },
+            "원": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:39:09"
+            },
+            "비싸다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:07"
+            },
+            "싸다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:41:57"
+            },
+            "전화번호": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:41:57"
+            },
+            "번호": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:41:57"
+            },
+            "전화": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:41:59"
+            },
+            "핸드폰": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:00"
+            },
+            "누르다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:11"
+            },
+            "몇": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:00"
+            },
+            "번": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:00"
+            },
+            "이거": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:00"
+            },
+            "저거": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:25"
+            },
+            "월요일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:25"
+            },
+            "화요일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:25"
+            },
+            "수요일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:32"
+            },
+            "목요일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:27"
+            },
+            "금요일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:27"
+            },
+            "오늘": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:27"
+            },
+            "어제": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:27"
+            },
+            "내일": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:28"
+            },
+            "날짜": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:42:32"
             }
           },
           "stats": {
-            "studied_count": 71,
+            "studied_count": 101,
             "avg_score": 90.0
           },
           "wrong_notes": [

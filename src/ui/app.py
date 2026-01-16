@@ -1718,7 +1718,7 @@ def main(page: ft.Page):
         topic = session.get("topic", "")
         today_words = session.get("today_words", []) or []
         
-        # 데이터 준비 (테스트 문제 출제용)
+        # 데이터 준비
         u_session = session.get("user")
         uid = u_session.get("id") or u_session.get("uid")
         user = ensure_progress(get_user(uid) or u_session)
@@ -1728,7 +1728,7 @@ def main(page: ft.Page):
         low_items = [it for it in today_words if learned.get(it.get("word", ""), {}).get("last_score", 999) < thr]
 
         def start_test_now(e=None):
-            # 문제 생성 로직
+            # 문제 생성
             combined, seen = [], set()
             for it in (today_words + low_items):
                 w = (it.get("word", "") or "").strip()
@@ -1742,45 +1742,44 @@ def main(page: ft.Page):
             session.update({"test_queue": final_queue, "test_idx": 0, "test_score": 0, "is_review": False})
             go_to("/test?i=0")
 
-        # [수정] 도장 이미지 위젯 (오류 해결: fit="contain" 문자열 사용)
+        # [도장 이미지] 우측 상단 배치용
         stamp_img = ft.Image(
             src="stamps/stamp_ok.png", 
             width=110, height=110, 
-            fit="contain", # [수정됨] ft.ImageFit.CONTAIN -> "contain"
+            fit="contain", # 호환성 확보
             rotate=ft.Rotate(angle=-0.15), 
             opacity=0.9,
-            error_content=ft.Text("💮", size=60) 
+            error_content=ft.Text("💮", size=60)
         )
 
-        # 중앙 컨텐츠
+        # [중앙 컨텐츠] 문구 수정 및 버튼 정리
         center_content = ft.Column([
             ft.Container(height=40), 
-            ft.Text("오늘 학습 완료!", size=24, weight="bold", color=COLOR_PRIMARY), 
+            ft.Text("오늘 단어 학습 완료!", size=24, weight="bold", color=COLOR_PRIMARY), 
             ft.Container(height=8), 
-            ft.Text("학습 내용을 확인해볼까요?", size=14, color=COLOR_TEXT_DESC),
+            ft.Text("잘했어요. 👏\n이제 연습 문제로\n가볍게 확인해볼까요?", size=16, color=COLOR_TEXT_MAIN, text_align="center"),
+            ft.Text("🧐", size=60),
             ft.Container(height=50), 
             
+            # [수정] 버튼 텍스트 변경
             ft.ElevatedButton(
-                "연습문제 시작하기", 
+                "시작하기", 
                 on_click=start_test_now, 
                 bgcolor=COLOR_TEXT_MAIN, color="white", 
                 width=300, height=52, 
                 style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16))
             ),
-            ft.Container(height=12), 
-            ft.OutlinedButton(
-                "나중에 하기", 
-                on_click=lambda _: go_home(), 
-                width=300, height=48, 
-                style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16))
-            )
+            # [삭제] '나중에 하기' 버튼 제거됨
         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.CENTER)
 
-        # Stack 레이아웃
+        # [레이아웃] Stack을 사용하여 도장 겹치기
         stack_layout = ft.Stack(
             expand=True,
             controls=[
+                # 배경 (중앙 컨텐츠)
                 ft.Container(expand=True, alignment=ft.Alignment(0, 0), content=center_content),
+                
+                # 도장 (우측 상단)
                 ft.Container(
                     content=stamp_img,
                     right=20,  
@@ -1827,15 +1826,12 @@ def main(page: ft.Page):
                 word = box.data
                 border_color, bg, txt_color = "#dfe6ee", "white", COLOR_TEXT_MAIN
                 
-                # 오답인 경우 (붉은색)
                 if word in wrong_set: 
                     border_color, bg, txt_color = COLOR_ACCENT, "#fff5f5", COLOR_ACCENT
                 
-                # 정답인 경우 (초록색) - 문제 풀이가 끝난 후 정답 표시
                 if answered and word == correct: 
                     border_color, bg, txt_color = COLOR_EVAL, "#f0fdf4", COLOR_EVAL
                 
-                # 현재 선택 중인 경우 (파란색)
                 if (not answered) and selected == word: 
                     border_color, bg, txt_color = COLOR_PRIMARY, "#eef5ff", COLOR_PRIMARY
                 
@@ -1845,7 +1841,7 @@ def main(page: ft.Page):
 
         # 보기 선택 핸들러
         def pick(word):
-            if q.get("answered"): return # 이미 정답을 맞췄으면 선택 변경 불가
+            if q.get("answered"): return 
             q["selected"] = word
             feedback.value = ""
             feedback.update()
@@ -1861,12 +1857,10 @@ def main(page: ft.Page):
         # [다음 문제 이동]
         def on_next(e=None):
             session["test_idx"] = idx + 1
-            # 마지막 문제면 결과 페이지로, 아니면 다음 문제로
             go_to("/study_complete" if session["test_idx"] >= total else f"/test?i={session['test_idx']}")
 
         # [정답 확인] 버튼 핸들러
         def on_confirm(e=None):
-            # 이미 정답 처리된 상태라면 바로 다음으로 이동
             if q.get("answered"): return on_next()
             
             selected = (q.get("selected") or "").strip()
@@ -1875,18 +1869,14 @@ def main(page: ft.Page):
             correct, prompt = (q.get("correct") or "").strip(), (q.get("prompt") or "").strip()
 
             if selected == correct:
-                # 정답 처리
                 q["answered"] = True
                 session["test_score"] = int(session.get("test_score", 0) or 0) + 1
                 feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
                 
-                # [수정] 버튼 텍스트 및 스타일 변경 (content 사용)
                 primary_btn.content.value = "다음 문제"
                 primary_btn.on_click = on_next 
-                # 스타일 업데이트 (새 ButtonStyle 할당)
                 primary_btn.style = ft.ButtonStyle(bgcolor=COLOR_EVAL, color="white", shape=ft.RoundedRectangleBorder(radius=14))
             else:
-                # 오답 처리
                 ws = _ensure_wrong_set()
                 if selected not in ws:
                     ws.add(selected)
@@ -1898,14 +1888,20 @@ def main(page: ft.Page):
             primary_btn.update()
             apply_styles()
 
-        # 3. UI 구성 요소 생성
+        # 3. UI 구성 요소 생성 (보기 버튼)
         for w in (q.get("choices") or []):
             option_boxes.append(
                 ft.Container(
-                    width=320, padding=ft.padding.symmetric(horizontal=14, vertical=12),
-                    border_radius=12, border=ft.border.all(2, "#dfe6ee"), bgcolor="white",
-                    ink=True, data=w, on_click=lambda e, ww=w: pick(ww),
-                    content=ft.Text(w, size=15, color=COLOR_TEXT_MAIN, weight="bold")
+                    width=320, 
+                    padding=ft.padding.symmetric(horizontal=14, vertical=12),
+                    border_radius=12, 
+                    border=ft.border.all(2, "#dfe6ee"), 
+                    bgcolor="white",
+                    ink=True, 
+                    data=w, 
+                    on_click=lambda e, ww=w: pick(ww),
+                    alignment=ft.Alignment(0, 0), # 텍스트 중앙 정렬
+                    content=ft.Text(w, size=15, color=COLOR_TEXT_MAIN, weight="bold", text_align="center")
                 )
             )
 
@@ -1915,7 +1911,6 @@ def main(page: ft.Page):
         btn_func = on_next if is_answered else on_confirm
         btn_color = COLOR_EVAL if is_answered else COLOR_PRIMARY
 
-        # [수정] text=... 대신 content=ft.Text(...) 사용 (오류 해결 핵심)
         primary_btn = ft.ElevatedButton(
             content=ft.Text(btn_text, size=15, weight="bold", color="white"), 
             on_click=btn_func, 
@@ -1926,33 +1921,43 @@ def main(page: ft.Page):
         if is_answered: 
             feedback.value, feedback.color = "✨ 정답입니다!", COLOR_EVAL
 
+        # 본문 구성 (레이아웃 안정화 + 여백 축소)
         body = ft.Column(spacing=0, controls=[
             student_info_bar(),
             ft.Container(
                 expand=True, padding=20, 
                 content=ft.Column([
                     ft.Container(
-                        bgcolor="#ffffff", border_radius=20, padding=18, border=ft.border.all(1, "#eef1f4"),
+                        bgcolor="#ffffff", border_radius=20, 
+                        padding=12, # [수정] 카드 내부 패딩 축소 (18 -> 12)
+                        border=ft.border.all(1, "#eef1f4"),
                         content=ft.Column([
-                            ft.Row([
-                                ft.Text(f"문제 {idx+1}/{total}", size=14, color=COLOR_PRIMARY, weight="bold"),
-                                ft.Container(expand=True)
-                            ]),
-                            ft.Container(height=12),
+                            
+                            # 1. 문제 번호 (Row 제거 후 단독 배치 -> 부모 Column 중앙 정렬 따름)
+                            ft.Text(f"문제 {idx+1}/{total}", size=14, color=COLOR_PRIMARY, weight="bold", text_align="center"),
+                            
+                            ft.Container(height=6), # 여백 축소
+                            
+                            # 2. 문제 지문 박스
                             ft.Container(
-                                bgcolor="#f8f9fa", border_radius=14, padding=20, width=320,
+                                bgcolor="#f8f9fa", border_radius=14, padding=16, width=320,
                                 content=ft.Column([
                                     ft.Text(f"“{q.get('prompt','')}”", size=16, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"),
-                                    ft.Container(height=8),
+                                    ft.Container(height=6),
                                     ft.Text("이 설명에 알맞은 단어는?", size=12, color=COLOR_TEXT_DESC)
                                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                             ),
-                            ft.Container(height=20),
-                            ft.Column(option_boxes, spacing=10),
-                            ft.Container(height=16),
+                            
+                            ft.Container(height=10), # 여백 축소 (20 -> 10)
+                            
+                            # 3. 보기 목록 (Column 중앙 정렬)
+                            ft.Column(option_boxes, spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                            
+                            ft.Container(height=10), # 여백 축소 (16 -> 10)
                             feedback,
-                            ft.Container(height=16),
+                            ft.Container(height=10),
                             primary_btn
+                            
                         ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
                     )
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True)

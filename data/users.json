@@ -1897,10 +1897,80 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-15 23:57:03"
+            },
+            "일본인": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:05"
+            },
+            "중국인": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:05"
+            },
+            "외국인": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:06"
+            },
+            "한국어": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:06"
+            },
+            "영어": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:09"
+            },
+            "일본어": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:10"
+            },
+            "중국어": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:10"
+            },
+            "어디": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:10"
+            },
+            "에서": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:12"
+            },
+            "오다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:12"
+            },
+            "나라": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:12"
+            },
+            "아니다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:12"
+            },
+            "하나": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:12"
+            },
+            "둘": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-16 10:15:12"
             }
           },
           "stats": {
-            "studied_count": 57,
+            "studied_count": 71,
             "avg_score": 90.0
           },
           "wrong_notes": [
@@ -1957,7 +2027,7 @@
       },
       "last_session": {
         "topic": "초급1",
-        "idx": 0
+        "idx": 9
       },
       "today_flags": {
         "motivate_shown": true,

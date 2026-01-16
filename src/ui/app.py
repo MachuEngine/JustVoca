@@ -1242,7 +1242,7 @@ def main(page: ft.Page):
         # 3초 후 자동 이동 타이머 (화면이 마운트된 후 실행 필요)
         # Flet View에서는 did_mount 등을 쓰기 어려우므로 버튼 유도 혹은 비동기 sleep 사용
         # 여기서는 심플하게 버튼 클릭을 유도하거나, schedule_go를 사용
-        schedule_go(3.0, "/study")
+        schedule_go(3.0, "/study", only_if_route="/review_intro")
 
         body = ft.Container(
             expand=True,

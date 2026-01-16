@@ -218,9 +218,9 @@ def main(page: ft.Page):
         return False, "인증번호가 올바르지 않습니다."
 
     # =============================================================================
-    # [수정] 모바일 쉘: 상단-본문(스크롤)-하단(고정) 구조
+    # [수정] 모바일 쉘: 클릭 차단 문제 해결 (alignment 제거 -> right/bottom 배치)
     # =============================================================================
-    def mobile_shell(route: str, body: ft.Control, title: str = "", leading=None, actions=None, bottom_nav: ft.Control = None):
+    def mobile_shell(route: str, body: ft.Control, title: str = "", leading=None, actions=None, bottom_nav: ft.Control = None, floating_action_button: ft.Control = None):
         actions = actions or []
         topbar = None
         if title:
@@ -246,7 +246,31 @@ def main(page: ft.Page):
         if bottom_nav:
             controls_list.append(bottom_nav)
 
-        shell_content = ft.Column(expand=True, spacing=0, controls=controls_list)
+        # 기본 레이아웃 (Column)
+        base_layout = ft.Column(expand=True, spacing=0, controls=controls_list)
+
+        # [수정] FAB가 있을 경우 Stack 사용
+        if floating_action_button:
+            # 하단 탭바 높이 고려
+            bottom_padding = 90 if bottom_nav else 20
+            
+            final_content = ft.Stack(
+                expand=True,
+                controls=[
+                    base_layout, # 배경 (기존 화면)
+                    
+                    # [핵심 수정] 
+                    # 이전 코드: alignment=ft.Alignment(1,1) -> 화면 전체를 덮어서 클릭 방해
+                    # 수정 코드: right, bottom 속성 사용 -> 해당 위치에만 배치되고 나머지 공간은 클릭 가능
+                    ft.Container(
+                        content=floating_action_button,
+                        right=16,              # 오른쪽에서 16px 떨어짐
+                        bottom=bottom_padding, # 바닥에서 계산된 만큼 떨어짐
+                    )
+                ]
+            )
+        else:
+            final_content = base_layout
 
         return ft.View(
             route=route,
@@ -256,7 +280,8 @@ def main(page: ft.Page):
                     expand=True, alignment=ft.Alignment(0, 0), padding=ft.padding.symmetric(vertical=24, horizontal=12),
                     content=ft.Container(
                         width=380, bgcolor="white", border_radius=STYLE_BORDER_RADIUS, shadow=STYLE_CARD_SHADOW,
-                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS, content=shell_content
+                        clip_behavior=ft.ClipBehavior.ANTI_ALIAS, 
+                        content=final_content
                     )
                 )
             ]
@@ -833,7 +858,7 @@ def main(page: ft.Page):
         user = ensure_progress(get_user(uid) or u_session)
         session["user"] = user
 
-        # [설정] 레벨 순서 및 토픽 동기화
+        # [기존 로직] 레벨 순서 및 토픽 설정
         LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급"]
         db_keys = list(VOCAB_DB.keys())
         topics = sorted(db_keys, key=lambda x: LEVEL_ORDER.index(x) if x in LEVEL_ORDER else 999)
@@ -852,56 +877,122 @@ def main(page: ft.Page):
         current_topic = session.get("topic")
         goal = int(user["progress"]["settings"].get("goal", 10))
         
-        # 통계 계산
         topics_prog = user["progress"]["topics"]
         total_learned = sum(len(t.get("learned", {})) for t in topics_prog.values())
         progress_value = min(total_learned / max(1, goal), 1.0)
         percent = int(progress_value * 100)
 
-        # 공지사항
         active_notices = get_active_notices(uid)
         unread_count = len([n for n in active_notices if uid not in n.get("read_by", [])])
         noti_icon = ft.IconButton(ft.icons.NOTIFICATIONS_OUTLINED, tooltip="공지사항", on_click=lambda _: go_to("/notice_inbox"))
         actions = [ft.Stack([noti_icon, ft.Container(content=ft.CircleAvatar(bgcolor=COLOR_ACCENT, radius=4, content=ft.Container()), padding=ft.padding.only(left=24, top=8))])] if unread_count > 0 else [noti_icon]
 
+        # [필수] 모듈 Import
         from datetime import datetime
-        today_str = datetime.now().strftime("%Y년 %m월 %d일")
+        import calendar
+        import random
 
-        # [기능] 학습 시작
+        now_dt = datetime.now()
+        
+        # --- [기능] 미니 달력 위젯 (오른쪽) ---
+        def build_mini_calendar():
+            year, month = now_dt.year, now_dt.month
+            try:
+                cal = calendar.monthcalendar(year, month)
+            except Exception as e:
+                return ft.Text("Err")
+
+            today_day = now_dt.day
+            
+            # 요일 헤더
+            weeks_ui = [ft.Row([
+                ft.Container(width=22, alignment=ft.Alignment(0,0), content=ft.Text(d, size=8, color=COLOR_TEXT_DESC)) 
+                for d in ["일", "월", "화", "수", "목", "금", "토"]
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=1)]
+            
+            # 날짜 그리드
+            for week in cal:
+                days_row = []
+                for day in week:
+                    if day == 0:
+                        days_row.append(ft.Container(width=22)) 
+                    else:
+                        is_today = (day == today_day)
+                        
+                        # [수정됨] 더미 출석 로직 제거 (실제 데이터 연동 전까지는 표시 안 함)
+                        is_attended = False 
+                        
+                        bg_color = COLOR_PRIMARY if is_today else ("#eef5ff" if is_attended else "transparent")
+                        txt_color = "white" if is_today else (COLOR_PRIMARY if is_attended else COLOR_TEXT_MAIN)
+                        weight = "bold" if is_today else None
+                        
+                        day_container = ft.Container(
+                            width=22, height=22, 
+                            border_radius=11, 
+                            bgcolor=bg_color,
+                            alignment=ft.Alignment(0,0),
+                            content=ft.Text(str(day), size=9, color=txt_color, weight=weight)
+                        )
+                        days_row.append(day_container)
+                
+                weeks_ui.append(ft.Row(days_row, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, spacing=1))
+
+            return ft.Container(
+                bgcolor="white", padding=10, border_radius=16, border=ft.border.all(1, "#eef1f4"),
+                expand=True,
+                content=ft.Column([
+                    ft.Text(f"{month}월", weight="bold", size=11, color=COLOR_TEXT_MAIN),
+                    ft.Column(weeks_ui, spacing=2)
+                ], spacing=4)
+            )
+
+        # --- [기능] 프로필 이미지 위젯 (왼쪽) ---
+        random_chars = ["🦁", "🐰", "🐻", "🐶", "🐱", "🦊", "🐨", "🐼"]
+        user_char = random.choice(random_chars)
+        
+        profile_widget = ft.Container(
+            width=90, height=120, 
+            bgcolor="#fff9db", border_radius=16,
+            alignment=ft.Alignment(0,0),
+            content=ft.Column([
+                ft.Text(user_char, size=36),
+                ft.Text("Today", size=9, color="#f59f00", weight="bold"),
+            ], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4)
+        )
+
+        # --- [기능] 챗봇 버튼 ---
+        chatbot_btn = ft.Container(
+            width=110, height=48,
+            bgcolor=COLOR_PRIMARY,
+            border_radius=24,
+            shadow=ft.BoxShadow(blur_radius=10, color="#4D000000", offset=ft.Offset(0, 4)),
+            content=ft.Row([
+                ft.Icon(ft.icons.SUPPORT_AGENT_ROUNDED, color="white", size=20),
+                ft.Text("AI 튜터", color="white", size=13, weight="bold")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=6),
+            on_click=lambda _: show_snack("챗봇 기능은 준비 중입니다.", COLOR_PRIMARY),
+            ink=True 
+        )
+
+        # [기존 기능] 학습 시작 함수들
         def start_study(topic_name: str, resume: bool = False):
             if topic_name not in VOCAB_DB: return show_snack("아직 준비 중인 토픽입니다.", COLOR_ACCENT)
-            
-            # 이어서 하기
             if resume and session.get("topic") == topic_name and session.get("study_words"):
                 go_to("/study")
                 return
-
-            # 새로 시작
             all_words = VOCAB_DB[topic_name] or []
             if not all_words: return show_snack("학습할 단어 데이터가 없습니다.", COLOR_ACCENT)
-            
             learned_set = set(user["progress"]["topics"].get(topic_name, {}).get("learned", {}).keys())
             unlearned = [w for w in all_words if w["word"] not in learned_set]
-            
             target_source = unlearned if unlearned else all_words
             pick = target_source[:goal]
-
             bump_nav_token()
             reset_pron_state()
             idx = 0
-            
-            # review_queue 초기화
             session.update({
-                "motivate_shown": False, 
-                "is_review": False, 
-                "test_queue": [], 
-                "today_words": pick,
-                "review_queue": [],
-                "topic": topic_name, 
-                "study_words": pick, 
-                "idx": idx
+                "motivate_shown": False, "is_review": False, "test_queue": [], "today_words": pick,
+                "review_queue": [], "topic": topic_name, "study_words": pick, "idx": idx
             })
-            
             user["progress"]["last_session"] = {"topic": topic_name, "idx": idx}
             update_user(uid, user)
             go_to("/study")
@@ -913,63 +1004,90 @@ def main(page: ft.Page):
         def on_ad_click(e):
              show_snack("광고 페이지로 이동합니다.", COLOR_PRIMARY)
 
-        # UI 구성
         continue_btn = ft.Container(height=0)
         if last_topic and last_topic in VOCAB_DB:
             continue_btn = ft.Container(
-                bgcolor="#eef5ff", border_radius=18, padding=14, border=ft.border.all(1, "#dbeafe"),
+                bgcolor="#eef5ff", border_radius=16, padding=10, border=ft.border.all(1, "#dbeafe"),
                 content=ft.Row([
                     ft.Column([
-                        ft.Text("이어서 학습하기", size=12, weight="bold", color=COLOR_PRIMARY), 
-                        ft.Text(f"{last_topic} · {last_idx + 1}번째 단어부터", size=11, color=COLOR_TEXT_DESC)
-                    ], expand=True, spacing=2),
-                    ft.ElevatedButton("계속", on_click=lambda _: start_study(last_topic, True), bgcolor=COLOR_PRIMARY, color="white")
+                        ft.Text("이어서 학습하기", size=11, weight="bold", color=COLOR_PRIMARY), 
+                        ft.Text(f"{last_topic} · {last_idx + 1}번부터", size=10, color=COLOR_TEXT_DESC)
+                    ], expand=True, spacing=1),
+                    ft.ElevatedButton("계속", on_click=lambda _: start_study(last_topic, True), bgcolor=COLOR_PRIMARY, color="white", height=30)
                 ])
             )
 
+        # 본문 구성
         content_body = ft.Column(
-            spacing=0, scroll="auto",
+            spacing=0, 
+            scroll="auto", # 스크롤 활성화
+            expand=True,   # 스크롤 영역 확보
             controls=[
                 student_info_bar(),
                 ft.Container(
-                    padding=20,
+                    padding=16,
                     content=ft.Column([
-                        ft.Row([
-                            ft.Container(width=50, height=50, bgcolor="#f0f2f5", border_radius=25, content=ft.Icon(ft.icons.PERSON, color=COLOR_PRIMARY)), 
-                            ft.Column([
-                                ft.Text(f"{user.get('name','')}님, 안녕하세요!", size=18, weight="bold", color=COLOR_TEXT_MAIN), 
-                                ft.Text(f"{today_str} 학습을 시작하세요.", size=12, color=COLOR_TEXT_DESC)
-                            ], spacing=2)
-                        ]),
-                        ft.Container(height=10),
                         
-                        ft.Container(
-                            bgcolor="white", padding=24, border_radius=20, border=ft.border.all(1, "#eef1f4"),
-                            content=ft.Column([
-                                ft.Row([ft.Text("오늘의 달성률", size=13, weight="bold"), ft.Text(f"{percent}%", size=13, weight="bold", color=COLOR_PRIMARY)], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                                ft.ProgressBar(value=progress_value, color=COLOR_PRIMARY, bgcolor="#eeeeee", height=8, border_radius=4),
-                                ft.Text(f"목표 {goal}개 중 {total_learned}개 학습 완료", size=11, color=COLOR_TEXT_DESC),
-                                ft.Container(height=16),
+                        # 상단: 프로필 + 달력
+                        ft.Row([
+                            profile_widget,        
+                            ft.Container(width=8), 
+                            build_mini_calendar()   
+                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.START),
 
-                                # [수정] 오답노트 버튼 제거됨, 학습 시작 버튼만 남음
+                        ft.Container(height=6), 
+                        
+                        # 오늘의 학습 카드 (Compact Mode)
+                        ft.Container(
+                            bgcolor="white", 
+                            padding=12,  
+                            border_radius=16, 
+                            border=ft.border.all(1, "#eef1f4"),
+                            content=ft.Column([
+                                ft.Row([
+                                    ft.Text("오늘의 달성률", size=12, weight="bold"), 
+                                    ft.Text(f"{percent}%", size=12, weight="bold", color=COLOR_PRIMARY)
+                                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                                
+                                ft.Container(height=4),
+                                ft.ProgressBar(value=progress_value, color=COLOR_PRIMARY, bgcolor="#eeeeee", height=6, border_radius=3),
+                                ft.Container(height=4),
+                                ft.Text(f"목표 {goal}개 중 {total_learned}개 완료", size=10, color=COLOR_TEXT_DESC),
+                                
+                                ft.Container(height=10),
+                                
                                 ft.ElevatedButton(
-                                    content=ft.Row([ft.Icon(ft.icons.PLAY_ARROW_ROUNDED, color="white"), ft.Text("오늘의 학습 시작", size=16, weight="bold", color="white")], alignment=ft.MainAxisAlignment.CENTER),
+                                    content=ft.Row([ft.Icon(ft.icons.PLAY_ARROW_ROUNDED, color="white", size=18), ft.Text("오늘의 학습 시작", size=13, weight="bold", color="white")], alignment=ft.MainAxisAlignment.CENTER),
                                     on_click=start_today, 
                                     bgcolor=COLOR_PRIMARY, color="white", 
-                                    width=320, height=52, 
-                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=16))
+                                    width=320, height=38, 
+                                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))
                                 ),
-                            ])
+                            ], spacing=0) 
                         ),
-                        ft.Container(height=10), continue_btn,
-                        ft.Container(height=20), build_ad_zone(on_click=on_ad_click), ft.Container(height=20),
-                    ], spacing=12)
+                        
+                        ft.Container(height=6),
+                        continue_btn,
+                        
+                        # 광고 영역
+                        ft.Container(height=10), 
+                        build_ad_zone(on_click=on_ad_click), 
+                        ft.Container(height=100),
+                        
+                    ], spacing=6) 
                 ),
             ]
         )
 
-        return mobile_shell("/student_home", body=content_body, title="Just Voca", actions=actions, bottom_nav=student_bottom_nav("home"))
-
+        return mobile_shell(
+            "/student_home", 
+            body=content_body, 
+            title="Just Voca", 
+            actions=actions, 
+            bottom_nav=student_bottom_nav("home"),
+            floating_action_button=chatbot_btn
+        )
+    
     def view_review_intro():
         # [사양] "3초 후 복습이 시작돼요..." 또는 [지금 시작] 버튼
         def start_review_now(e=None):

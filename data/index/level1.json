@@ -135,8 +135,9 @@
         "image": { "file": "images/Level1_15.webp" },
         "audio_voca": { "file": "audio/voca/level1/Level1_15.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level1/Level1_15.wav", "language": "ko", "speed": "normal" }
+      }
     },
-	{
+	  {
       "id": "voca_016",
       "text": "하세요",
       "resources": {
@@ -404,7 +405,8 @@
         "image": { "file": "images/Level1_45.webp" },
         "audio_voca": { "file": "audio/voca/level1/Level1_45.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level1/Level1_45.wav", "language": "ko", "speed": "normal" }
-      },
+      }
+    },
 	 {
       "id": "voca_046",
       "text": "자기소개",

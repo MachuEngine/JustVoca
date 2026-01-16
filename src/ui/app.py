@@ -328,7 +328,8 @@ def main(page: ft.Page):
                 nav_btn("🏠", t("home"), "/student_home", "home"),
                 nav_btn("🗂", t("level_select"), "/level_select", "level"),
                 nav_btn("⚙️", t("settings"), "/settings", "settings"),
-                nav_btn("📊", t("stats"), "/stats", "stats"),
+                # [수정] t("stats") 대신 "통계" 직접 입력하여 레이블 변경
+                nav_btn("📊", "통계", "/stats", "stats"),
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
@@ -794,61 +795,196 @@ def main(page: ft.Page):
             bottom_nav=student_bottom_nav("settings")
         )
 
+    # [수정] 통계 화면: 차트 라이브러리 미지원 오류 해결 (막대/도넛 그래프 직접 구현)
+    # [수정] 통계 화면: 0개 항목 렌더링 방지 (WASM 에러 해결) 및 동적 모서리 적용
     def view_stats():
         u = session.get("user")
         if not u: return mobile_shell("/stats", ft.Text("로그인이 필요합니다."), title="통계")
         uid = u.get("id") or u.get("uid")
         u = ensure_progress(get_user(uid) or u)
 
+        # ------------------------------
+        # 1. 데이터 집계
+        # ------------------------------
         topics = u["progress"]["topics"]
-        total_learned = sum(len(t.get("learned", {})) for t in topics.values())
-        wrong_cnt = sum(len(t.get("wrong_notes", [])) for t in topics.values())
-        avgs = [t.get("stats", {}).get("avg_score", 0) for t in topics.values() if t.get("learned")]
-        avg_score = round(sum(avgs) / max(1, len(avgs)), 2) if avgs else 0.0
+        
+        all_learned_words = []
+        for t_name, t_data in topics.items():
+            for w, info in t_data.get("learned", {}).items():
+                all_learned_words.append({
+                    "word": w,
+                    "score": info.get("last_score", 0),
+                    "last_seen": info.get("last_seen", "")
+                })
 
-        cards = [
-            ft.Container(expand=True, bgcolor="#f8f9fa", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("누적 학습", size=11, color=COLOR_TEXT_DESC), ft.Text(str(total_learned), size=22, weight="bold", color=COLOR_PRIMARY)], spacing=2)),
-            ft.Container(expand=True, bgcolor="#f8f9fa", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("평균 점수", size=11, color=COLOR_TEXT_DESC), ft.Text(str(avg_score), size=22, weight="bold", color=COLOR_TEXT_MAIN)], spacing=2)),
-            ft.Container(expand=True, bgcolor="#f8f9fa", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("오답", size=11, color=COLOR_TEXT_DESC), ft.Text(str(wrong_cnt), size=22, weight="bold", color=COLOR_ACCENT)], spacing=2))
-        ]
+        total_learned = len(all_learned_words)
+        total_wrong = sum(len(t.get("wrong_notes", [])) for t in topics.values())
+        
+        # (1) 숙련도 데이터 계산
+        count_perfect = sum(1 for w in all_learned_words if w["score"] >= 90)
+        count_review = sum(1 for w in all_learned_words if 70 <= w["score"] < 90)
+        count_relearn = sum(1 for w in all_learned_words if w["score"] < 70)
+        
+        # (2) 주간 학습 데이터 계산 (최근 7일)
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        daily_counts = { (today - timedelta(days=i)).strftime("%Y-%m-%d"): 0 for i in range(6, -1, -1) }
+        
+        for w in all_learned_words:
+            ls = w.get("last_seen", "")
+            if ls:
+                try:
+                    dt = ls.split(" ")[0]
+                    if dt in daily_counts:
+                        daily_counts[dt] += 1
+                except: pass
+        
+        sorted_dates = sorted(daily_counts.keys())
+        
+        # ------------------------------
+        # 2. UI 컴포넌트 생성
+        # ------------------------------
 
-        topic_rows = []
-        for tp in sorted(VOCAB_DB.keys()):
-            tpdata = topics.get(tp, {})
-            studied = len(tpdata.get("learned", {}))
-            avg = tpdata.get("stats", {}).get("avg_score", 0.0)
-            wcnt = len(tpdata.get("wrong_notes", []))
-            topic_rows.append(
-                ft.Container(
-                    bgcolor="white", border_radius=16, padding=12, border=ft.border.all(1, "#eef1f4"),
-                    content=ft.Row([
-                        ft.Column([ft.Text(tp, size=13, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(f"누적 {studied} · 평균 {avg} · 오답 {wcnt}", size=11, color=COLOR_TEXT_DESC)], spacing=2, expand=True),
-                        ft.Icon(ft.icons.CHEVRON_RIGHT, color="#bdc3c7")
-                    ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                    ink=True, on_click=lambda e, tpn=tp: (session.update({"topic": tpn}), go_to("/cumulative"))
+        # [A] 숙련도 그래프 (WASM 에러 방지 로직 적용)
+        # 데이터가 있는 항목만 필터링하여 리스트 생성
+        chart_items = []
+        if count_perfect > 0:
+            chart_items.append({"label": "완전 암기", "count": count_perfect, "color": COLOR_EVAL})
+        if count_review > 0:
+            chart_items.append({"label": "복습 필요", "count": count_review, "color": COLOR_SECONDARY})
+        if count_relearn > 0:
+            chart_items.append({"label": "다시 학습", "count": count_relearn, "color": COLOR_ACCENT})
+
+        bar_controls = []
+        if total_learned == 0:
+            # 데이터 없음: 회색 바 하나
+            bar_controls.append(ft.Container(height=20, bgcolor="#f1f3f5", border_radius=6, expand=True))
+        else:
+            # 데이터 있음: 유효한 항목만 컨테이너로 생성
+            for i, item in enumerate(chart_items):
+                # 첫 번째 항목이면 왼쪽 모서리 둥글게
+                radius_dict = {}
+                if i == 0:
+                    radius_dict["top_left"] = 6
+                    radius_dict["bottom_left"] = 6
+                # 마지막 항목이면 오른쪽 모서리 둥글게
+                if i == len(chart_items) - 1:
+                    radius_dict["top_right"] = 6
+                    radius_dict["bottom_right"] = 6
+                
+                # 모서리 속성 적용
+                b_radius = ft.border_radius.only(**radius_dict) if radius_dict else None
+                
+                bar_controls.append(
+                    ft.Container(
+                        expand=item["count"], # 개수를 비율로 사용
+                        height=20, 
+                        bgcolor=item["color"], 
+                        border_radius=b_radius, 
+                        tooltip=f"{item['label']}: {item['count']}개"
+                    )
                 )
+
+        ratio_bar = ft.Row(bar_controls, spacing=0)
+
+        proficiency_card = ft.Container(
+            padding=20, bgcolor="white", border_radius=20, border=ft.border.all(1, "#eef1f4"),
+            content=ft.Column([
+                ft.Text("단어 숙련도 분석", size=15, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                ratio_bar,
+                ft.Container(height=10),
+                # 범례 (항상 표시)
+                ft.Row([
+                    ft.Row([ft.Container(width=8, height=8, bgcolor=COLOR_EVAL, border_radius=2), ft.Text(f"완전 암기 ({count_perfect})", size=11, color=COLOR_TEXT_DESC)], spacing=4),
+                    ft.Row([ft.Container(width=8, height=8, bgcolor=COLOR_SECONDARY, border_radius=2), ft.Text(f"복습 필요 ({count_review})", size=11, color=COLOR_TEXT_DESC)], spacing=4),
+                    ft.Row([ft.Container(width=8, height=8, bgcolor=COLOR_ACCENT, border_radius=2), ft.Text(f"다시 학습 ({count_relearn})", size=11, color=COLOR_TEXT_DESC)], spacing=4),
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+            ])
+        )
+
+        # [B] 주간 학습 추이
+        max_val = max(daily_counts.values()) if daily_counts and max(daily_counts.values()) > 0 else 1
+        bar_height_base = 100 
+        
+        bars_ui = []
+        for d_str in sorted_dates:
+            val = daily_counts[d_str]
+            h = (val / max_val) * bar_height_base
+            if h < 2 and val > 0: h = 2 
+            if h > bar_height_base: h = bar_height_base # 안전장치
+            
+            bars_ui.append(
+                ft.Column([
+                    ft.Container(height=bar_height_base - h),
+                    ft.Container(
+                        width=14, height=h, 
+                        bgcolor=COLOR_PRIMARY if val > 0 else "#f1f3f5", 
+                        border_radius=4,
+                        tooltip=f"{d_str}: {val}단어"
+                    ),
+                    ft.Text(d_str[5:], size=10, color="#95a5a6") 
+                ], spacing=4, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
             )
+            
+        trend_card = ft.Container(
+            padding=20, bgcolor="white", border_radius=20, border=ft.border.all(1, "#eef1f4"),
+            content=ft.Column([
+                ft.Text("최근 7일 학습 추이", size=15, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                ft.Row(bars_ui, alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.END)
+            ])
+        )
+
+        # [C] 요약 통계
+        def stat_mini_card(label, value, color):
+            return ft.Container(
+                expand=True, padding=12, bgcolor="#f8f9fa", border_radius=14, border=ft.border.all(1, "#eef1f4"),
+                content=ft.Column([
+                    ft.Text(label, size=11, color="#95a5a6"),
+                    ft.Text(str(value), size=18, weight="bold", color=color)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+            )
+        
+        summary_row = ft.Row([
+            stat_mini_card("총 학습", total_learned, COLOR_PRIMARY),
+            stat_mini_card("오답 노트", total_wrong, COLOR_ACCENT),
+            stat_mini_card("완전 암기", count_perfect, COLOR_EVAL),
+        ], spacing=10)
+
+        # [D] 하단 버튼
+        action_buttons = ft.Row([
+            ft.ElevatedButton("누적 단어장", on_click=lambda _: go_to("/cumulative"), bgcolor=COLOR_PRIMARY, color="white", expand=True, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))),
+            ft.ElevatedButton("오답 노트", on_click=lambda _: go_to("/wrong_notes"), bgcolor=COLOR_ACCENT, color="white", expand=True, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12))),
+        ], spacing=10)
+        
+        review_btn = ft.ElevatedButton("취약 단어 복습하기", on_click=lambda _: go_to("/review"), bgcolor=COLOR_TEXT_MAIN, color="white", width=320, height=48, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)))
 
         body = ft.Container(
             padding=20,
             content=ft.Column([
-                ft.Row(cards, spacing=10), ft.Container(height=14),
-                ft.Row([ft.ElevatedButton("누적", on_click=lambda _: go_to("/cumulative"), bgcolor=COLOR_PRIMARY, color="white", expand=True), ft.ElevatedButton("오답노트", on_click=lambda _: go_to("/wrong_notes"), bgcolor=COLOR_ACCENT, color="white", expand=True)], spacing=10),
-                ft.Container(height=10), ft.ElevatedButton("복습", on_click=lambda _: go_to("/review"), bgcolor=COLOR_TEXT_MAIN, color="white", width=320),
-                ft.Container(height=14), ft.Text("토픽별 보기", size=14, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8),
-                ft.Column(topic_rows, spacing=10, scroll="auto"),
-            ], spacing=0)
+                summary_row,
+                ft.Container(height=16),
+                proficiency_card,
+                ft.Container(height=16),
+                trend_card,
+                ft.Container(height=24),
+                ft.Text("학습 관리", size=15, weight="bold", color=COLOR_TEXT_MAIN),
+                ft.Container(height=10),
+                action_buttons,
+                ft.Container(height=10),
+                review_btn,
+                ft.Container(height=30),
+            ], scroll="auto")
         )
 
-        shell_body = ft.Column(
-            spacing=0,
-            controls=[
-                student_info_bar(),
-                ft.Container(expand=True, content=body),
-                student_bottom_nav(active="stats"),
-            ],
+        return mobile_shell(
+            "/stats", 
+            body, 
+            title="학습 통계", 
+            leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()),
+            bottom_nav=student_bottom_nav("stats")
         )
-        return mobile_shell("/stats", shell_body, title="통계", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()))
 
     def view_student_home():
         u_session = session.get("user")

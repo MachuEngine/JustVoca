@@ -1002,12 +1002,15 @@ def main(page: ft.Page):
         last_topic = (last.get("topic") or "").strip()
         last_idx = int(last.get("idx", 0) or 0)
 
+        # [수정 1] 최초 로그인 시 토픽 자동 할당 로직 변경
+        # 기존: 이력이 없으면 topics[0]('초급1') 자동 할당
+        # 수정: 이력이 없으면 "-" 상태 유지
         current_topic = session.get("topic")
         if not current_topic or current_topic == "-" or current_topic not in VOCAB_DB:
             if last_topic and last_topic in VOCAB_DB:
                 session["topic"] = last_topic
-            elif topics:
-                session["topic"] = topics[0]
+            else:
+                session["topic"] = "-"  # 강제 할당 하지 않음
         
         current_topic = session.get("topic")
         goal = int(user["progress"]["settings"].get("goal", 10))
@@ -1053,8 +1056,6 @@ def main(page: ft.Page):
                         days_row.append(ft.Container(width=22)) 
                     else:
                         is_today = (day == today_day)
-                        
-                        # [수정됨] 더미 출석 로직 제거 (실제 데이터 연동 전까지는 표시 안 함)
                         is_attended = False 
                         
                         bg_color = COLOR_PRIMARY if is_today else ("#eef5ff" if is_attended else "transparent")
@@ -1132,8 +1133,18 @@ def main(page: ft.Page):
             update_user(uid, user)
             go_to("/study")
 
+        # [수정 2] 학습 시작 버튼 동작 변경
         def start_today(e=None):
-            target = current_topic if (current_topic and current_topic in VOCAB_DB) else (last_topic if last_topic else topics[0])
+            # 현재 선택된 토픽 확인
+            target = session.get("topic")
+            
+            # 토픽이 없거나 "-" 상태이면 레벨 선택 화면으로 이동
+            if not target or target == "-" or target not in VOCAB_DB:
+                show_snack("학습할 레벨을 먼저 선택해주세요.", COLOR_PRIMARY)
+                go_to("/level_select")
+                return
+
+            # 토픽이 있으면 학습 시작
             start_study(target, resume=False)
 
         def on_ad_click(e):

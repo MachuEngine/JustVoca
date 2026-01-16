@@ -58,6 +58,6 @@ if __name__ == "__main__":
     if view_mode is None:
         # 이 경우는 AppView가 특이하게 바뀐 케이스.
         # 일단 view 인자 없이 실행(기본값 사용)하게 처리.
-        ft.run(main, host=host, port=port, assets_dir=str(ASSETS_DIR))
+        ft.app(main, host=host, port=port, assets_dir=str(ASSETS_DIR))
     else:
-        ft.run(main, host=host, port=port, view=view_mode, assets_dir=str(ASSETS_DIR))
+        ft.app(main, host=host, port=port, view=view_mode, assets_dir=str(ASSETS_DIR))

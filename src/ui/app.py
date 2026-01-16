@@ -5,7 +5,7 @@ import random
 import asyncio
 import math
 import flet as ft
-from datetime import datetime
+from datetime import datetime, time
 
 # =============================================================================
 # Flet 0.80+ 호환
@@ -89,12 +89,14 @@ def main(page: ft.Page):
             "recorded": False,
             "target_word": "",
             "target_example": "",
+            "target_audio_ex": "", # [추가] 결과 화면에서 다시 듣기를 위해
             "result_score": None,
             "result_comment": "",
             "detail": [],
         },
         "today_words": [],
         "nav_token": 0,
+        "selected_notice_id": None,
     }
 
     MOTIVATE_MESSAGES = [
@@ -117,21 +119,32 @@ def main(page: ft.Page):
         u = session.get("user") or {}
         lang = (u.get("progress", {}).get("settings", {}) or {}).get("ui_lang", "ko")
         return I18N.get(lang, I18N["ko"]).get(key, key)
-
-    def play_tts(text: str):
+    
+    def play_audio_file(file_path: str):
+        if not file_path:
+            show_snack("오디오 파일이 없습니다.", "grey")
+            return
+        
+        print(f"Play Audio: {file_path}")
+        
+        # 1. 기존에 떠있는 오디오가 있다면 제거 (소리 겹침 방지)
+        for control in page.overlay[:]:
+            if isinstance(control, ft.Audio):
+                page.overlay.remove(control)
+        
+        # 2. 유효한 경로를 가진 새 플레이어 생성
+        # autoplay=True 덕분에 추가되자마자 소리가 납니다.
         try:
-            tjson = json.dumps(text)
-            page.run_javascript(f"""
-            try {{
-                if (!window.speechSynthesis) return;
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance({tjson});
-                u.lang = "ko-KR"; u.rate = 1.0; u.volume = 1.0;
-                window.speechSynthesis.speak(u);
-            }} catch(e) {{}}
-            """)
-        except:
-            pass
+            new_player = ft.Audio(src=file_path, autoplay=True)
+            page.overlay.append(new_player)
+            page.update()
+        except Exception as e:
+            print(f"Audio Error: {e}")
+            show_snack("오디오 재생 중 오류가 발생했습니다.", COLOR_ACCENT)
+
+    # 실시간 TTS 재생 함수 (더미)
+    def play_tts(text: str):
+        pass
 
     def evaluate_pronunciation_dummy(text: str):
         score = random.randint(75, 100)
@@ -994,7 +1007,7 @@ def main(page: ft.Page):
         session["user"] = user
 
         # [기존 로직] 레벨 순서 및 토픽 설정
-        LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급"]
+        LEVEL_ORDER = ["초급1", "초급2", "중급1", "중급2", "고급1", "고급2"]
         db_keys = list(VOCAB_DB.keys())
         topics = sorted(db_keys, key=lambda x: LEVEL_ORDER.index(x) if x in LEVEL_ORDER else 999)
 
@@ -1271,7 +1284,7 @@ def main(page: ft.Page):
         user = ensure_progress(get_user(uid) or u_session)
 
         # 이미지처럼 고정 레벨(있으면 활성, 없으면 비활성)
-        LEVELS = ["초급1", "초급2", "중급1", "중급2", "고급"]
+        LEVELS = ["초급1", "초급2", "중급1", "중급2", "고급1", "고급2"]
 
         def start_study(topic_name: str):
             if topic_name not in VOCAB_DB:
@@ -1526,7 +1539,14 @@ def main(page: ft.Page):
 
         def open_pron_result_for_current():
             w = words[st.idx]
-            session["pron_state"].update({"target_word": w.get("word", ""), "target_example": w.get("ex", ""), "result_score": None, "result_comment": "", "detail": []})
+            session["pron_state"].update({
+                "target_word": w.get("word", ""), 
+                "target_example": w.get("ex", ""),
+                "target_audio_ex": w.get("audio_ex", ""), # [추가] 오디오 경로 전달
+                "result_score": None, 
+                "result_comment": "", 
+                "detail": []
+            })
             go_to("/pron_result")
 
         def eojeol_buttons(example: str):
@@ -1552,7 +1572,7 @@ def main(page: ft.Page):
                     ft.Container(height=14),
                     ft.Container(bgcolor="#fff9f0", padding=14, border_radius=14, content=ft.Column([ft.Text(w.get("mean", ""), size=14, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"), ft.Text(w.get("desc", ""), size=11, color="#8a7e6a", italic=True, text_align="center")], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4)),
                     ft.Container(height=10),
-                    ft.ElevatedButton("🔊 단어 듣기", on_click=lambda e: play_tts(w["word"]), width=200, bgcolor=COLOR_PRIMARY, color="white"),
+                    ft.ElevatedButton("🔊 단어 듣기", on_click=lambda e, url=w.get("audio_voca"): play_audio_file(url), width=200, bgcolor=COLOR_PRIMARY, color="white"),
                     ft.Container(height=8),
                     ft.Row([ft.OutlinedButton("뒷면 보기", on_click=lambda _: flip_card(), expand=True), ft.ElevatedButton("다음 ▶", on_click=lambda e: change_card(1), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white")], spacing=10)
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -1562,8 +1582,21 @@ def main(page: ft.Page):
                 
                 return ft.Column([
                     header,
-                    ft.Container(bgcolor="#eef5ff", padding=14, border_radius=16, margin=ft.margin.symmetric(vertical=12), border=ft.border.only(left=ft.BorderSide(5, COLOR_PRIMARY)), content=ft.Column([ft.Text("[Example]", size=11, color=COLOR_PRIMARY, weight="bold"), ft.Text(w.get("ex", ""), size=14, color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Text("어절별 듣기", size=11, color=COLOR_TEXT_DESC), eojeol_buttons(w.get("ex", ""))], spacing=6)),
-                    ft.Row([ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e: play_tts(w.get("ex", "")), expand=True, bgcolor=COLOR_PRIMARY, color="white"), rec_btn], spacing=10),
+                    ft.Container(bgcolor="#eef5ff", padding=14, border_radius=16, margin=ft.margin.symmetric(vertical=12), border=ft.border.only(left=ft.BorderSide(5, COLOR_PRIMARY)), 
+                                 content=ft.Column([
+                                    ft.Text("[Example]", size=11, color=COLOR_PRIMARY, weight="bold"), 
+                                    ft.Text(w.get("ex", ""), size=14, color=COLOR_TEXT_MAIN), 
+                                    ft.Container(height=8), 
+                                    
+                                    # [참고] 어절별 듣기는 wav 파일이 없으므로 비활성화하거나 숨김 처리 권장
+                                    # ft.Text("어절별 듣기", size=11, color=COLOR_TEXT_DESC), 
+                                    # eojeol_buttons(w.get("ex", "")) 
+                                    ], spacing=6)
+                                ),
+                    ft.Row([
+                        ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e, url=w.get("audio_ex"): play_audio_file(url), expand=True, bgcolor=COLOR_PRIMARY, color="white"),
+                        rec_btn
+                    ], spacing=10),
                     ft.Container(height=8), status_text, ft.Container(expand=True),
                     ft.Row([ft.OutlinedButton("앞면 보기", on_click=lambda _: flip_card(), expand=True), ft.OutlinedButton("이전", on_click=lambda e: change_card(-1), expand=True), ft.OutlinedButton("다음", on_click=lambda e: change_card(1), expand=True)], spacing=10)
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -1585,6 +1618,8 @@ def main(page: ft.Page):
         word, example_text, recorded = ps.get("target_word", ""), ps.get("target_example", ""), bool(ps.get("recorded", False))
         score_text, comment_text, detail_col = ft.Text("", size=22, weight="bold", color=COLOR_EVAL), ft.Text("", size=12, color=COLOR_TEXT_DESC, text_align="center"), ft.Column(scroll="auto", expand=True, spacing=6)
         result_box = ft.Container(visible=False, bgcolor="#f8f9fa", border_radius=18, padding=16, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text("평가 결과", size=13, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=8), ft.Row([ft.Container(width=88, height=88, border_radius=44, border=ft.border.all(5, COLOR_EVAL), alignment=ft.Alignment(0, 0), content=ft.Column([score_text, ft.Text("점수", size=10, color="grey")], alignment=ft.MainAxisAlignment.CENTER, spacing=0)), ft.Container(expand=True)]), ft.Container(height=6), comment_text, ft.Divider(height=18), ft.Text("어절별 점수(더미)", size=11, color=COLOR_TEXT_DESC), ft.Container(height=6), ft.Container(content=detail_col, height=220)], horizontal_alignment=ft.CrossAxisAlignment.CENTER))
+        audio_ex = ps.get("target_audio_ex", "") # 저장해둔 오디오 경로 가져오기
+
 
         def run_ai_eval(e=None):
             if not recorded: return show_snack("먼저 문장 녹음을 완료해 주세요. (현재는 더미)", COLOR_ACCENT)
@@ -1609,7 +1644,10 @@ def main(page: ft.Page):
             session["pron_state"].update({"recording": False, "recorded": False})
             go_to("/study")
 
-        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Text("발음 녹음 결과", size=16, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=10), ft.Container(bgcolor="white", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(word, size=20, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(example_text, size=13, color=COLOR_TEXT_DESC), ft.Container(height=8), ft.Row([ft.ElevatedButton("▶ 문장 듣기", on_click=lambda _: play_tts(example_text), bgcolor=COLOR_PRIMARY, color="white", expand=True), ft.ElevatedButton("AI 평가", on_click=run_ai_eval, bgcolor=COLOR_ACCENT, color="white", expand=True)], spacing=10), ft.Container(height=10), result_box], horizontal_alignment=ft.CrossAxisAlignment.CENTER)), ft.Container(height=12), ft.ElevatedButton("학습 계속하기", on_click=back_to_study, bgcolor=COLOR_TEXT_MAIN, color="white", width=320)], horizontal_alignment=ft.CrossAxisAlignment.CENTER))])
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Text("발음 녹음 결과", size=16, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=10), ft.Container(bgcolor="white", border_radius=18, padding=14, border=ft.border.all(1, "#eef1f4"), content=ft.Column([ft.Text(word, size=20, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(example_text, size=13, color=COLOR_TEXT_DESC), ft.Container(height=8), ft.Row([# [수정] 결과 화면에서도 오디오 재생
+                        ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e, url=audio_ex: play_audio_file(url), bgcolor=COLOR_PRIMARY, color="white", expand=True), 
+                        ft.ElevatedButton("AI 평가", on_click=run_ai_eval, bgcolor=COLOR_ACCENT, color="white", expand=True)
+                    ], spacing=10), ft.Container(height=10), result_box], horizontal_alignment=ft.CrossAxisAlignment.CENTER)), ft.Container(height=12), ft.ElevatedButton("학습 계속하기", on_click=back_to_study, bgcolor=COLOR_TEXT_MAIN, color="white", width=320)], horizontal_alignment=ft.CrossAxisAlignment.CENTER))])
         return mobile_shell("/pron_result", body, title="발음 결과", leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_to("/study")), bottom_nav=student_bottom_nav("home"))
 
     def make_test_queue(topic: str, today_words: list[dict], n_choices: int = 4) -> list[dict]:

@@ -9,6 +9,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.ui.app import main
+import src.ui.app as _APP
+print("### RUNNING src.ui.app =", _APP.__file__)
+
 from src.constants import ASSETS_DIR
 
 

@@ -425,10 +425,35 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-17 05:35:49"
+            },
+            "하지만": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 15:21:15"
+            },
+            "그렇지만": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 16:18:28"
+            },
+            "장점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 17:17:19"
+            },
+            "단점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 17:17:43"
+            },
+            "좋은 점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 17:17:48"
             }
           },
           "stats": {
-            "studied_count": 72,
+            "studied_count": 77,
             "avg_score": 90.0
           },
           "wrong_notes": [
@@ -2873,11 +2898,30 @@
             "avg_score": 90.0
           },
           "wrong_notes": []
+        },
+        "고급2": {
+          "learned": {
+            "본질": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 14:26:24"
+            },
+            "해석": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-17 15:09:45"
+            }
+          },
+          "stats": {
+            "studied_count": 2,
+            "avg_score": 90.0
+          },
+          "wrong_notes": []
         }
       },
       "last_session": {
-        "topic": "초급2",
-        "idx": 0
+        "topic": "중급1",
+        "idx": 3
       },
       "today_flags": {
         "motivate_shown": true,

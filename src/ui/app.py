@@ -85,6 +85,9 @@ def main(page: ft.Page):
             "result_comment": "",
             "detail": [],
         },
+        "ui": {
+            "show_pron_overlay": False
+        },
         "today_words": [],
         "nav_token": 0,
         "selected_notice_id": None,
@@ -147,6 +150,43 @@ def main(page: ft.Page):
     def play_tts(text: str):
         pass
 
+    # main(page) 안(또는 render_card_content가 접근 가능한 같은 스코프)에 추가
+    def stop_audio(e=None):
+        """
+        ✅ 더미 중지 버튼 핸들러
+        - 지금은 실제 오디오 중지 구현 없이 UI만 맞추기
+        - 나중에 오디오 플레이어 객체/스트림을 붙이면 여기서 stop 처리
+        """
+        try:
+            show_snack("중지(더미)", COLOR_TEXT_DESC)
+        except Exception:
+            pass
+
+
+    def run_ai_eval_for_overlay(e=None):
+        ps = session.get("pron_state", {})
+        text = (ps.get("target_example") or ps.get("target_word") or "").strip()
+        if not text:
+            show_snack("평가할 문장이 없습니다.", COLOR_ACCENT)
+            return
+
+        score, raw_comment, tag, detail = evaluate_pronunciation_dummy(text)
+
+        # ✅ overlay 표시값 갱신
+        ps["result_score"] = int(score)
+        ps["result_comment"] = post_process_comment(tag, raw_comment)
+        ps["detail"] = detail
+
+        # ✅ 점수 표준화: overlay에서 쓰는 score도 AI 점수로 맞춰둠
+        ps["score"] = int(score)
+
+        session["pron_state"] = ps
+        page.update()
+
+        # ✅ 핵심: AI 평가 점수를 즉시 저장
+        persist_pron_score_for_current(int(score))
+
+
     def evaluate_pronunciation_dummy(text: str):
         score = random.randint(75, 100)
         tag = "excellent" if score >= 95 else "good" if score >= 88 else "ok" if score >= 80 else "need_practice"
@@ -179,6 +219,34 @@ def main(page: ft.Page):
             "result_comment": "",
             "detail": []
         }
+
+    def persist_pron_score_for_current(score: int):
+        """현재 카드 단어에 발음 점수(learned.last_score)를 저장"""
+        try:
+            words = session.get("study_words", [])
+            idx = int(session.get("idx", 0) or 0)
+            w = words[idx] if 0 <= idx < len(words) else None
+            if not w:
+                return
+
+            topic = (session.get("topic") or "").strip()
+            if not topic:
+                return
+
+            u_session = session.get("user") or {}
+            uid = u_session.get("id") or u_session.get("uid")
+            if not uid:
+                return
+
+            user = ensure_progress(get_user(uid) or u_session)
+            user = ensure_topic_progress(user, topic)
+
+            user = update_learned_word(user, topic, w, int(score))
+            update_user(uid, user)
+            session["user"] = user
+        except Exception as err:
+            log_write(f"[persist_pron_score_for_current] error: {repr(err)}")   
+
 
     # [수정] 더 이상 페이지 이동이 아니므로 이 함수는 사용하지 않거나, 예비용으로 둠
     def open_pron_result_for_current(e=None):
@@ -1313,6 +1381,125 @@ def main(page: ft.Page):
         schedule_go(0.8, "/study", only_if_route="/motivate")
         return mobile_shell("/motivate", body, title="학습 격려", leading=None, bottom_nav=student_bottom_nav("home"))
 
+
+    def open_pron_result_overlay(e=None):
+        words = session.get("study_words", [])
+        idx = int(session.get("idx", 0) or 0)
+        w = words[idx] if 0 <= idx < len(words) else None
+        if not w:
+            show_snack("결과를 열 수 없습니다.", COLOR_ACCENT)
+            return
+
+        session.setdefault("pron_state", {})
+        session["pron_state"].update({
+            "target_word": w.get("word", ""),
+            "target_example": str(w.get("예문1") or w.get("ex") or "").strip(),
+            "target_audio_ex": w.get("audio_ex", ""),
+            "detail": session["pron_state"].get("detail", []),
+            "result_score": session["pron_state"].get("result_score"),
+            "result_comment": session["pron_state"].get("result_comment", ""),
+        })
+
+        # ✅ 오버레이 열기
+        session["ui"]["show_pron_overlay"] = True
+        page.update()
+
+        # ✅ 결과 보기 누르면 = 평가+저장까지 자동 완료
+        ps = session.get("pron_state", {})
+        if bool(ps.get("recorded", False)):
+            try:
+                run_ai_eval_for_overlay()
+            except Exception as err:
+                log_write(f"[open_pron_result_overlay] auto eval failed: {repr(err)}")
+                # 평가 실패해도 녹음 점수라도 저장
+                if ps.get("score") is not None:
+                    persist_pron_score_for_current(int(ps["score"]))
+
+
+    def close_pron_overlay(e=None):
+        session["ui"]["show_pron_overlay"] = False
+        page.update()
+
+
+    def continue_learning(e=None):
+        session["ui"]["show_pron_overlay"] = False
+
+        words = session.get("study_words", [])
+        next_idx = int(session.get("idx", 0) or 0) + 1
+        if next_idx >= len(words):
+            # 끝까지 왔으면 기존 로직대로 다음 단계로 보내기(여기서는 테스트 인트로 등)
+            go_to("/test_intro")
+            return
+
+        session["idx"] = next_idx
+        reset_pron_state()
+        page.update()
+
+
+
+    def build_pron_overlay():
+        # show flag 꺼져 있으면 빈 컨테이너
+        if not session.get("ui", {}).get("show_pron_overlay"):
+            return ft.Container()
+
+        ps = session.get("pron_state", {})
+        word = ps.get("target_word", "")
+        example = ps.get("target_example", "")
+        score = ps.get("score", None)
+        comment = ps.get("result_comment", "")
+
+        panel = ft.Container(
+            width=360,
+            height=620,
+            bgcolor="white",
+            border_radius=20,
+            padding=20,
+            content=ft.Column(
+                expand=True,
+                scroll="auto",
+                controls=[
+                    ft.Row([
+                        ft.Text("발음 결과", size=16, weight="bold"),
+                        ft.Container(expand=True),
+                        ft.IconButton(ft.icons.CLOSE, on_click=close_pron_overlay),
+                    ]),
+                    ft.Container(height=6),
+                    ft.Text(word, size=18, weight="bold", color=COLOR_TEXT_MAIN),
+                    ft.Text(example, size=12, color=COLOR_TEXT_DESC),
+                    ft.Container(height=12),
+
+                    ft.Text(f"정확도: {0 if score is None else int(score)}", size=14, weight="bold"),
+                    ft.Text(comment if score is not None else "AI 평가를 눌러 점수를 확인하세요.",
+                            size=12, color=COLOR_TEXT_DESC),
+
+                    ft.Container(height=12),
+
+                    # 여기서 AI 평가 버튼은 기존 함수(run_ai_eval)를 그대로 연결하면 됨
+                    ft.ElevatedButton(
+                        "AI 평가",
+                        on_click=run_ai_eval_for_overlay,
+                        bgcolor=COLOR_ACCENT, color="white", height=44,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)),
+                    ),
+
+                    ft.Container(height=8),
+                    ft.ElevatedButton(
+                        "학습 계속하기",
+                        on_click=continue_learning,
+                        bgcolor=COLOR_PRIMARY, color="white", height=48,
+                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)),
+                    ),
+                ],
+            ),
+        )
+
+        return ft.Container(
+            expand=True,
+            bgcolor="black54",
+            alignment=ft.Alignment(0, 0),
+            content=panel,
+        )
+
     def view_study():
         if not session.get("user"): return mobile_shell("/study", ft.Text("로그인이 필요합니다."), title="단어 학습")
         
@@ -1418,156 +1605,46 @@ def main(page: ft.Page):
 
             page.run_task(_finish_recording)
 
-        # -------------------------------------------------------------
-        # [신규 함수] 발음 평가 결과 모달 (Overlay)
-        # -------------------------------------------------------------
-        def show_pron_result_modal():
-            """
-            단어 카드 뒷면에서 녹음 완료 후 [결과 보기] 클릭 시 뜨는 모달
-            사양서 스타일(원형 점수판, 파형 효과, 피드백) 적용
-            """
-            fixed_score = 90
-            
-            # 모달 닫기
-            def close_dlg(e):
-                try: page.close(dlg)
-                except: pass
-
-            # 다시 녹음하기 (상태 초기화)
-            def retry_record(e):
-                try: page.close(dlg)
-                except: pass
-                # 녹음 상태 초기화
-                session["pron_state"]["recorded"] = False
-                session["pron_state"]["recording"] = False
-                session["pron_state"]["score"] = 0
-                update_view() # 카드 화면 갱신
-
-            # [UI 컴포넌트] 더미 파형 (Waveform) 효과
-            # 높이가 다른 막대들을 나열하여 음성 파형처럼 연출
-            wave_heights = [10, 18, 12, 24, 16, 28, 20, 14, 22, 12, 18, 10, 24, 16, 12]
-            waveform_row = ft.Row(
-                controls=[
-                    ft.Container(
-                        width=4, height=h, 
-                        border_radius=2, 
-                        bgcolor=COLOR_PRIMARY if i % 2 == 0 else "#b2fab4"
-                    ) for i, h in enumerate(wave_heights)
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=3
-            )
-
-            # [UI 컴포넌트] 원형 점수판 (Ring Chart)
-            score_ring = ft.Stack(
-                controls=[
-                    ft.Container(
-                        width=120, height=120,
-                        border_radius=60,
-                        border=ft.border.all(8, "#eef1f4"), # 회색 배경 링
-                    ),
-                    ft.Container(
-                        width=120, height=120,
-                        content=ft.ProgressRing(
-                            value=fixed_score / 100, 
-                            stroke_width=8, 
-                            color=COLOR_PRIMARY,
-                            bgcolor="transparent"
-                        ),
-                    ),
-                    ft.Container(
-                        width=120, height=120,
-                        alignment=ft.Alignment(0, 0),
-                        content=ft.Column([
-                            ft.Text(f"{fixed_score}", size=36, weight="bold", color=COLOR_PRIMARY),
-                            ft.Text("점", size=14, color=COLOR_TEXT_DESC, weight="bold"),
-                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=0)
-                    )
-                ],
-                width=120, height=120,
-            )
-
-            # 모달 내부 조립
-            content = ft.Container(
-                width=300,
-                padding=24,
-                bgcolor="white",
-                border_radius=24,
-                content=ft.Column([
-                    ft.Text("발음 평가 결과", size=16, weight="bold", color=COLOR_TEXT_MAIN),
-                    ft.Container(height=20),
-                    
-                    # 1. 원형 점수
-                    score_ring,
-                    
-                    ft.Container(height=20),
-                    
-                    # 2. 오디오 파형 (분석된 느낌)
-                    waveform_row,
-                    
-                    ft.Container(height=16),
-                    
-                    # 3. 피드백 메시지
-                    ft.Container(
-                        padding=ft.padding.symmetric(horizontal=16, vertical=10),
-                        bgcolor="#f0fdf4", border_radius=12,
-                        content=ft.Row([
-                            ft.Icon(ft.icons.THUMB_UP, size=16, color=COLOR_EVAL),
-                            ft.Text("원어민 같아요! 👏", size=14, color=COLOR_EVAL, weight="bold")
-                        ], alignment=ft.MainAxisAlignment.CENTER, spacing=6)
-                    ),
-                    
-                    ft.Container(height=24),
-                    
-                    # 4. 버튼 그룹
-                    ft.Row([
-                        ft.ElevatedButton(
-                            "다시 녹음", 
-                            on_click=retry_record, 
-                            bgcolor="white", color=COLOR_TEXT_DESC, 
-                            expand=True, height=44,
-                            style=ft.ButtonStyle(
-                                shape=ft.RoundedRectangleBorder(radius=12),
-                                side=ft.BorderSide(1, "#eef1f4"),
-                                overlay_color="#f8f9fa"
-                            )
-                        ),
-                        ft.ElevatedButton(
-                            "확인", 
-                            on_click=close_dlg, 
-                            bgcolor=COLOR_PRIMARY, color="white", 
-                            expand=True, height=44,
-                            style=ft.ButtonStyle(
-                                shape=ft.RoundedRectangleBorder(radius=12),
-                                elevation=0
-                            )
-                        ),
-                    ], spacing=10)
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, tight=True)
-            )
-
-            dlg = ft.AlertDialog(
-                modal=True,
-                content=content,
-                bgcolor="transparent",
-                surface_tint_color="transparent",
-                content_padding=0,
-            )
-            page.open(dlg)
-
         def render_card_content():
             w = words[st.idx]
             log_write(f"[EX_CHECK] keys={list(w.keys())} / ex='{w.get('ex','')}' / 예문1='{w.get('예문1','')}'")
-            pron = w.get("pronunciation", "").strip() 
-            
+            pron = w.get("pronunciation", "").strip()
+
             # --- [공통] 상단 헤더 ---
-            right_badges = [ft.Container(padding=ft.padding.symmetric(horizontal=8, vertical=4), bgcolor="#fff5f5", border_radius=999, content=ft.Text("복습", size=10, color=COLOR_ACCENT, weight="bold"))] if is_review else []
-            
-            header = ft.Row([
-                ft.Container(padding=ft.padding.symmetric(horizontal=8, vertical=4), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"{topic}", size=10, color=COLOR_TEXT_DESC)),
-                ft.Container(padding=ft.padding.symmetric(horizontal=8, vertical=4), bgcolor="#f8f9fa", border_radius=999, content=ft.Text(f"{st.idx + 1}/{total}", size=10, color=COLOR_TEXT_DESC)),
-                ft.Container(expand=True), *right_badges, ft.IconButton(icon=ft.icons.HOME, icon_color=COLOR_TEXT_MAIN, icon_size=18, on_click=lambda _: go_to("/level_select"))
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+            right_badges = [
+                ft.Container(
+                    padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                    bgcolor="#fff5f5",
+                    border_radius=999,
+                    content=ft.Text("복습", size=10, color=COLOR_ACCENT, weight="bold"),
+                )
+            ] if is_review else []
+
+            header = ft.Row(
+                [
+                    ft.Container(
+                        padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                        bgcolor="#f8f9fa",
+                        border_radius=999,
+                        content=ft.Text(f"{topic}", size=10, color=COLOR_TEXT_DESC),
+                    ),
+                    ft.Container(
+                        padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                        bgcolor="#f8f9fa",
+                        border_radius=999,
+                        content=ft.Text(f"{st.idx + 1}/{total}", size=10, color=COLOR_TEXT_DESC),
+                    ),
+                    ft.Container(expand=True),
+                    *right_badges,
+                    ft.IconButton(
+                        icon=ft.icons.HOME,
+                        icon_color=COLOR_TEXT_MAIN,
+                        icon_size=18,
+                        on_click=lambda _: go_to("/level_select"),
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            )
 
             # --- [앞면용] 이미지 ---
             img_src = w.get("image", "📖")
@@ -1576,158 +1653,231 @@ def main(page: ft.Page):
             else:
                 main_image = ft.Text(img_src, size=50, font_family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji")
 
-            image_container = ft.Container(content=main_image, width=110, height=110, bgcolor="#f8f9fa", border_radius=55, alignment=ft.Alignment(0, 0))
+            image_container = ft.Container(
+                content=main_image,
+                width=110,
+                height=110,
+                bgcolor="#f8f9fa",
+                border_radius=55,
+                alignment=ft.Alignment(0, 0),
+            )
 
             # --- [공통] 뜻 텍스트 ---
-            meaning_content = ft.Column([
-                ft.Text(w.get("mean", ""), size=18, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"),
-                ft.Container(height=2),
-                ft.Text(w.get("desc", ""), size=12, color="#8a7e6a", italic=True, text_align="center")
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=0)
+            meaning_content = ft.Column(
+                [
+                    ft.Text(w.get("mean", ""), size=18, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"),
+                    ft.Container(height=2),
+                    ft.Text(w.get("desc", ""), size=12, color="#8a7e6a", italic=True, text_align="center"),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0,
+            )
 
             # === [앞면 Layout] ===
             if st.is_front:
-                # 단어와 발음(주황색)을 한 줄에 배치
                 word_row_controls = [ft.Text(w["word"], size=30, weight="bold", color=COLOR_TEXT_MAIN)]
                 if pron:
                     clean_pron = pron.replace("[", "").replace("]", "")
-                    word_row_controls.extend([
-                        ft.Container(width=4), 
-                        ft.Text(f"[{clean_pron}]", size=16, weight="bold", color="#ff922b")
-                    ])
-
-                return ft.Column([
-                    header, 
-
-                    ft.Container(height=15),
-                    image_container,
-                    ft.Container(height=15),
-                    
-                    ft.Row(
-                        word_row_controls, 
-                        alignment=ft.MainAxisAlignment.CENTER, 
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=0 
-                    ),
-                    
-                    ft.Container(height=20), 
-                    
-                    # 뜻 박스
-                    ft.Container(
-                        bgcolor="#fff9f0", 
-                        padding=16, 
-                        border_radius=16, 
-                        width=300, 
-                        content=meaning_content
-                    ),
-                    
-                    ft.Container(height=20),
-                    
-                    ft.ElevatedButton(
-                        "발음 듣기", 
-                        on_click=lambda e, url=w.get("audio_voca"): play_audio_file(url), 
-                        width=320, height=48,
-                        bgcolor=COLOR_PRIMARY, color="white",
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))
-                    ),
-                    
-                    ft.Container(expand=True),
-                    ft.Text("👆 카드를 눌러 뒷면 보기", size=11, color="#bdc3c7"),
-                    ft.Container(height=10),
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-
-            # === [뒷면 Layout] ===
-            else:
-                is_recording = session["pron_state"]["recording"]
-                is_recorded = session["pron_state"]["recorded"]
-
-                ex_text = str((w.get("예문1") or w.get("ex") or "")).strip()
-
-                # [Example] 섹션
-                example_section = ft.Column([
-                    ft.Container(
-                        alignment=ft.Alignment(-1, 0), 
-                        content=ft.Text("[Example]", size=14, color=COLOR_PRIMARY, weight="bold")
-                    ),
-                    ft.Container(height=6), 
-                    ft.Container(
-                        bgcolor="#f8f9fa",
-                        padding=16,
-                        border_radius=12,
-                        width=320,
-                        alignment=ft.Alignment(-1, 0),
-                        content=ft.Text(
-                            ex_text if ex_text else "(예문 없음)",
-                            size=15,
-                            color=COLOR_TEXT_MAIN,
-                            text_align=ft.TextAlign.LEFT
-                        )
+                    word_row_controls.extend(
+                        [
+                            ft.Container(width=4),
+                            ft.Text(f"[{clean_pron}]", size=16, weight="bold", color="#ff922b"),
+                        ]
                     )
-                ], spacing=0)
 
-                # 상단 버튼 그룹
-                listen_btn = ft.ElevatedButton(
-                    "문장 듣기", 
-                    on_click=lambda e, url=w.get("audio_ex"): play_audio_file(url), 
-                    expand=True, height=48, 
-                    bgcolor=COLOR_PRIMARY, color="white",
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))
+                tap_area = ft.GestureDetector(
+                    on_tap=flip_card,
+                    content=ft.Container(
+                        width=340,
+                        padding=0,
+                        content=ft.Column(
+                            [
+                                header,
+                                ft.Container(height=15),
+                                image_container,
+                                ft.Container(height=15),
+                                ft.Row(
+                                    word_row_controls,
+                                    alignment=ft.MainAxisAlignment.CENTER,
+                                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                                    spacing=0,
+                                ),
+                                ft.Container(height=20),
+                                ft.Container(
+                                    bgcolor="#fff9f0",
+                                    padding=16,
+                                    border_radius=16,
+                                    width=300,
+                                    content=meaning_content,
+                                ),
+                                ft.Container(expand=True),
+                                ft.Text("👆 카드를 눌러 뒷면 보기", size=11, color="#bdc3c7"),
+                                ft.Container(height=10),
+                            ],
+                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                    ),
                 )
 
-                if is_recording: 
-                    rec_btn = ft.ElevatedButton("🔴 녹음 중...", disabled=True, bgcolor="#ffebee", color=COLOR_ACCENT, expand=True, height=48, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14)))
-                elif is_recorded:
-                    # [수정] 결과 보기 버튼 -> 모달 오픈
-                    rec_btn = ft.ElevatedButton(
-                        "결과 보기",
-                        on_click=lambda e: show_pron_result_modal(), # 모달 호출
-                        disabled=False,
-                        bgcolor=COLOR_EVAL,
+                return ft.Column(
+                    [
+                        tap_area,
+                        ft.ElevatedButton(
+                            "발음 듣기",
+                            on_click=lambda e, url=w.get("audio_voca"): play_audio_file(url),
+                            width=320,
+                            height=48,
+                            bgcolor=COLOR_PRIMARY,
+                            color="white",
+                            style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14)),
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                )
+
+            else:
+                # ----------------------------
+                # 뒷면 사양 반영:
+                # 1) 높이 맞춤 (예문+spacer+버튼)
+                # 2) 문장 녹음 버튼 표시
+                # 3) 녹음 후 결과 보기로 변경
+                # 4) 녹음 전에는 다음 비활성화
+                # ----------------------------
+                example_text = str(w.get("예문1") or w.get("ex") or "").strip()
+
+                ps = session.get("pron_state", {}) if isinstance(session.get("pron_state", {}), dict) else {}
+                is_recording = bool(ps.get("recording", False))
+                is_recorded  = bool(ps.get("recorded", False))
+
+                # ✅ 상단(버튼 제외) 탭 영역: 뒤집기 유지
+                top_area = ft.GestureDetector(
+                    on_tap=flip_card,
+                    content=ft.Column(
+                        [
+                            header,
+                            ft.Container(height=12),
+                            ft.Text(w.get("word", ""), size=28, weight="bold", color=COLOR_TEXT_MAIN),
+                            ft.Container(height=12),
+
+                            # 예문 박스 (이미지 스타일)
+                            ft.Container(
+                                width=300,
+                                padding=16,
+                                border_radius=16,
+                                bgcolor="#f3f8ff",
+                                border=ft.border.all(1, "#dbe9ff"),
+                                content=ft.Column(
+                                    [
+                                        ft.Text("[Example]", size=11, color=COLOR_PRIMARY, weight="bold"),
+                                        ft.Container(height=6),
+                                        ft.Text(
+                                            example_text if example_text else "(예문 없음)",
+                                            size=13,
+                                            color=COLOR_TEXT_MAIN,
+                                        ),
+                                    ],
+                                    spacing=0,
+                                ),
+                            ),
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                )
+
+                # ✅ 버튼(사양): 위 row 2개, 아래 row 2개
+                btn_listen = ft.ElevatedButton(
+                    "▶  문장 듣기",
+                    on_click=lambda e, url=w.get("audio_ex"): play_audio_file(url),
+                    height=52,
+                    expand=True,
+                    style=ft.ButtonStyle(
+                        bgcolor=COLOR_PRIMARY,
                         color="white",
+                        shape=ft.RoundedRectangleBorder(radius=14),
+                    ),
+                )
+
+                # 오른쪽 상단 버튼: (녹음 중: 중지) / (녹음 완료: 결과 보기) / (기본: 문장 녹음)
+                if is_recording:
+                    btn_right = ft.ElevatedButton(
+                        "■  중지",
+                        on_click=stop_audio,   # 더미/실제 중지
+                        height=52,
                         expand=True,
-                        height=48,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))
+                        style=ft.ButtonStyle(
+                            bgcolor=COLOR_ACCENT,
+                            color="white",
+                            shape=ft.RoundedRectangleBorder(radius=14),
+                        ),
+                    )
+                elif is_recorded:
+                    btn_right = ft.ElevatedButton(
+                        "결과 보기",
+                        on_click=open_pron_result_overlay,
+                        height=52,
+                        expand=True,
+                        style=ft.ButtonStyle(
+                            bgcolor=COLOR_EVAL,
+                            color="white",
+                            shape=ft.RoundedRectangleBorder(radius=14),
+                        ),
                     )
                 else:
-                    rec_btn = ft.ElevatedButton("문장 녹음", on_click=on_click_record, bgcolor=COLOR_ACCENT, color="white", expand=True, height=48, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14)))
+                    btn_right = ft.ElevatedButton(
+                        "문장 녹음",
+                        on_click=on_click_record,
+                        height=52,
+                        expand=True,
+                        style=ft.ButtonStyle(
+                            bgcolor=COLOR_ACCENT,
+                            color="white",
+                            shape=ft.RoundedRectangleBorder(radius=14),
+                        ),
+                    )
 
-                upper_actions = ft.Row([listen_btn, rec_btn], spacing=10)
+                btn_prev = ft.ElevatedButton(
+                    "이전",
+                    on_click=lambda e: change_card(-1),
+                    height=44,
+                    expand=True,
+                    style=ft.ButtonStyle(
+                        bgcolor="#e9ecef",
+                        color=COLOR_TEXT_MAIN,
+                        shape=ft.RoundedRectangleBorder(radius=14),
+                    ),
+                )
 
-                # 하단 네비게이션
-                next_style = ft.ButtonStyle(bgcolor=COLOR_TEXT_MAIN if is_recorded else "#e0e0e0", color="white" if is_recorded else "#9e9e9e", shape=ft.RoundedRectangleBorder(radius=14))
-                nav_row = ft.Row([
-                    ft.OutlinedButton("이전", on_click=lambda e: change_card(-1), expand=True, height=48, style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=14))),
-                    ft.ElevatedButton("다음", on_click=lambda e: change_card(1), disabled=(not is_recorded), style=next_style, expand=True, height=48)
-                ], spacing=10)
+                # ✅ 녹음 전에는 다음 비활성화
+                btn_next = ft.ElevatedButton(
+                    "다음",
+                    on_click=lambda e: change_card(1),
+                    disabled=(not is_recorded),  # ✅ 핵심
+                    height=44,
+                    expand=True,
+                    style=ft.ButtonStyle(
+                        bgcolor="#e9ecef",
+                        color=COLOR_TEXT_MAIN,
+                        shape=ft.RoundedRectangleBorder(radius=14),
+                    ),
+                )
 
-                return ft.Column([
-                    header, 
-                    ft.Container(height=20), 
-                    
-                    # 1. 단어
-                    ft.Text(w["word"], size=30, weight="bold", color=COLOR_TEXT_MAIN),
-                    
-                    ft.Container(height=10),
-                    
-                    # 2. 뜻/설명 (뒷면에도 배치)
-                    ft.Container(width=300, content=meaning_content),
+                btn_row_top = ft.Row([btn_listen, btn_right], spacing=14, width=320)
+                btn_row_bottom = ft.Row([btn_prev, btn_next], spacing=14, width=320)
 
-                    ft.Container(height=20),
+                # ✅ 높이 맞춤: spacer로 버튼을 카드 하단에 고정 (앞면 느낌과 동일)
+                return ft.Column(
+                    [
+                        top_area,
+                        ft.Container(expand=True),        # ✅ 이게 앞/뒤 높이 균일하게 만듦
+                        btn_row_top,
+                        ft.Container(height=10),
+                        btn_row_bottom,
+                        ft.Container(height=12),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    expand=True,  # ✅ 카드 컨테이너 안에서 세로로 꽉 차게
+                )
 
-                    # 3. 예문 섹션 (데이터 키 매칭 수정됨)
-                    example_section,
-                    
-                    ft.Container(height=30), 
-                    
-                    # 4. 상단 버튼
-                    upper_actions,
-                    
-                    ft.Container(expand=True),
-                    
-                    # 5. 하단 버튼
-                    nav_row, 
-                    ft.Container(height=10),
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
         # [수정] 카드 컨테이너 클릭 시 뒤집기 (앞/뒤 모두 동작)
         card_container = ft.Container(
@@ -1735,7 +1885,9 @@ def main(page: ft.Page):
             width=340, bgcolor=COLOR_CARD_BG, border_radius=24, padding=20, 
             shadow=ft.BoxShadow(blur_radius=30, color="#14000000", offset=ft.Offset(0, 14)), 
             alignment=ft.Alignment(0, 0),
-            on_click=lambda e: flip_card(e) 
+            on_click=None,
+            ink=False,
+            height=560
         )
         
         def update_view():
@@ -1744,7 +1896,11 @@ def main(page: ft.Page):
                 card_container.update()
 
         body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Container(height=4), card_container, ft.Container(height=10)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))])
-        return mobile_shell("/study", body, title=page_title, leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
+        controls = [body]
+        if session.get("ui", {}).get("show_pron_overlay"):
+            controls.append(build_pron_overlay())
+
+        return mobile_shell("/study", ft.Stack(expand=True, controls=controls), title=page_title, leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 
     def view_pron_result():
         if not session.get("user"): return mobile_shell("/pron_result", ft.Text("로그인이 필요합니다."), title="발음 결과")

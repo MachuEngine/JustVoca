@@ -450,10 +450,25 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-17 17:17:48"
+            },
+            "나쁜 점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:35:42"
+            },
+            "문제점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:35:52"
+            },
+            "선택하다": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:36:17"
             }
           },
           "stats": {
-            "studied_count": 77,
+            "studied_count": 80,
             "avg_score": 90.0
           },
           "wrong_notes": [
@@ -2891,11 +2906,36 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-17 14:18:38"
+            },
+            "정의": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:39:28"
+            },
+            "가치": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:39:31"
+            },
+            "관점": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:52:57"
+            },
+            "시각": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 00:53:02"
+            },
+            "입장": {
+              "mean": "",
+              "last_score": 85,
+              "last_seen": "2026-01-18 01:02:16"
             }
           },
           "stats": {
-            "studied_count": 2,
-            "avg_score": 90.0
+            "studied_count": 7,
+            "avg_score": 89.29
           },
           "wrong_notes": []
         },
@@ -2920,7 +2960,7 @@
         }
       },
       "last_session": {
-        "topic": "중급1",
+        "topic": "고급1",
         "idx": 0
       },
       "today_flags": {

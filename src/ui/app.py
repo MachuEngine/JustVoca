@@ -198,7 +198,29 @@ def main(page: ft.Page):
         tag = "excellent" if score >= 95 else "good" if score >= 88 else "ok" if score >= 80 else "need_practice"
         comment = "발음이 매우 정확합니다." if score >= 95 else "좋습니다." if score >= 88 else "의미 전달은 충분합니다."
         words = [w for w in (text or "").split() if w.strip()]
-        detail = [{"unit": w, "score": random.randint(max(60, score - 15), min(100, score + 10))} for w in words[:12]]
+        detail = []
+        for w in words[:12]:
+            unit_score = random.randint(max(60, score - 15), min(100, score + 10))
+
+            # ✅ 사양서 24p(음소별) UI가 보이도록 더미 phones 생성
+            # - 실제 음소 분해가 아니라, "문자 단위"로 점수 더미를 만들어 시각화만 되게 함
+            # - refresh_pron_overlay()가 phones=[{"p":..., "s":...}] 형태를 기대
+            chars = [c for c in (w or "") if c.strip()]
+            if not chars:
+                chars = ["?"]
+
+            # 너무 길면 UI가 과밀해지니 최대 6개만 표시
+            chars = chars[:6]
+            phones = []
+            for c in chars:
+                ph_score = random.randint(max(40, unit_score - 20), min(100, unit_score + 10))
+                phones.append({"p": c, "s": int(ph_score)})
+
+            detail.append({
+                "unit": w,
+                "score": int(unit_score),
+                "phones": phones,
+            })
         return score, comment, tag, detail
 
     def post_process_comment(tag: str, raw_comment: str) -> str:
@@ -1461,6 +1483,117 @@ def main(page: ft.Page):
         score = ps.get("score", None)
         comment = ps.get("result_comment", "")
 
+        # =========================================================
+        # ✅ 사양서 22~24p: 어절별 리스트 + 상세 펼치기(음소 점수)
+        # =========================================================
+        detail = ps.get("detail", []) or []
+        selected_unit = ps.get("selected_unit", None)
+
+        def _safe_int(x, default=0):
+            try:
+                return int(x)
+            except Exception:
+                return default
+
+        def _toggle_unit(unit: str):
+            cur = (session.get("pron_state") or {}).get("selected_unit")
+            session.setdefault("pron_state", {})
+            session["pron_state"]["selected_unit"] = (None if cur == unit else unit)
+
+            refresh_pron_overlay()
+            try:
+                pron_overlay_host.update()
+            except Exception:
+                page.update()
+
+        def _unit_row(d: dict):
+            unit = str(d.get("unit", "") or "")
+            s = _safe_int(d.get("score", 0), 0)
+            is_open = (selected_unit == unit)
+
+            header = ft.Container(
+                padding=ft.padding.symmetric(horizontal=12, vertical=10),
+                border_radius=12,
+                bgcolor="#f5f7fb",
+                ink=True,
+                on_click=lambda e: _toggle_unit(unit),
+                content=ft.Row(
+                    controls=[
+                        ft.Text(unit if unit else "(어절)", size=13, weight="bold"),
+                        ft.Container(expand=True),
+                        ft.Text(f"{s}점", size=12, color=COLOR_TEXT_DESC),
+                        ft.Icon(
+                            ft.icons.KEYBOARD_ARROW_UP if is_open else ft.icons.KEYBOARD_ARROW_DOWN,
+                            size=18,
+                            color=COLOR_TEXT_DESC,
+                        ),
+                    ],
+                    spacing=8,
+                ),
+            )
+
+            if not is_open:
+                return header
+
+            # 상세(23p) + 음소(24p)
+            phones = d.get("phones", []) or []
+            if phones:
+                phone_line = ft.Row(
+                    wrap=True,            # ✅ Wrap 대체
+                    spacing=8,
+                    run_spacing=6,
+                    controls=[
+                        ft.Container(
+                            padding=ft.padding.symmetric(horizontal=8, vertical=4),
+                            border_radius=10,
+                            bgcolor="#ffffff",
+                            border=ft.border.all(1, "#e6eaf2"),
+                            content=ft.Row(
+                                controls=[
+                                    ft.Text(str(p.get("p", "")), size=12, weight="bold"),
+                                    ft.Text(str(_safe_int(p.get("s", 0), 0)), size=12, color=COLOR_TEXT_DESC),
+                                ],
+                                tight=True,
+                                spacing=6,
+                            ),
+                        )
+                        for p in phones
+                    ],
+                )
+            else:
+                phone_line = ft.Text("음소 점수 데이터가 없습니다.", size=12, color=COLOR_TEXT_DESC)
+
+            detail_box = ft.Container(
+            padding=ft.padding.only(left=12, top=10, right=12, bottom=10),
+            border_radius=12,
+            bgcolor="#ffffff",
+            border=ft.border.all(1, "#e6eaf2"),
+            content=ft.Column(
+                spacing=8,
+                controls=[
+                    ft.Text("상세보기", size=12, weight="bold", color=COLOR_TEXT_MAIN),
+                    phone_line,
+                ],
+            ),
+        )
+
+            return ft.Column(spacing=8, controls=[header, detail_box])
+
+        # 리스트가 비어있으면 안내 문구
+        if detail:
+            unit_list_block = ft.Column(
+                spacing=10,
+                controls=[
+                    ft.Text("어절별 점수", size=13, weight="bold"),
+                    ft.Column(spacing=8, controls=[_unit_row(d) for d in detail]),
+                ],
+            )
+        else:
+            unit_list_block = ft.Container(
+                padding=ft.padding.symmetric(vertical=6),
+                content=ft.Text("어절별 점수 데이터가 없습니다. (AI 평가 후 생성될 수 있어요)", size=12, color=COLOR_TEXT_DESC),
+            )
+
         panel = ft.Container(
             width=360,
             height=620,
@@ -1497,7 +1630,11 @@ def main(page: ft.Page):
                         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12)),
                     ),
 
-                    ft.Container(height=8),
+                    # ✅ 여기부터가 사양서 22~24p 영역
+                    ft.Container(height=14),
+                    unit_list_block,
+
+                    ft.Container(height=14),
                     ft.ElevatedButton(
                         "학습 계속하기",
                         on_click=continue_learning,
@@ -1514,6 +1651,7 @@ def main(page: ft.Page):
             alignment=ft.Alignment(0, 0),
             content=panel,
         )
+
 
     def view_study():
         if not session.get("user"): return mobile_shell("/study", ft.Text("로그인이 필요합니다."), title="단어 학습")

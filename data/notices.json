@@ -50,6 +50,8 @@
     "author": "teacher",
     "created_at": "2026-01-17T14:28:03.067423",
     "scheduled_at": "2026-01-17T14:28:03.067449",
-    "read_by": []
+    "read_by": [
+      "student"
+    ]
   }
 ]

@@ -2941,11 +2941,31 @@
               "mean": "",
               "last_score": 89,
               "last_seen": "2026-01-18 01:15:46"
+            },
+            "판단하다": {
+              "mean": "",
+              "last_score": 83,
+              "last_seen": "2026-01-18 01:43:37"
+            },
+            "설명하다": {
+              "mean": "",
+              "last_score": 93,
+              "last_seen": "2026-01-18 01:45:45"
+            },
+            "분류하다": {
+              "mean": "",
+              "last_score": 96,
+              "last_seen": "2026-01-18 01:47:56"
+            },
+            "정리하다": {
+              "mean": "",
+              "last_score": 76,
+              "last_seen": "2026-01-18 01:48:08"
             }
           },
           "stats": {
-            "studied_count": 9,
-            "avg_score": 87.78
+            "studied_count": 13,
+            "avg_score": 87.54
           },
           "wrong_notes": []
         },
@@ -2970,7 +2990,7 @@
         }
       },
       "last_session": {
-        "topic": "고급1",
+        "topic": "고급2",
         "idx": 0
       },
       "today_flags": {

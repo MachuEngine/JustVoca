@@ -2931,11 +2931,21 @@
               "mean": "",
               "last_score": 85,
               "last_seen": "2026-01-18 01:02:16"
+            },
+            "고려하다": {
+              "mean": "",
+              "last_score": 76,
+              "last_seen": "2026-01-18 01:15:31"
+            },
+            "평가하다": {
+              "mean": "",
+              "last_score": 89,
+              "last_seen": "2026-01-18 01:15:46"
             }
           },
           "stats": {
-            "studied_count": 7,
-            "avg_score": 89.29
+            "studied_count": 9,
+            "avg_score": 87.78
           },
           "wrong_notes": []
         },

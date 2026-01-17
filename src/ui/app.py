@@ -93,6 +93,8 @@ def main(page: ft.Page):
         "selected_notice_id": None,
     }
 
+    pron_overlay_host = ft.Container(expand=True, visible=False)
+
     MOTIVATE_MESSAGES = [
         "지금처럼만 하면 충분해요 ☺️",
         "충분히 잘하고 있어요! 지금처럼만 해요.",
@@ -181,7 +183,11 @@ def main(page: ft.Page):
         ps["score"] = int(score)
 
         session["pron_state"] = ps
-        page.update()
+        refresh_pron_overlay()
+        try:
+            pron_overlay_host.update()
+        except:
+            page.update()
 
         # ✅ 핵심: AI 평가 점수를 즉시 저장
         persist_pron_score_for_current(int(score))
@@ -1402,7 +1408,8 @@ def main(page: ft.Page):
 
         # ✅ 오버레이 열기
         session["ui"]["show_pron_overlay"] = True
-        page.update()
+        refresh_pron_overlay()
+        pron_overlay_host.update()
 
         # ✅ 결과 보기 누르면 = 평가+저장까지 자동 완료
         ps = session.get("pron_state", {})
@@ -1418,12 +1425,14 @@ def main(page: ft.Page):
 
     def close_pron_overlay(e=None):
         session["ui"]["show_pron_overlay"] = False
-        page.update()
+        refresh_pron_overlay()
+        pron_overlay_host.update()
 
 
     def continue_learning(e=None):
         session["ui"]["show_pron_overlay"] = False
-
+        refresh_pron_overlay()
+        pron_overlay_host.update()
         words = session.get("study_words", [])
         next_idx = int(session.get("idx", 0) or 0) + 1
         if next_idx >= len(words):
@@ -1437,12 +1446,16 @@ def main(page: ft.Page):
 
 
 
-    def build_pron_overlay():
-        # show flag 꺼져 있으면 빈 컨테이너
-        if not session.get("ui", {}).get("show_pron_overlay"):
-            return ft.Container()
+    def refresh_pron_overlay():
+        """오버레이 host(pron_overlay_host)의 visible/content를 최신 session 상태로 반영"""
+        show = bool(session.get("ui", {}).get("show_pron_overlay", False))
+        pron_overlay_host.visible = show
 
-        ps = session.get("pron_state", {})
+        if not show:
+            pron_overlay_host.content = None
+            return
+
+        ps = session.get("pron_state", {}) or {}
         word = ps.get("target_word", "")
         example = ps.get("target_example", "")
         score = ps.get("score", None)
@@ -1469,12 +1482,14 @@ def main(page: ft.Page):
                     ft.Container(height=12),
 
                     ft.Text(f"정확도: {0 if score is None else int(score)}", size=14, weight="bold"),
-                    ft.Text(comment if score is not None else "AI 평가를 눌러 점수를 확인하세요.",
-                            size=12, color=COLOR_TEXT_DESC),
+                    ft.Text(
+                        comment if score is not None else "AI 평가를 눌러 점수를 확인하세요.",
+                        size=12,
+                        color=COLOR_TEXT_DESC,
+                    ),
 
                     ft.Container(height=12),
 
-                    # 여기서 AI 평가 버튼은 기존 함수(run_ai_eval)를 그대로 연결하면 됨
                     ft.ElevatedButton(
                         "AI 평가",
                         on_click=run_ai_eval_for_overlay,
@@ -1493,7 +1508,7 @@ def main(page: ft.Page):
             ),
         )
 
-        return ft.Container(
+        pron_overlay_host.content = ft.Container(
             expand=True,
             bgcolor="black54",
             alignment=ft.Alignment(0, 0),
@@ -1896,9 +1911,8 @@ def main(page: ft.Page):
                 card_container.update()
 
         body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Container(height=4), card_container, ft.Container(height=10)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))])
-        controls = [body]
-        if session.get("ui", {}).get("show_pron_overlay"):
-            controls.append(build_pron_overlay())
+        refresh_pron_overlay()  # 뷰 생성 시 현재 상태 반영
+        controls = [body, pron_overlay_host]
 
         return mobile_shell("/study", ft.Stack(expand=True, controls=controls), title=page_title, leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 

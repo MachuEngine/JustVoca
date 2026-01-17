@@ -26,27 +26,13 @@ from src.utils import log_write, hash_password
 from src.vocab import load_vocab_data
 from src.ui.components import build_ad_zone
 from src.storage import (
-    load_system,
-    save_system,
-    load_users,
-    save_users,
-    authenticate_user,
-    update_user,
-    get_user,
-    register_user,
-    update_user_approval,
-    load_notices,
-    add_notice,
-    get_active_notices,
-    mark_notice_read
+    load_system, save_system, load_users, save_users, authenticate_user,
+    update_user, get_user, register_user, update_user_approval,
+    load_notices, add_notice, get_active_notices, mark_notice_read
 )
 from src.progress import (
-    ensure_progress,
-    ensure_topic_progress,
-    update_learned_word,
-    update_last_seen_only,
-    add_wrong_note,
-    country_label,
+    ensure_progress, ensure_topic_progress, update_learned_word,
+    update_last_seen_only, add_wrong_note, country_label,
 )
 
 VOCAB_DB = load_vocab_data()
@@ -87,9 +73,10 @@ def main(page: ft.Page):
         "pron_state": {
             "recording": False,
             "recorded": False,
+            "score": 0, # 점수 상태 추가
             "target_word": "",
             "target_example": "",
-            "target_audio_ex": "", # [추가] 결과 화면에서 다시 듣기를 위해
+            "target_audio_ex": "", 
             "result_score": None,
             "result_comment": "",
             "detail": [],
@@ -126,14 +113,9 @@ def main(page: ft.Page):
             return
         
         print(f"Play Audio: {file_path}")
-        
-        # 1. 기존에 떠있는 오디오가 있다면 제거 (소리 겹침 방지)
         for control in page.overlay[:]:
             if isinstance(control, ft.Audio):
                 page.overlay.remove(control)
-        
-        # 2. 유효한 경로를 가진 새 플레이어 생성
-        # autoplay=True 덕분에 추가되자마자 소리가 납니다.
         try:
             new_player = ft.Audio(src=file_path, autoplay=True)
             page.overlay.append(new_player)
@@ -142,7 +124,6 @@ def main(page: ft.Page):
             print(f"Audio Error: {e}")
             show_snack("오디오 재생 중 오류가 발생했습니다.", COLOR_ACCENT)
 
-    # 실시간 TTS 재생 함수 (더미)
     def play_tts(text: str):
         pass
 
@@ -158,7 +139,7 @@ def main(page: ft.Page):
         return raw_comment
 
     def show_snack(msg, color="black"):
-        print(f"SNACK: {msg}")  # [추가] 콘솔에 로그 출력 (화면에 안 뜰 경우 확인용)
+        print(f"SNACK: {msg}")
         page.snack_bar = ft.SnackBar(ft.Text(msg, color="white"), bgcolor=color)
         page.snack_bar.open = True
         page.update()
@@ -167,7 +148,16 @@ def main(page: ft.Page):
         page.go(route)
 
     def reset_pron_state():
-        session["pron_state"] = {"recording": False, "recorded": False, "target_word": "", "target_example": "", "result_score": None, "result_comment": "", "detail": []}
+        session["pron_state"] = {
+            "recording": False, 
+            "recorded": False, 
+            "score": 0, 
+            "target_word": "", 
+            "target_example": "", 
+            "result_score": None, 
+            "result_comment": "", 
+            "detail": []
+        }
 
     def reset_today_session(keep_user: bool = True):
         bump_nav_token()
@@ -231,7 +221,7 @@ def main(page: ft.Page):
         return False, "인증번호가 올바르지 않습니다."
 
     # =============================================================================
-    # [수정] 모바일 쉘: 클릭 차단 문제 해결 (alignment 제거 -> right/bottom 배치)
+    # 모바일 쉘
     # =============================================================================
     def mobile_shell(route: str, body: ft.Control, title: str = "", leading=None, actions=None, bottom_nav: ft.Control = None, floating_action_button: ft.Control = None):
         actions = actions or []
@@ -252,33 +242,23 @@ def main(page: ft.Page):
         if topbar:
             controls_list.append(topbar)
         
-        # 본문은 확장(expand=True) -> 남은 공간 차지
         controls_list.append(ft.Container(content=body, expand=True))
         
-        # 하단 메뉴 고정
         if bottom_nav:
             controls_list.append(bottom_nav)
 
-        # 기본 레이아웃 (Column)
         base_layout = ft.Column(expand=True, spacing=0, controls=controls_list)
 
-        # [수정] FAB가 있을 경우 Stack 사용
         if floating_action_button:
-            # 하단 탭바 높이 고려
             bottom_padding = 90 if bottom_nav else 20
-            
             final_content = ft.Stack(
                 expand=True,
                 controls=[
-                    base_layout, # 배경 (기존 화면)
-                    
-                    # [핵심 수정] 
-                    # 이전 코드: alignment=ft.Alignment(1,1) -> 화면 전체를 덮어서 클릭 방해
-                    # 수정 코드: right, bottom 속성 사용 -> 해당 위치에만 배치되고 나머지 공간은 클릭 가능
+                    base_layout,
                     ft.Container(
                         content=floating_action_button,
-                        right=16,              # 오른쪽에서 16px 떨어짐
-                        bottom=bottom_padding, # 바닥에서 계산된 만큼 떨어짐
+                        right=16,
+                        bottom=bottom_padding,
                     )
                 ]
             )
@@ -350,112 +330,10 @@ def main(page: ft.Page):
     # =============================================================================
     def view_landing():
         def feature_card(icon_text: str, title: str, desc: str):
-            return ft.Container(
-                width=340,
-                padding=ft.padding.symmetric(horizontal=16, vertical=14),
-                bgcolor="#f4f6f8",
-                border_radius=18,
-                content=ft.Row(
-                    spacing=14,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[
-                        ft.Container(
-                            width=42,
-                            height=42,
-                            bgcolor="white",
-                            border_radius=14,
-                            alignment=ft.Alignment(0, 0),
-                            content=ft.Text(icon_text, size=20),
-                        ),
-                        ft.Column(
-                            spacing=4,
-                            expand=True,
-                            controls=[
-                                ft.Text(title, size=13, weight="bold", color=COLOR_TEXT_MAIN),
-                                ft.Text(desc, size=11, color=COLOR_TEXT_DESC),
-                            ],
-                        ),
-                    ],
-                ),
-            )
-
-        content = ft.Column(
-            alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=0,
-            controls=[
-                ft.Container(height=10),
-
-                # 상단 KR 아이콘(이미지에 맞게: 텍스트 "KR"로)
-                ft.Container(
-                    width=120,
-                    height=120,
-                    bgcolor="#eef5ff",
-                    border_radius=30,
-                    alignment=ft.Alignment(0, 0),
-                    content=ft.Text("KR", size=42, weight="bold", color=COLOR_TEXT_MAIN),
-                ),
-
-                ft.Container(height=18),
-
-                ft.Text("한국어 학습", size=26, weight="bold", color=COLOR_TEXT_MAIN),
-
-                ft.Container(height=6),
-
-                ft.Text(
-                    "단어부터 발음, 진도 관리까지\n쉽고 체계적인 한국어 학습",
-                    size=12,
-                    color=COLOR_TEXT_DESC,
-                    text_align="center",
-                ),
-
-                ft.Container(height=22),
-
-                feature_card(
-                    "📘",
-                    "체계적 단계별 단어 & 예문 학습",
-                    "한국어 표준 교육 과정에 따른\n단계별 단어 학습",
-                ),
-                ft.Container(height=12),
-                feature_card(
-                    "🎧",
-                    "발음 녹음 & 평가",
-                    "특별한 발음평가 엔진으로\n보다 정확한 발음 진단",
-                ),
-                ft.Container(height=12),
-                feature_card(
-                    "📊",
-                    "학습 진도 관리",
-                    "학생별 맞춤 진도 및 평균점 관리",
-                ),
-
-                ft.Container(height=18),
-
-                ft.Text(
-                    "화면을 터치하면 학습을 시작합니다",
-                    size=10,
-                    color="#b0b7c3",
-                ),
-
-                ft.Container(height=10),
-            ],
-        )
-
-        # 화면 전체 탭 시 로그인으로 이동
-        tappable = ft.GestureDetector(
-            on_tap=lambda _: go_to("/login"),
-            content=ft.Container(
-                padding=28,
-                content=ft.Column(
-                    expand=True,
-                    scroll="auto",
-                    alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    controls=[content],
-                ),
-            ),
-        )
-
+            return ft.Container(width=340, padding=ft.padding.symmetric(horizontal=16, vertical=14), bgcolor="#f4f6f8", border_radius=18, content=ft.Row(spacing=14, vertical_alignment=ft.CrossAxisAlignment.CENTER, controls=[ft.Container(width=42, height=42, bgcolor="white", border_radius=14, alignment=ft.Alignment(0, 0), content=ft.Text(icon_text, size=20)), ft.Column(spacing=4, expand=True, controls=[ft.Text(title, size=13, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(desc, size=11, color=COLOR_TEXT_DESC)])]))
+        
+        content = ft.Column(alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=0, controls=[ft.Container(height=10), ft.Container(width=120, height=120, bgcolor="#eef5ff", border_radius=30, alignment=ft.Alignment(0, 0), content=ft.Text("KR", size=42, weight="bold", color=COLOR_TEXT_MAIN)), ft.Container(height=18), ft.Text("한국어 학습", size=26, weight="bold", color=COLOR_TEXT_MAIN), ft.Container(height=6), ft.Text("단어부터 발음, 진도 관리까지\n쉽고 체계적인 한국어 학습", size=12, color=COLOR_TEXT_DESC, text_align="center"), ft.Container(height=22), feature_card("📘", "체계적 단계별 단어 & 예문 학습", "한국어 표준 교육 과정에 따른\n단계별 단어 학습"), ft.Container(height=12), feature_card("🎧", "발음 녹음 & 평가", "특별한 발음평가 엔진으로\n보다 정확한 발음 진단"), ft.Container(height=12), feature_card("📊", "학습 진도 관리", "학생별 맞춤 진도 및 평균점 관리"), ft.Container(height=18), ft.Text("화면을 터치하면 학습을 시작합니다", size=10, color="#b0b7c3"), ft.Container(height=10)])
+        tappable = ft.GestureDetector(on_tap=lambda _: go_to("/login"), content=ft.Container(padding=28, content=ft.Column(expand=True, scroll="auto", alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, controls=[content])))
         return mobile_shell("/", tappable, title="")
 
     def view_login():
@@ -1421,74 +1299,56 @@ def main(page: ft.Page):
 
         st = StudyState()
         total = len(words)
-        status_text = ft.Text("", size=11, color="#95a5a6")
 
-        # [기능] 단어 학습 처리 (DB 저장)
         def mark_seen_default(word_item):
-            u_session = session.get("user")
-            uid = u_session.get("id") or u_session.get("uid")
-            user = get_user(uid) or u_session
-            user = ensure_progress(user)
-            user = ensure_topic_progress(user, topic)
-            tpdata = user["progress"]["topics"].get(topic, {})
-            learned = tpdata.get("learned", {})
-            
-            # 처음 본 단어면 learned에 추가
-            if word_item["word"] not in learned:
-                user = update_learned_word(user, topic, word_item, 90)
-            else:
-                user = update_last_seen_only(user, topic, word_item)
-                
-            update_user(uid, user)
-            session["user"] = user
+            try:
+                u_session = session.get("user")
+                uid = u_session.get("id") or u_session.get("uid")
+                user = get_user(uid) or u_session
+                user = ensure_progress(user)
+                user = ensure_topic_progress(user, topic)
+                tpdata = user["progress"]["topics"].get(topic, {})
+                learned = tpdata.get("learned", {})
+                if word_item["word"] not in learned:
+                    user = update_learned_word(user, topic, word_item, 90)
+                else:
+                    user = update_last_seen_only(user, topic, word_item)
+                update_user(uid, user)
+                session["user"] = user
+            except: pass
 
-        # [기능 1] 격려 화면 로직 (복구됨)
+        def check_and_add_review(word_item):
+            if is_review: return 
+            if "review_queue" not in session: session["review_queue"] = []
+            if random.random() < 0.3:
+                exists = any(w["word"] == word_item["word"] for w in session["review_queue"])
+                if not exists: session["review_queue"].append(word_item)
+
+        # [복구] 격려 화면 로직
         def maybe_motivate(new_idx: int):
-            # 복습 모드이거나 이미 보여줬으면 패스
             if is_review or session.get("motivate_shown", False): return
             if len(words) < 2: return
             
-            # 절반 지점(예: 10개 중 5번째)에서 격려
-            half_reach_idx = math.ceil(len(words) / 2) - 1
+            # 절반 지점(예: 10개 중 5번째) 도달 시
+            half_reach_idx = len(words) // 2
             if new_idx == half_reach_idx:
                 session["motivate_shown"] = True
                 if not session.get("motivate_msg"): session["motivate_msg"] = random.choice(MOTIVATE_MESSAGES)
                 if not session.get("motivate_emoji"): session["motivate_emoji"] = random.choice(MOTIVATE_EMOJIS)
                 go_to("/motivate")
 
-        # [기능 2] 복습 큐 추가 (시뮬레이션 유지)
-        def check_and_add_review(word_item):
-            if is_review: return 
-            if "review_queue" not in session: session["review_queue"] = []
-            
-            # (테스트용) 30% 확률로 복습 대상 추가 (2번 항목 요청대로 유지)
-            import random
-            if random.random() < 0.3:
-                exists = any(w["word"] == word_item["word"] for w in session["review_queue"])
-                if not exists: session["review_queue"].append(word_item)
-
         def persist_position():
-            u_session = session.get("user")
-            uid = u_session.get("id") or u_session.get("uid")
-            user = get_user(uid) or u_session
-            user = ensure_progress(user)
-            if not is_review:
-                user["progress"]["last_session"] = {"topic": topic, "idx": st.idx}
-                update_user(uid, user)
-            session["user"] = user
+            u = session.get("user")
+            if u and not is_review:
+                u["progress"]["last_session"] = {"topic": topic, "idx": st.idx}
+                update_user(u.get("id"), u)
 
         def change_card(delta):
-            # 1. 다음 카드로 넘어갈 때 처리 (delta > 0)
             if delta > 0:
-                # 학습 완료 처리 (DB 저장)
-                try: mark_seen_default(words[st.idx])
-                except: pass
+                mark_seen_default(words[st.idx])
+                check_and_add_review(words[st.idx])
                 
-                # 복습 대상인지 체크 (시뮬레이션)
-                try: check_and_add_review(words[st.idx])
-                except: pass
-
-                # [복구됨] 다음 인덱스 기준으로 격려 화면 체크
+                # [복구] 다음 카드로 넘어갈 때 격려 조건 체크
                 maybe_motivate(st.idx + delta)
 
             new_idx = st.idx + delta
@@ -1496,63 +1356,36 @@ def main(page: ft.Page):
                 st.idx = new_idx
                 session["idx"] = new_idx
                 st.is_front = True
-                status_text.value = ""
+                reset_pron_state()
                 persist_position()
                 update_view()
             elif new_idx >= total:
                 persist_position()
-                
-                # 학습 종료 후 분기 처리
-                
-                # 1. 이미 복습 모드였으면 -> 바로 테스트로
-                if is_review:
-                    go_to("/test_intro")
-                    return
-
-                # 2. 일반 학습이었으면 -> 복습할게 있는지 확인
-                review_list = session.get("review_queue", [])
-                if review_list:
-                    # 복습 세션 설정
-                    session["study_words"] = review_list
-                    session["idx"] = 0
-                    session["is_review"] = True
-                    go_to("/review_intro") # 안내 화면으로 이동
+                if is_review: go_to("/test_intro")
                 else:
-                    # 복습할 게 없으면 바로 테스트
-                    go_to("/test_intro")
+                    review_list = session.get("review_queue", [])
+                    if review_list:
+                        session["study_words"] = review_list; session["idx"] = 0; session["is_review"] = True; go_to("/review_intro")
+                    else: go_to("/test_intro")
+            elif new_idx < 0:
+                pass # First card prev click ignored
 
         def flip_card(e=None):
             st.is_front = not st.is_front
             update_view()
 
-        def start_recording():
+        def on_click_record(e):
+            if session["pron_state"]["recorded"]: return 
             session["pron_state"]["recording"] = True
-            session["pron_state"]["recorded"] = False
-            status_text.value = "🎙 녹음 중... (더미)"
-            page.update()
-
-        def stop_recording():
-            session["pron_state"]["recording"] = False
-            session["pron_state"]["recorded"] = True
-            status_text.value = "⏹ 녹음 종료."
-            page.update()
-
-        def open_pron_result_for_current():
-            w = words[st.idx]
-            session["pron_state"].update({
-                "target_word": w.get("word", ""), 
-                "target_example": w.get("ex", ""),
-                "target_audio_ex": w.get("audio_ex", ""), # [추가] 오디오 경로 전달
-                "result_score": None, 
-                "result_comment": "", 
-                "detail": []
-            })
-            go_to("/pron_result")
-
-        def eojeol_buttons(example: str):
-            parts = [p for p in (example or "").split() if p.strip()]
-            if not parts: return ft.Container(height=0)
-            return ft.Row(controls=[ft.OutlinedButton(p, on_click=lambda e, t=p: play_tts(t), height=32) for p in parts[:12]], wrap=True, spacing=6, run_spacing=8)
+            update_view()
+            async def _finish_recording():
+                await asyncio.sleep(0.5)
+                session["pron_state"]["recording"] = False
+                session["pron_state"]["recorded"] = True
+                session["pron_state"]["score"] = 90
+                update_view()
+                show_snack("녹음 완료! (90점)", COLOR_PRIMARY)
+            page.run_task(_finish_recording)
 
         def render_card_content():
             w = words[st.idx]
@@ -1564,52 +1397,85 @@ def main(page: ft.Page):
                 ft.Container(expand=True), *right_badges, ft.IconButton(icon=ft.icons.HOME, icon_color=COLOR_TEXT_MAIN, on_click=lambda _: go_to("/level_select"))
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
+            img_src = w.get("image", "📖")
+            if img_src and (img_src.startswith("/") or "images/" in img_src):
+                main_image = ft.Image(src=img_src, width=140, height=140, fit=ft.ImageFit.CONTAIN)
+            else:
+                # [수정] 이모티콘 폰트 적용
+                main_image = ft.Text(img_src, size=60, font_family="Segoe UI Emoji, Apple Color Emoji, Noto Color Emoji")
+
+            image_container = ft.Container(content=main_image, width=140, height=140, bgcolor="#f8f9fa", border_radius=70, alignment=ft.Alignment(0, 0))
+
+            # --- 앞면 ---
             if st.is_front:
                 return ft.Column([
-                    header, ft.Container(height=10),
-                    ft.Container(content=ft.Text(w.get("image", "📖"), size=54), width=110, height=110, bgcolor="#f8f9fa", border_radius=55, alignment=ft.Alignment(0, 0)),
-                    ft.Container(height=12), ft.Text(w["word"], size=34, weight="bold", color=COLOR_TEXT_MAIN), ft.Text(w.get("pronunciation", ""), size=14, color=COLOR_SECONDARY),
-                    ft.Container(height=14),
-                    ft.Container(bgcolor="#fff9f0", padding=14, border_radius=14, content=ft.Column([ft.Text(w.get("mean", ""), size=14, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"), ft.Text(w.get("desc", ""), size=11, color="#8a7e6a", italic=True, text_align="center")], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4)),
-                    ft.Container(height=10),
+                    header, ft.Container(height=20),
+                    image_container,
+                    ft.Container(height=16), 
+                    ft.Text(w["word"], size=32, weight="bold", color=COLOR_TEXT_MAIN), 
+                    ft.Text(w.get("pronunciation", ""), size=14, color=COLOR_SECONDARY),
+                    ft.Container(height=20),
+                    ft.Container(bgcolor="#fff9f0", padding=16, border_radius=16, content=ft.Column([ft.Text(w.get("mean", ""), size=16, weight="bold", color=COLOR_TEXT_MAIN, text_align="center"), ft.Text(w.get("desc", ""), size=12, color="#8a7e6a", italic=True, text_align="center")], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6)),
+                    ft.Container(height=20),
+                    # [수정] 단어 듣기만 있음
                     ft.ElevatedButton("🔊 단어 듣기", on_click=lambda e, url=w.get("audio_voca"): play_audio_file(url), width=200, bgcolor=COLOR_PRIMARY, color="white"),
-                    ft.Container(height=8),
-                    ft.Row([ft.OutlinedButton("뒷면 보기", on_click=lambda _: flip_card(), expand=True), ft.ElevatedButton("다음 ▶", on_click=lambda e: change_card(1), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white")], spacing=10)
-                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-            else:
-                is_rec, is_recorded = bool(session["pron_state"].get("recording")), bool(session["pron_state"].get("recorded"))
-                rec_btn = ft.ElevatedButton("⏹ 중지", on_click=lambda e: stop_recording(), expand=True, bgcolor=COLOR_TEXT_MAIN, color="white") if is_rec else (ft.ElevatedButton("✅ 결과 보기", on_click=lambda e: open_pron_result_for_current(), expand=True, bgcolor=COLOR_EVAL, color="white") if is_recorded else ft.ElevatedButton("🎙 문장 녹음", on_click=lambda e: start_recording(), expand=True, bgcolor=COLOR_ACCENT, color="white"))
-                
-                return ft.Column([
-                    header,
-                    ft.Container(bgcolor="#eef5ff", padding=14, border_radius=16, margin=ft.margin.symmetric(vertical=12), border=ft.border.only(left=ft.BorderSide(5, COLOR_PRIMARY)), 
-                                 content=ft.Column([
-                                    ft.Text("[Example]", size=11, color=COLOR_PRIMARY, weight="bold"), 
-                                    ft.Text(w.get("ex", ""), size=14, color=COLOR_TEXT_MAIN), 
-                                    ft.Container(height=8), 
-                                    
-                                    # [참고] 어절별 듣기는 wav 파일이 없으므로 비활성화하거나 숨김 처리 권장
-                                    # ft.Text("어절별 듣기", size=11, color=COLOR_TEXT_DESC), 
-                                    # eojeol_buttons(w.get("ex", "")) 
-                                    ], spacing=6)
-                                ),
-                    ft.Row([
-                        ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e, url=w.get("audio_ex"): play_audio_file(url), expand=True, bgcolor=COLOR_PRIMARY, color="white"),
-                        rec_btn
-                    ], spacing=10),
-                    ft.Container(height=8), status_text, ft.Container(expand=True),
-                    ft.Row([ft.OutlinedButton("앞면 보기", on_click=lambda _: flip_card(), expand=True), ft.OutlinedButton("이전", on_click=lambda e: change_card(-1), expand=True), ft.OutlinedButton("다음", on_click=lambda e: change_card(1), expand=True)], spacing=10)
+                    ft.Container(expand=True),
+                    # [수정] 안내 문구
+                    ft.Text("👆 카드를 눌러 뒷면 보기", size=12, color="#bdc3c7"),
+                    ft.Container(height=20),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
-        card_container = ft.Container(content=render_card_content(), width=340, bgcolor=COLOR_CARD_BG, border_radius=24, padding=20, shadow=ft.BoxShadow(blur_radius=30, color="#14000000", offset=ft.Offset(0, 14)), alignment=ft.Alignment(0, 0), on_click=lambda e: flip_card(e))
+            # --- 뒷면 ---
+            else:
+                is_recording = session["pron_state"]["recording"]
+                is_recorded = session["pron_state"]["recorded"]
+                score = session["pron_state"]["score"]
+
+                example_box = ft.Container(bgcolor="#eef5ff", padding=16, border_radius=16, margin=ft.margin.symmetric(vertical=10), border=ft.border.only(left=ft.BorderSide(5, COLOR_PRIMARY)), content=ft.Column([ft.Text("[Example]", size=12, color=COLOR_PRIMARY, weight="bold"), ft.Text(w.get("ex", ""), size=15, color=COLOR_TEXT_MAIN, weight="w500")], spacing=6))
+
+                # 상단 버튼 (듣기 / 녹음)
+                if is_recording: rec_btn = ft.ElevatedButton("🔴 녹음 중...", disabled=True, bgcolor="#ffebee", color=COLOR_ACCENT, expand=True)
+                elif is_recorded: rec_btn = ft.ElevatedButton(f"✅ {score}점", disabled=True, bgcolor=COLOR_EVAL, color="white", expand=True)
+                else: rec_btn = ft.ElevatedButton("🎙 문장 녹음", on_click=on_click_record, bgcolor=COLOR_ACCENT, color="white", expand=True)
+
+                upper_actions = ft.Row([
+                    ft.ElevatedButton("▶ 문장 듣기", on_click=lambda e, url=w.get("audio_ex"): play_audio_file(url), bgcolor=COLOR_PRIMARY, color="white", expand=True),
+                    rec_btn
+                ], spacing=10)
+
+                # 하단 버튼 (이전 / 다음)
+                # [수정] 다음 버튼은 녹음 완료 시 활성화
+                next_style = ft.ButtonStyle(bgcolor=COLOR_TEXT_MAIN if is_recorded else "#e0e0e0", color="white" if is_recorded else "#9e9e9e", shape=ft.RoundedRectangleBorder(radius=14))
+                nav_row = ft.Row([
+                    ft.OutlinedButton("이전 단어", on_click=lambda e: change_card(-1), expand=True, height=48),
+                    ft.ElevatedButton("다음 단어 ▶", on_click=lambda e: change_card(1), disabled=(not is_recorded), style=next_style, expand=True, height=48)
+                ], spacing=10)
+
+                return ft.Column([
+                    header, ft.Container(height=10), image_container, ft.Container(height=10),
+                    example_box, ft.Container(height=10),
+                    upper_actions,
+                    ft.Container(expand=True),
+                    ft.Text("녹음을 완료해야 다음으로 넘어갈 수 있어요." if not is_recorded else "참 잘했어요! 다음 단어로 넘어가세요.", size=12, color="#95a5a6"),
+                    ft.Container(height=10),
+                    nav_row, ft.Container(height=20),
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+
+        # [수정] 카드 컨테이너 클릭 시 뒤집기 (앞/뒤 모두 동작)
+        card_container = ft.Container(
+            content=render_card_content(), 
+            width=340, bgcolor=COLOR_CARD_BG, border_radius=24, padding=20, 
+            shadow=ft.BoxShadow(blur_radius=30, color="#14000000", offset=ft.Offset(0, 14)), 
+            alignment=ft.Alignment(0, 0),
+            on_click=lambda e: flip_card(e) 
+        )
         
         def update_view():
             if card_container.page:
                 card_container.content = render_card_content()
                 card_container.update()
 
-        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Container(height=4), card_container, ft.Container(height=10), ft.Text("카드를 터치하거나 버튼으로 앞/뒤를 전환하세요", color="#bdc3c7", size=11)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))])
-        
+        body = ft.Column(spacing=0, controls=[student_info_bar(), ft.Container(expand=True, padding=20, content=ft.Column([ft.Container(height=4), card_container, ft.Container(height=10)], horizontal_alignment=ft.CrossAxisAlignment.CENTER, scroll="auto", expand=True))])
         return mobile_shell("/study", body, title=page_title, leading=ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=lambda _: go_home()), bottom_nav=student_bottom_nav("home"))
 
     def view_pron_result():

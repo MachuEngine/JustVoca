@@ -2980,10 +2980,25 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-17 15:09:45"
+            },
+            "중요성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 12:11:40"
+            },
+            "필요성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 12:20:32"
+            },
+            "정당성": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-18 12:39:14"
             }
           },
           "stats": {
-            "studied_count": 2,
+            "studied_count": 5,
             "avg_score": 90.0
           },
           "wrong_notes": []
@@ -2991,7 +3006,7 @@
       },
       "last_session": {
         "topic": "고급2",
-        "idx": 0
+        "idx": 1
       },
       "today_flags": {
         "motivate_shown": true,

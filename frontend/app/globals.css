@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 모바일 앱 느낌을 위한 기본 배경 설정 */
+body {
+  background-color: #f3f4f6; /* bg-gray-100 색상 */
+  margin: 0;
+  padding: 0;
+}

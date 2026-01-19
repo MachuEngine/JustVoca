@@ -2995,18 +2995,33 @@
               "mean": "",
               "last_score": 90,
               "last_seen": "2026-01-18 12:39:14"
+            },
+            "의의": {
+              "mean": "",
+              "last_score": 0,
+              "last_seen": "2026-01-19 02:26:21"
+            },
+            "견해": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-19 03:05:40"
+            },
+            "해당": {
+              "mean": "",
+              "last_score": 90,
+              "last_seen": "2026-01-19 03:06:06"
             }
           },
           "stats": {
-            "studied_count": 5,
-            "avg_score": 90.0
+            "studied_count": 8,
+            "avg_score": 78.75
           },
           "wrong_notes": []
         }
       },
       "last_session": {
         "topic": "고급2",
-        "idx": 1
+        "idx": 0
       },
       "today_flags": {
         "motivate_shown": true,

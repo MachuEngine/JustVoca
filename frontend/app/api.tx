@@ -1,0 +1,16 @@
+// frontend/app/api.ts
+export const BACKEND_BASE =
+  process.env.NEXT_PUBLIC_BACKEND_BASE || "http://localhost:8000";
+
+export async function evaluatePronunciation(text: string, blob: Blob) {
+  const fd = new FormData();
+  fd.append("text", text);
+  fd.append("audio", blob, "record.webm");
+
+  const res = await fetch(`${BACKEND_BASE}/api/pron/evaluate`, {
+    method: "POST",
+    body: fd,
+  });
+
+  return await res.json();
+}

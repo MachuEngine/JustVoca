@@ -1,109 +1,155 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
-  Flame, 
-  BookOpen, 
-  Clock, 
-  Target, 
-  Trophy, 
-  ChevronRight 
+  ChevronLeft, 
+  Camera, 
+  User, 
+  Mail, 
+  Phone, 
+  Globe, 
+  Save,
+  CheckCircle2
 } from 'lucide-react';
+// [추가] AuthGuard 및 API 임포트
+import AuthGuard from '../components/AuthGuard';
+import { getUserProfile, updateUserProfile } from '../api';
 
 export default function ProfilePage() {
-  // 사양서 기반 데이터 (John Smith 예시)
-  const profileData = {
-    name: "John Smith", // [cite: 88]
-    statusMsg: "오늘도 한 걸음", // [cite: 89]
-    todayStatus: "오늘 학습 완료!", // [cite: 90]
-    stats: {
-      continuous: "7일 연속 학습", // [cite: 92]
-      wordCount: "320단어 학습", // [cite: 93]
-      totalTime: "총 4시간 학습", // [cite: 94]
-    },
-    topikLevel: "TOPIK II 레벨", // 
-    nextGoal: "중급 단어 완주", // 
+  const router = useRouter();
+  const [profile, setProfile] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    country: "",
+    role: ""
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      getUserProfile(userId).then(data => {
+        if (data) setProfile(data);
+      });
+    }
+  }, []);
+
+  const handleSave = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    setIsSaving(true);
+    try {
+      await updateUserProfile(userId, {
+        email: profile.email,
+        phone: profile.phone,
+        country: profile.country
+      });
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (error) {
+      alert("저장에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-gray-50 p-6 pb-10">
-      {/* 1. 상단 타이틀 */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">내 프로필</h1> {/* [cite: 86] */}
-      </div>
-
-      {/* 2. 메인 프로필 카드 */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-6 text-center">
-        <div className="w-24 h-24 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center border-4 border-green-50">
-          {/* 캐릭터 이미지 또는 아이콘 자리 */}
-          <span className="text-4xl">👨‍🎓</span>
-        </div>
-        <h2 className="text-xl font-black text-gray-900">{profileData.name}</h2>
-        <p className="text-gray-500 font-medium text-sm mt-1">{profileData.statusMsg}</p>
-        
-        {/* 오늘 학습 상태 태그 */}
-        <div className="inline-block mt-4 px-4 py-1.5 bg-green-600 text-white rounded-full text-xs font-bold shadow-md animate-bounce">
-          {profileData.todayStatus}
-        </div>
-      </div>
-
-      {/* 3. 성취 요약 섹션 (지금까지 이렇게 했어요) */}
-      <div className="mb-6">
-        <h3 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">
-          지금까지 이렇게 했어요 {/* [cite: 91] */}
-        </h3>
-        <div className="grid grid-cols-1 gap-3">
-          {/* 연속 학습 */}
-          <div className="flex items-center p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 mr-4">
-              <Flame size={24} strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-gray-700">{profileData.stats.continuous}</span>
-          </div>
-          {/* 학습 단어 수 */}
-          <div className="flex items-center p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 mr-4">
-              <BookOpen size={24} strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-gray-700">{profileData.stats.wordCount}</span>
-          </div>
-          {/* 총 학습 시간 */}
-          <div className="flex items-center p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mr-4">
-              <Clock size={24} strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-gray-700">{profileData.stats.totalTime}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. TOPIK 레벨 및 목표 */}
-      <div className="space-y-3">
-        {/* TOPIK 레벨 정보 */}
-        <div className="p-5 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl text-white shadow-lg flex justify-between items-center">
-          <div>
-            <p className="text-blue-100 text-xs font-bold mb-1 italic">Current Ability</p>
-            <h4 className="text-lg font-black">{profileData.topikLevel}</h4> {/*  */}
-          </div>
-          <Trophy size={32} className="text-blue-200 opacity-50" />
-        </div>
-
-        {/* 다음 목표 */}
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center">
-          <div>
-            <h4 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-1">다음 목표</h4> {/* [cite: 96] */}
-            <p className="text-gray-800 font-bold">{profileData.nextGoal}</p> {/*  */}
-          </div>
-          <button className="p-2 bg-gray-50 rounded-full text-gray-400">
-            <ChevronRight size={20} />
+    // [보안 적용] 로그인한 모든 유저 접근 가능
+    <AuthGuard>
+      <div className="flex flex-col min-h-full bg-white pb-24">
+        {/* 헤더 */}
+        <header className="h-14 flex items-center justify-between px-4 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ChevronLeft size={24} className="text-gray-800" />
           </button>
-        </div>
-      </div>
+          <h1 className="text-lg font-bold text-gray-900">프로필 편집</h1>
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className="text-green-600 font-bold px-2 disabled:opacity-50"
+          >
+            {isSaving ? "저장 중..." : "완료"}
+          </button>
+        </header>
 
-      {/* 5. 확인 버튼 */}
-      <button className="w-full h-16 bg-gray-900 text-white font-bold rounded-2xl text-lg hover:bg-black active:scale-[0.98] transition-all shadow-lg mt-8 flex-shrink-0">
-        확인 {/* [cite: 103] */}
-      </button>
-    </div>
+        <main className="flex-1 px-6 pt-6">
+          {/* 프로필 이미지 섹션 */}
+          <div className="flex flex-col items-center mb-10">
+            <div className="relative group">
+              <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center border-4 border-white shadow-xl overflow-hidden">
+                <User size={50} className="text-green-200" />
+              </div>
+              <button className="absolute bottom-0 right-0 bg-gray-900 text-white p-2 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform">
+                <Camera size={18} />
+              </button>
+            </div>
+            <p className="mt-4 text-xl font-black text-gray-900">{profile.name}</p>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-full mt-2">
+              {profile.role || "LEARNER"}
+            </span>
+          </div>
+
+          {/* 입력 폼 */}
+          <div className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 ml-1 uppercase">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                <input 
+                  type="email" 
+                  value={profile.email}
+                  onChange={(e) => setProfile({...profile, email: e.target.value})}
+                  className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none font-bold text-gray-800 transition-all"
+                  placeholder="이메일을 입력하세요"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 ml-1 uppercase">Phone Number</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                <input 
+                  type="tel" 
+                  value={profile.phone}
+                  onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                  className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none font-bold text-gray-800 transition-all"
+                  placeholder="전화번호를 입력하세요"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-black text-gray-400 ml-1 uppercase">Country</label>
+              <div className="relative">
+                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={18} />
+                <select 
+                  value={profile.country}
+                  onChange={(e) => setProfile({...profile, country: e.target.value})}
+                  className="w-full h-14 pl-12 pr-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-green-500 outline-none font-bold text-gray-800 appearance-none transition-all"
+                >
+                  <option value="KR">South Korea (대한민국)</option>
+                  <option value="US">United States</option>
+                  <option value="VN">Vietnam</option>
+                  <option value="CN">China</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* 성공 알림 토스트 */}
+          {showSuccess && (
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce">
+              <CheckCircle2 size={18} className="text-green-400" />
+              <span className="font-bold text-sm">성공적으로 저장되었습니다!</span>
+            </div>
+          )}
+        </main>
+      </div>
+    </AuthGuard>
   );
 }

@@ -3,35 +3,33 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-// 사양서의 메뉴 직관성을 위해 아이콘을 선정했습니다.
 import { Home, Layers, BarChart3, Settings } from "lucide-react";
 
 export default function BottomNavBar() {
   const pathname = usePathname();
 
-  // 사양서 기준 하단 메뉴 구성 (홈 / 레벨 / 설정 / 통계) 
-  // 
+  // [수정] 레벨 메뉴의 href를 /level_select에서 /levels로 변경
   const menuItems = [
     { 
       name: "홈", 
       href: "/student_home", 
       icon: Home 
-    }, // [cite: 185]
+    },
     { 
       name: "레벨", 
-      href: "/level_select", 
+      href: "/levels", // [변경 포인트]
       icon: Layers 
-    }, // 레벨 선택 
+    },
     { 
       name: "통계", 
       href: "/stats", 
       icon: BarChart3 
-    }, // 
+    },
     { 
       name: "설정", 
       href: "/settings", 
       icon: Settings 
-    }, // [cite: 187]
+    },
   ];
 
   return (
@@ -48,9 +46,7 @@ export default function BottomNavBar() {
               isActive ? "text-green-600" : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            {/* 아이콘 크기와 굵기 조절 */}
             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-            {/* 사양서에 명시된 메뉴 명칭 [cite: 185-188] */}
             <span className="text-[11px] font-bold tracking-tighter">
               {item.name}
             </span>

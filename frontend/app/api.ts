@@ -163,3 +163,16 @@ export async function withdrawUser(userId: string) {
     return { status: "error" };
   }
 }
+
+export async function getStudents() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/teacher/students`);
+    if (!res.ok) throw new Error("학생 목록 로드 실패");
+    const data = await res.json();
+    // 백엔드 리턴 구조({ok: true, items: [...]})에 맞춰 items 반환
+    return data.ok ? data.items : [];
+  } catch (error) {
+    console.error("getStudents Error:", error);
+    return [];
+  }
+}

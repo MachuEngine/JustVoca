@@ -1,81 +1,103 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation"; //
-// [추가] AuthGuard 임포트
-import AuthGuard from "../../components/AuthGuard";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ChevronLeft, Mail, Phone, User, Globe } from 'lucide-react'; // 아이콘 추가
+import AuthGuard from '../../components/AuthGuard';
+import { getStudentDetail } from '../../api'; // API 함수 임포트
 
-const API = process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
-
-type Student = {
-  uid: string; name: string; email: string; phone: string; country: string; progress: any;
-};
-
-export default function TeacherStudentPage() {
+export default function StudentDetailPage() {
+  const params = useParams();
   const router = useRouter();
-  const params = useParams<{ uid: string }>();
-  const uid = params?.uid;
+  const uid = params.uid as string;
 
-  const [student, setStudent] = useState<Student | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [student, setStudent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  async function load() {
-    if (!uid) return;
-    setErr(null);
-    const res = await fetch(`${API}/api/teacher/students/${uid}`, { credentials: "include" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setErr(data?.detail ?? "불러오기 실패");
-      return;
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const data = await getStudentDetail(uid);
+        if (data && data.info) {
+          setStudent(data);
+        }
+      } catch (error) {
+        console.error("학생 정보 로드 실패:", error);
+        alert("학생 정보를 불러오지 못했습니다.");
+        router.back();
+      } finally {
+        setLoading(false);
+      }
     }
-    setStudent(data?.student ?? null);
-  }
+    fetchData();
+  }, [uid, router]);
 
-  async function resetPassword() {
-    if (!uid) return;
-    const ok = confirm("이 학생 비밀번호를 1111로 초기화할까요?");
-    if (!ok) return;
+  if (loading) return <div className="p-10 text-center">로딩 중...</div>;
+  if (!student) return null;
 
-    setBusy(true);
-    try {
-      const res = await fetch(`${API}/api/teacher/students/${uid}/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ new_password: "1111" }),
-      });
-      if (!res.ok) { alert("초기화 실패"); return; }
-      alert("비밀번호를 1111로 초기화했습니다.");
-    } finally { setBusy(false); }
-  }
-
-  useEffect(() => { load(); }, [uid]);
+  const { info, progress } = student;
 
   return (
-    // [보안 적용] 선생님 또는 관리자만 접근 가능
     <AuthGuard allowedRoles={['teacher', 'admin']}>
-      <div style={{ maxWidth: 820, margin: "40px auto" }} className="p-6">
-        <button onClick={() => router.back()} className="mb-4 px-4 py-2 bg-gray-100 rounded-lg">← 뒤로</button>
-        <h2 className="text-2xl font-bold mb-6">학생 상세 정보</h2>
-        {err && <p className="text-red-500 mb-4">{err}</p>}
-        {!student ? (
-          <p>불러오는 중...</p>
-        ) : (
-          <>
-            <div className="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm mb-6">
-              <div className="text-xl font-bold mb-2">{student.name || "(이름 없음)"} <span className="text-gray-400 text-sm font-normal">({student.uid})</span></div>
-              <div className="text-gray-600 text-sm">국가: {student.country} · 이메일: {student.email || "-"} · 전화: {student.phone || "-"}</div>
-              <div className="mt-6">
-                <button onClick={resetPassword} disabled={busy} className="bg-red-50 text-red-600 px-4 py-2 rounded-xl font-bold hover:bg-red-100 disabled:opacity-50">
-                  비밀번호 1111로 초기화
-                </button>
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* 헤더 */}
+        <header className="h-16 flex items-center px-4 bg-white border-b border-gray-100 sticky top-0 z-10">
+          <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-gray-50 rounded-full">
+            <ChevronLeft className="text-gray-800" size={24} />
+          </button>
+          <h1 className="text-lg font-bold text-gray-900 ml-2">{info.name} 학생 상세</h1>
+        </header>
+
+        <main className="p-6 space-y-6">
+          
+          {/* 1. 기본 정보 카드 (요청하신 부분) */}
+          <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                <User size={32} className="text-gray-400" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-gray-900">{info.name}</h2>
+                <p className="text-sm font-bold text-gray-400">ID: {info.uid}</p>
+              </div>
+              <div className="ml-auto">
+                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-black">
+                  {progress.level} 과정
+                </span>
               </div>
             </div>
-            <h3 className="text-lg font-bold mb-4">학습 진도 (상세 데이터)</h3>
-            <pre className="bg-gray-900 text-gray-100 p-6 rounded-2xl overflow-x-auto text-xs">{JSON.stringify(student.progress ?? {}, null, 2)}</pre>
-          </>
-        )}
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <Globe size={18} className="text-gray-500" />
+                <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase">국적</p>
+                  <p className="text-sm font-bold text-gray-800">{info.country}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <Phone size={18} className="text-gray-500" />
+                <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase">전화번호</p>
+                  <p className="text-sm font-bold text-gray-800">{info.phone}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                <Mail size={18} className="text-gray-500" />
+                <div>
+                  <p className="text-[10px] text-gray-400 font-bold uppercase">이메일</p>
+                  <p className="text-sm font-bold text-gray-800">{info.email}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* 이후 기존의 학습 통계 차트나 상세 정보를 배치 */}
+          {/* <StudentScoreChart ... /> 등을 여기에 추가 */}
+          
+        </main>
       </div>
     </AuthGuard>
   );

@@ -1,17 +1,22 @@
 # backend/app/api/auth.py
 from fastapi import APIRouter, HTTPException, Depends, Response
 from sqlmodel import Session
+from pydantic import BaseModel  # [추가] 요청 데이터 정의를 위해 필요
 from app.core.database import get_session
 from app.models import User
 from app.schemas import UserLogin, UserRegister
 from app.core.session import hash_password, verify_password
-from app.core.config import settings  # [중요] 쿠키 설정을 위해 추가
+from app.core.config import settings
 
 router = APIRouter()
 
+# [신규 추가] 아이디 중복 확인용 요청 모델
+class IdCheckRequest(BaseModel):
+    id: str
+
 @router.post("/login")
 async def login(
-    response: Response,  # [중요] 쿠키를 설정하기 위해 Response 객체 주입
+    response: Response,  # 쿠키 설정을 위해 Response 객체 주입
     data: UserLogin, 
     session: Session = Depends(get_session)
 ):
@@ -34,16 +39,15 @@ async def login(
     if user.role == "teacher" and not user.is_approved:
         raise HTTPException(status_code=403, detail="승인 대기 중인 계정입니다.")
 
-    # [수정] 쿠키 설정 최적화
-    # path="/"를 명시하여 모든 경로에서 쿠키가 유효하도록 설정
+    # [쿠키 설정]
     response.set_cookie(
         key=settings.SESSION_COOKIE_NAME,
         value=user.uid,
-        max_age=3600 * 24,  # 24시간 유효
-        path="/",           # [중요] 모든 경로에서 접근 가능
+        max_age=3600 * 24,  # 24시간
+        path="/",           # 모든 경로 허용
         httponly=True,
-        samesite="lax",     # 로컬 개발 시 lax가 가장 무난함
-        secure=False        # http(로컬) 환경이므로 False
+        samesite="lax",
+        secure=False        # 로컬(http) 환경이므로 False
     )
 
     print(f" -> 로그인 성공: {user.name} (Cookie Set for path=/)")
@@ -51,7 +55,7 @@ async def login(
 
 @router.post("/register")
 async def register(data: UserRegister, session: Session = Depends(get_session)):
-    # 1. 중복 확인
+    # 1. 중복 확인 (방어 로직)
     if session.get(User, data.id):
         raise HTTPException(status_code=400, detail="이미 존재하는 아이디입니다.")
     
@@ -75,3 +79,14 @@ async def register(data: UserRegister, session: Session = Depends(get_session)):
     session.commit()
     
     return {"status": "ok"}
+
+# [신규 추가] 아이디 중복 확인 엔드포인트
+@router.post("/check-id")
+async def check_id(data: IdCheckRequest, session: Session = Depends(get_session)):
+    """
+    아이디 중복 여부를 확인합니다.
+    - user가 존재하면(검색됨) -> is_available: False (사용 불가)
+    - user가 없으면(None) -> is_available: True (사용 가능)
+    """
+    user = session.get(User, data.id)
+    return {"is_available": user is None}

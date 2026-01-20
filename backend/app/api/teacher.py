@@ -69,3 +69,35 @@ async def send_notice(
     session.add(new_notice)
     session.commit()
     return {"status": "ok"}
+
+
+
+@router.get("/student/{student_id}")
+def get_student_detail(student_id: str, request: Request, session: Session = Depends(get_session)):
+    """특정 학생의 상세 정보(연락처 포함) 조회"""
+    # 1. 선생님 권한 확인
+    _require_teacher(request, session)
+    
+    # 2. 학생 조회
+    student = session.get(User, student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="학생을 찾을 수 없습니다.")
+        
+    # 3. 학습 진도 정보 조회 (옵션)
+    prog = session.exec(select(StudyProgress).where(StudyProgress.user_id == student_id)).first()
+    
+    return {
+        "status": "ok",
+        "info": {
+            "uid": student.uid,
+            "name": student.name,
+            "email": student.email or "-",      # 이메일 (없으면 -)
+            "phone": student.phone or "-",      # 전화번호 (없으면 -)
+            "country": student.country or "KR",
+            "joined_at": student.created_at,    # 가입일 (User 모델에 있다면)
+        },
+        "progress": {
+            "level": prog.level if prog else "미시작",
+            "page": prog.current_page if prog else 0
+        }
+    }

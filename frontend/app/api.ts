@@ -41,6 +41,7 @@ export const api = {
 // 인증 및 사용자 관련
 export const login = (id: string, pw: string) => api.post("/auth/login", { id, password: pw });
 export const signup = (data: any) => api.post("/auth/register", data);
+export const checkIdDuplicate = (id: string) => api.post("/auth/check-id", { id });
 
 // 프로필 및 설정 관련 (추가 및 수정)
 export const getUserProfile = (uid: string) => api.get(`/user/${uid}/profile`);
@@ -74,3 +75,6 @@ export const sendNotice = (data: {
   author: string; 
   scheduled_at: string | null 
 }) => api.post("/api/teacher/notice", data);
+
+// [추가] 선생님용: 특정 학생 상세 정보 가져오기
+export const getStudentDetail = (uid: string) => api.get(`/api/teacher/student/${uid}`);

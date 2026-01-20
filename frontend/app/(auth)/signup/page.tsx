@@ -4,47 +4,122 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  ChevronLeft, 
-  User, 
-  Mail, 
-  Lock, 
-  Globe, 
-  CheckSquare, 
-  Square, 
-  UserCheck, 
-  BadgeCheck 
+  ChevronLeft, User, Mail, Lock, Globe, CheckSquare, Square, 
+  UserCheck, BadgeCheck, Phone, Loader2 
 } from 'lucide-react';
+// [중요] api.ts에서 함수 불러오기
+import { checkIdDuplicate, signup } from '../../api';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [isTeacher, setIsTeacher] = useState(false); // 선생님 여부 체크 [cite: 36]
   
-  // 중복확인 관련 상태 관리
-  const [userId, setUserId] = useState("");
-  const [isIdChecked, setIsIdChecked] = useState(false); // 중복확인 버튼 클릭 여부
-  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null); // 아이디 사용 가능 여부
+  // 1. 입력값 상태 관리 (전화번호 phone 추가됨)
+  const [formData, setFormData] = useState({
+    name: "",
+    id: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    country: "",
+    role: "student" // 기본값
+  });
 
-  // 아이디 중복확인 함수 (모의 로직) 
-  const handleIdCheck = () => {
-    if (!userId.trim()) {
+  // 2. UI 상태 관리
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [isIdChecked, setIsIdChecked] = useState(false); // 중복확인 버튼 눌렀는지
+  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null); // 사용 가능 여부
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 입력값 변경 핸들러
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // 아이디를 고치면 중복확인을 다시 해야 함 -> 상태 초기화
+    if (name === "id") {
+      setIsIdChecked(false);
+      setIsIdAvailable(null);
+    }
+  };
+
+  // 선생님 <-> 학생 전환
+  const toggleRole = () => {
+    const newIsTeacher = !isTeacher;
+    setIsTeacher(newIsTeacher);
+    setFormData(prev => ({ ...prev, role: newIsTeacher ? "teacher" : "student" }));
+  };
+
+  // [수정됨] 실제 백엔드 API로 중복 확인
+  const handleIdCheck = async () => {
+    if (!formData.id.trim()) {
       alert("아이디를 입력해주세요.");
       return;
     }
 
-    // 예시: 'admin'이나 'test'는 중복된 것으로 가정
-    const duplicateIds = ["admin", "test", "user1"];
-    
-    if (duplicateIds.includes(userId)) {
-      setIsIdAvailable(false);
-    } else {
-      setIsIdAvailable(true);
+    try {
+      // app/api.ts에 추가한 함수 호출
+      const res = await checkIdDuplicate(formData.id);
+      
+      // 백엔드 응답: { "is_available": true/false }
+      setIsIdAvailable(res.is_available);
+      setIsIdChecked(true);
+      
+      if (!res.is_available) {
+        alert("이미 사용 중인 아이디입니다.");
+      } else {
+        alert("사용 가능한 아이디입니다.");
+      }
+    } catch (error) {
+      console.error("중복 확인 에러:", error);
+      alert("중복 확인 중 서버 오류가 발생했습니다.");
     }
-    setIsIdChecked(true);
+  };
+
+  // [수정됨] 실제 백엔드 API로 회원가입 요청
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // 필수 입력값 검사
+    if (!formData.name || !formData.id || !formData.password || !formData.email || !formData.phone || !formData.country) {
+      alert("모든 정보를 입력해주세요.");
+      return;
+    }
+    
+    // 중복 확인 여부 검사
+    if (!isIdChecked || !isIdAvailable) {
+      alert("아이디 중복 확인을 해주세요.");
+      return;
+    }
+
+    // 비밀번호 일치 검사
+    if (formData.password !== formData.confirmPassword) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // 비밀번호 확인용 필드(confirmPassword)는 백엔드에 보낼 필요 없음
+      const { confirmPassword, ...submitData } = formData;
+      
+      const res = await signup(submitData);
+
+      if (res.status === "ok") {
+        alert("회원가입이 완료되었습니다! 로그인해주세요.");
+        router.push("/login");
+      }
+    } catch (error: any) {
+      console.error("회원가입 실패:", error);
+      alert("회원가입에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="h-full flex flex-col bg-white p-6 overflow-y-auto">
-      {/* 1. 상단 뒤로가기 [cite: 195] */}
       <header className="h-14 flex items-center -ml-2 mb-4 flex-shrink-0">
         <Link href="/login" className="p-2 rounded-full hover:bg-gray-100 transition-colors">
           <ChevronLeft size={28} className="text-gray-800" />
@@ -53,20 +128,13 @@ export default function SignupPage() {
 
       <div className="flex-1 pb-10">
         <div className="mb-8">
-          <h1 className="text-3xl font-black text-gray-900 mb-3 leading-tight">
-            회원가입 {/* [cite: 34] */}
-          </h1>
-          <p className="text-gray-500 font-medium">
-            한국어 학습을 시작해보세요 {/* [cite: 35] */}
-          </p>
+          <h1 className="text-3xl font-black text-gray-900 mb-3 leading-tight">회원가입</h1>
+          <p className="text-gray-500 font-medium">한국어 학습을 시작해보세요</p>
         </div>
 
-        <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-          {/* 2. 선생님/관리자 체크박스 [cite: 36] */}
-          <div 
-            onClick={() => setIsTeacher(!isTeacher)}
-            className="flex items-center gap-2 cursor-pointer mb-2 w-fit px-1"
-          >
+        <form className="space-y-5" onSubmit={handleSignup}>
+          {/* 역할 선택 */}
+          <div onClick={toggleRole} className="flex items-center gap-2 cursor-pointer mb-2 w-fit px-1">
             {isTeacher 
               ? <CheckSquare className="text-green-600" size={22} /> 
               : <Square className="text-gray-300" size={22} />
@@ -77,44 +145,40 @@ export default function SignupPage() {
           </div>
 
           <div className="space-y-4">
-            {/* 이름 입력 [cite: 37] */}
+            {/* 이름 */}
             <div className="relative">
               <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
-                type="text" 
-                placeholder="이름" 
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all font-bold text-gray-800"
+                type="text" name="name" placeholder="이름" 
+                value={formData.name} onChange={handleChange}
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
               />
             </div>
 
-            {/* 아이디 입력 및 중복확인 [cite: 39, 41] */}
+            {/* 아이디 & 중복확인 */}
             <div className="space-y-2">
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
                   <input 
-                    type="text" 
-                    placeholder="아이디" 
-                    value={userId}
-                    onChange={(e) => {
-                      setUserId(e.target.value);
-                      setIsIdChecked(false); // 입력값이 바뀌면 다시 중복확인 하도록 초기화
-                    }}
-                    className={`w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none transition-all font-bold text-gray-800 ${
-                      isIdChecked ? (isIdAvailable ? 'ring-2 ring-green-500' : 'ring-2 ring-red-500') : 'focus:ring-2 focus:ring-green-500'
+                    type="text" name="id" placeholder="아이디" 
+                    value={formData.id} onChange={handleChange}
+                    className={`w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-800 transition-all ${
+                      isIdChecked 
+                        ? (isIdAvailable ? 'ring-2 ring-green-500 bg-green-50' : 'ring-2 ring-red-500 bg-red-50') 
+                        : 'focus:ring-2 focus:ring-green-500'
                     }`}
                   />
                 </div>
                 <button 
-                  type="button"
-                  onClick={handleIdCheck}
-                  className={`px-4 font-bold rounded-2xl text-sm transition-colors ${
+                  type="button" onClick={handleIdCheck}
+                  className={`px-4 font-bold rounded-2xl text-sm transition-colors whitespace-nowrap ${
                     isIdChecked && isIdAvailable 
                     ? "bg-green-600 text-white" 
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
-                  중복확인 {/*  */}
+                  중복확인
                 </button>
               </div>
               {/* 중복확인 결과 메시지 */}
@@ -125,21 +189,35 @@ export default function SignupPage() {
               )}
             </div>
 
-            {/* 이메일 입력 [cite: 42] */}
+            {/* 이메일 */}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
-                type="email" 
-                placeholder="이메일 (example@email.com)" 
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all font-bold text-gray-800"
+                type="email" name="email" placeholder="이메일" 
+                value={formData.email} onChange={handleChange}
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
               />
             </div>
 
-            {/* 국적 정보 [cite: 56] */}
+            {/* [신규] 전화번호 */}
+            <div className="relative">
+              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+              <input 
+                type="tel" name="phone" placeholder="전화번호" 
+                value={formData.phone} onChange={handleChange}
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
+              />
+            </div>
+
+            {/* 국적 */}
             <div className="relative">
               <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <select className="w-full h-16 pl-12 pr-10 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800 appearance-none">
+              <select 
+                name="country" value={formData.country} onChange={handleChange}
+                className="w-full h-16 pl-12 pr-10 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800 appearance-none"
+              >
                 <option value="">국적을 선택해주세요</option>
+                <option value="KR">한국 (Korea)</option>
                 <option value="US">미국 (USA)</option>
                 <option value="VN">베트남 (Vietnam)</option>
                 <option value="JP">일본 (Japan)</option>
@@ -147,28 +225,38 @@ export default function SignupPage() {
               </select>
             </div>
 
-            {/* 비밀번호 [cite: 44] 및 확인 [cite: 45] */}
+            {/* 비밀번호 */}
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
-                type="password" 
-                placeholder="비밀번호" 
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all font-bold text-gray-800"
+                type="password" name="password" placeholder="비밀번호" 
+                value={formData.password} onChange={handleChange}
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
               />
             </div>
 
+            {/* 비밀번호 확인 */}
             <div className="relative">
               <BadgeCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
-                type="password" 
-                placeholder="비밀번호 확인" 
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all font-bold text-gray-800"
+                type="password" name="confirmPassword" placeholder="비밀번호 확인" 
+                value={formData.confirmPassword} onChange={handleChange}
+                className={`w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-800 transition-all ${
+                  formData.confirmPassword && formData.password !== formData.confirmPassword
+                    ? "ring-2 ring-red-500 bg-red-50"
+                    : "focus:ring-2 focus:ring-green-500"
+                }`}
               />
             </div>
           </div>
 
-          {/* 가입 완료 버튼 [cite: 51] */}
-          <button className="w-full h-16 bg-gray-900 text-white font-bold rounded-2xl text-lg hover:bg-black active:scale-[0.98] transition-all shadow-lg mt-6">
+          {/* 가입 완료 버튼 */}
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full h-16 bg-gray-900 text-white font-bold rounded-2xl text-lg hover:bg-black active:scale-[0.98] transition-all shadow-lg mt-6 flex items-center justify-center gap-2"
+          >
+            {isLoading && <Loader2 className="animate-spin" />}
             회원가입
           </button>
         </form>
@@ -177,7 +265,7 @@ export default function SignupPage() {
           <p className="text-gray-400 text-sm font-medium">
             이미 계정이 있으신가요?{" "}
             <Link href="/login" className="text-green-600 font-black hover:underline ml-1">
-              로그인 {/* [cite: 52] */}
+              로그인
             </Link>
           </p>
         </div>

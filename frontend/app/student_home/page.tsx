@@ -79,7 +79,10 @@ export default function StudentHomePage() {
         {/* 최신 공지 배너 */}
         {notices.length > 0 && (
           <section className="px-6 mb-6">
-            <div className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-center justify-between group active:scale-[0.98] transition-all">
+            <div 
+              onClick={() => router.push('/notices')}
+              className="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 flex items-center justify-between group active:scale-[0.98] transition-all cursor-pointer"
+            >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="bg-indigo-500 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Notice</span>

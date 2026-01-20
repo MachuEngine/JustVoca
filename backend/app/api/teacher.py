@@ -2,6 +2,7 @@
 from fastapi import APIRouter, HTTPException, Request, Depends, Body
 from sqlmodel import Session, select, func
 from typing import List, Optional
+from datetime import datetime  # [추가] datetime 모듈 임포트 필수!
 from app.core.database import get_session
 from app.models import User, StudyProgress, StudyLog, Notice
 from app.core.config import settings
@@ -43,17 +44,27 @@ def list_teacher_notices(request: Request, session: Session = Depends(get_sessio
 async def send_notice(
     title: str = Body(...), 
     content: str = Body(...), 
-    scheduled_at: Optional[str] = Body(None), # [수정] 예약 시간 필드 추가
+    scheduled_at: Optional[str] = Body(None), 
     request: Request = None, 
     session: Session = Depends(get_session)
 ):
     teacher = _require_teacher(request, session)
-    # [수정] Notice 모델 생성 시 예약 시간 포함
+    
+    # [수정] 문자열로 들어온 날짜를 실제 datetime 객체로 변환
+    dt_scheduled = None
+    if scheduled_at:
+        try:
+            # 프론트엔드에서 보내는 'YYYY-MM-DDTHH:mm' 형식을 파싱
+            dt_scheduled = datetime.fromisoformat(scheduled_at)
+        except ValueError:
+            # 날짜 형식이 올바르지 않으면 None으로 처리하거나 에러를 낼 수 있음
+            pass 
+
     new_notice = Notice(
         title=title, 
         content=content, 
         author=teacher.name,
-        scheduled_at=scheduled_at
+        scheduled_at=dt_scheduled # [수정] 변환된 datetime 객체를 저장
     )
     session.add(new_notice)
     session.commit()

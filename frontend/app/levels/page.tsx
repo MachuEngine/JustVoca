@@ -2,15 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, BookOpen } from 'lucide-react';
+import { ChevronLeft, BookOpen, Award } from 'lucide-react'; // Award 아이콘 추가
 
-const LEVELS = [
-  { id: "초급1", title: "초급 1", desc: "기초 자음/모음과 인사말 배우기", color: "bg-green-100 text-green-700 border-green-200" },
-  { id: "초급2", title: "초급 2", desc: "일상 생활 표현과 기본 문법", color: "bg-green-50 text-green-600 border-green-100" },
-  { id: "중급1", title: "중급 1", desc: "복잡한 문장 만들기와 감정 표현", color: "bg-blue-100 text-blue-700 border-blue-200" },
-  { id: "중급2", title: "중급 2", desc: "비즈니스 한국어와 사회 이슈", color: "bg-blue-50 text-blue-600 border-blue-100" },
-  { id: "고급1", title: "고급 1", desc: "전문적인 토론과 뉴스 청취", color: "bg-purple-100 text-purple-700 border-purple-200" },
-  { id: "고급2", title: "고급 2", desc: "학문적 연구와 관용구 심화", color: "bg-purple-50 text-purple-600 border-purple-100" },
+// [수정] 레벨과 토픽 매칭 데이터 정의
+export const LEVELS = [
+  { id: "초급1", title: "초급 1", topik: "1급", desc: "기초 자음/모음과 인사말 배우기", color: "bg-green-100 text-green-700 border-green-200" },
+  { id: "초급2", title: "초급 2", topik: "2급", desc: "일상 생활 표현과 기본 문법", color: "bg-green-50 text-green-600 border-green-100" },
+  { id: "중급1", title: "중급 1", topik: "3급", desc: "복잡한 문장 만들기와 감정 표현", color: "bg-blue-100 text-blue-700 border-blue-200" },
+  { id: "중급2", title: "중급 2", topik: "4급", desc: "비즈니스 한국어와 사회 이슈", color: "bg-blue-50 text-blue-600 border-blue-100" },
+  { id: "고급1", title: "고급 1", topik: "5급", desc: "전문적인 토론과 뉴스 청취", color: "bg-purple-100 text-purple-700 border-purple-200" },
+  { id: "고급2", title: "고급 2", topik: "6급", desc: "학문적 연구와 관용구 심화", color: "bg-purple-50 text-purple-600 border-purple-100" },
 ];
 
 export default function LevelSelectPage() {
@@ -38,7 +39,13 @@ export default function LevelSelectPage() {
             >
               <div className={`p-6 rounded-3xl border-2 transition-all duration-200 ${lvl.color} bg-opacity-60 hover:bg-opacity-100 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`}>
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-black text-xl tracking-tight flex items-center gap-2">{lvl.title}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-xl tracking-tight">{lvl.title}</span>
+                    {/* [추가] TOPIK 뱃지 표시 */}
+                    <span className="bg-white/80 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                      <Award size={10} /> TOPIK {lvl.topik}
+                    </span>
+                  </div>
                   <div className="bg-white/50 p-1.5 rounded-full">
                     <BookOpen size={18} fill="currentColor" className="opacity-70" />
                   </div>

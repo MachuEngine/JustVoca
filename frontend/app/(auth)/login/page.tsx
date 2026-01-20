@@ -24,16 +24,17 @@ export default function LoginPage() {
 
     try {
       // 1. 백엔드 API 호출 (진짜 로그인 검증)
+      // [수정] credentials: "include" 옵션을 추가하여 서버가 주는 쿠키를 저장하도록 설정합니다.
       const res = await fetch('http://localhost:8000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, password }) // 스키마에 맞게 필드명 확인 (id, password)
+        body: JSON.stringify({ id, password }),
+        credentials: "include" // <--- [핵심 수정] 이 줄이 있어야 쿠키가 저장됩니다!
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // 백엔드에서 에러(401 등)를 보내면 여기서 걸러짐
         alert(data.detail || "로그인에 실패했습니다.");
         setIsLoading(false);
         return;

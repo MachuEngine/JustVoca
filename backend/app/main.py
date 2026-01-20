@@ -31,9 +31,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="JustVoca API", lifespan=lifespan)
 
+# [수정] CORS 설정 강화: localhost와 127.0.0.1 모두 허용
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

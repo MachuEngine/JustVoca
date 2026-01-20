@@ -7,13 +7,12 @@ import {
 } from 'lucide-react'; 
 import Link from 'next/link';
 import AuthGuard from '../components/AuthGuard';
-// [추가] 필요한 API 함수들
 import { getStudents, sendNotice, getNotices } from '../api'; 
 
 export default function TeacherDash() {
   // --- 상태 관리 ---
   const [students, setStudents] = useState<any[]>([]);
-  const [noticeLogs, setNoticeLogs] = useState<any[]>([]); // 공지 이력
+  const [noticeLogs, setNoticeLogs] = useState<any[]>([]); 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isScheduled, setIsScheduled] = useState(false);
@@ -28,12 +27,23 @@ export default function TeacherDash() {
 
   const fetchData = async () => {
     try {
-      const studentData = await getStudents();
-      setStudents(studentData);
+      // 1. 학생 데이터 가져오기
+      const response = await getStudents();
       
-      // 공지 이력 가져오기 (사양서 Page 42 반영)
+      // [수정 핵심] 백엔드가 { ok: true, items: [...] } 형태로 주므로 items만 꺼내야 함
+      if (response && response.items) {
+        setStudents(response.items);
+      } else if (Array.isArray(response)) {
+        // 혹시 백엔드가 배열로 줄 경우를 대비한 방어 코드
+        setStudents(response);
+      } else {
+        setStudents([]);
+      }
+      
+      // 2. 공지 이력 가져오기
       const logs = await getNotices();
       setNoticeLogs(logs || []);
+      
     } catch (error) {
       console.error("데이터 로드 실패:", error);
     }
@@ -63,7 +73,7 @@ export default function TeacherDash() {
   return (
     <AuthGuard allowedRoles={['teacher', 'admin']}>
       <div className="min-h-screen bg-gray-50 pb-20">
-        {/* 1. 상단 통계 카드 영역 (사양서 Page 43) */}
+        {/* 1. 상단 통계 카드 영역 */}
         <div className="bg-white px-6 py-8 border-b border-gray-100 shadow-sm">
           <h1 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
              <BarChart className="text-blue-600" /> 학습 통계
@@ -71,6 +81,7 @@ export default function TeacherDash() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 p-5 rounded-3xl border border-blue-100">
               <Users className="text-blue-500 mb-2" size={20} />
+              {/* students가 배열이므로 .length 사용 가능 */}
               <p className="text-2xl font-black text-blue-900">{students.length}</p>
               <p className="text-[10px] font-bold text-blue-400 uppercase">전체 학생</p>
             </div>
@@ -93,7 +104,7 @@ export default function TeacherDash() {
         </div>
 
         <main className="p-6 space-y-8">
-          {/* 2. 학생 목록 및 검색 (사양서 Page 43~44) */}
+          {/* 2. 학생 목록 및 검색 */}
           <section>
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-black text-gray-900">학생 관리</h2>
@@ -108,26 +119,41 @@ export default function TeacherDash() {
               </div>
             </div>
             <div className="space-y-3">
-              {students.filter(s => s.name.includes(searchTerm)).map((student) => (
+              {/* 이제 students가 확실히 배열이므로 .filter 사용 가능 */}
+              {Array.isArray(students) && students.filter(s => s.name && s.name.includes(searchTerm)).map((student) => (
                 <Link key={student.uid} href={`/teacher_student/${student.uid}`}>
                   <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center hover:shadow-md transition-all active:scale-[0.99] mb-3">
                     <div>
                       <p className="font-bold text-gray-900">{student.name}</p>
-                      <p className="text-xs text-gray-400">초급 1 A반 · 진도 65%</p>
+                      <p className="text-xs text-gray-400">
+                        {student.current_level} · 진도 {Math.round(student.progress_rate * 100)}%
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-24 bg-gray-100 rounded-full overflow-hidden">
-                        <div className="bg-blue-500 h-full w-[65%]"></div>
+                        <div 
+                          className="bg-blue-500 h-full transition-all duration-500" 
+                          style={{ width: `${Math.min(100, student.progress_rate * 100)}%` }}
+                        ></div>
                       </div>
-                      <span className="text-xs font-black text-blue-600">65%</span>
+                      <span className="text-xs font-black text-blue-600">
+                        {Math.round(student.progress_rate * 100)}%
+                      </span>
                     </div>
                   </div>
                 </Link>
               ))}
+              
+              {/* 학생이 없을 경우 안내 메시지 */}
+              {students.length === 0 && (
+                 <div className="text-center py-10 text-gray-400 text-sm">
+                   등록된 학생이 없습니다.
+                 </div>
+              )}
             </div>
           </section>
 
-          {/* 3. 공지사항 작성 (사양서 Page 38~40) */}
+          {/* 3. 공지사항 작성 */}
           <section className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-50">
             <h2 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
               <Send size={20} className="text-blue-600" /> 전체 공지 발송
@@ -152,7 +178,7 @@ export default function TeacherDash() {
             </button>
           </section>
 
-          {/* 4. 공지 발송 로그 (사양서 Page 42) */}
+          {/* 4. 공지 발송 로그 */}
           <section>
             <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
               <List size={20} className="text-gray-400" /> 공지 발송 로그

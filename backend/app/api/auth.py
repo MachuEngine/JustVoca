@@ -1,26 +1,29 @@
 # backend/app/api/auth.py
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Response
 from sqlmodel import Session
-from app.core.database import get_session  # [필수] SQL 세션 가져오기
-from app.models import User                # [필수] User 테이블 가져오기
+from app.core.database import get_session
+from app.models import User
 from app.schemas import UserLogin, UserRegister
 from app.core.session import hash_password, verify_password
+from app.core.config import settings  # [중요] 쿠키 설정을 위해 추가
 
 router = APIRouter()
 
 @router.post("/login")
-async def login(data: UserLogin, session: Session = Depends(get_session)):
+async def login(
+    response: Response,  # [중요] 쿠키를 설정하기 위해 Response 객체 주입
+    data: UserLogin, 
+    session: Session = Depends(get_session)
+):
     print(f"[Login Attempt] ID: {data.id}")
 
-    # 1. DB에서 사용자 조회 (load_users 아님!)
+    # 1. DB에서 사용자 조회
     user = session.get(User, data.id)
     
     if not user:
         raise HTTPException(status_code=401, detail="존재하지 않는 아이디입니다.")
     
-    # 2. 비밀번호 검증 (평문 & 해시 모두 지원)
-    # verify_password: 해시된 값 비교
-    # user.pw == data.password: 초기 데이터(1111 등)용 평문 비교
+    # 2. 비밀번호 검증
     is_valid_hash, _ = verify_password(user.pw, data.password)
     is_valid_plain = (user.pw == data.password)
 
@@ -31,7 +34,19 @@ async def login(data: UserLogin, session: Session = Depends(get_session)):
     if user.role == "teacher" and not user.is_approved:
         raise HTTPException(status_code=403, detail="승인 대기 중인 계정입니다.")
 
-    print(f" -> 로그인 성공: {user.name}")
+    # [수정] 쿠키 설정 최적화
+    # path="/"를 명시하여 모든 경로에서 쿠키가 유효하도록 설정
+    response.set_cookie(
+        key=settings.SESSION_COOKIE_NAME,
+        value=user.uid,
+        max_age=3600 * 24,  # 24시간 유효
+        path="/",           # [중요] 모든 경로에서 접근 가능
+        httponly=True,
+        samesite="lax",     # 로컬 개발 시 lax가 가장 무난함
+        secure=False        # http(로컬) 환경이므로 False
+    )
+
+    print(f" -> 로그인 성공: {user.name} (Cookie Set for path=/)")
     return {"status": "ok", "user": user}
 
 @router.post("/register")

@@ -159,14 +159,40 @@ export default function VocabularyStudyPage() {
     setIsProcessing(false);
   };
 
+  function parseLevelDirFromAudioKey(audioKey: string, fallbackLevelDir: string) {
+    // 예: "Level6_1" / "level6_1" / "LEVEL6_1" -> "level6"
+    const m = String(audioKey).match(/level\s*(\d+)/i);
+    if (m && m[1]) return `level${m[1]}`;
+    return fallbackLevelDir;
+  }
+
+  function buildAudioPath(params: {
+    type: "voca" | "example";
+    audioKey: string;
+    fallbackLevelDir: string;
+  }) {
+    const { type, audioKey, fallbackLevelDir } = params;
+
+    if (!audioKey) return "";
+    if (audioKey.startsWith("http")) return audioKey;
+
+    const dir = parseLevelDirFromAudioKey(audioKey, fallbackLevelDir);
+    return `/assets/audio/${type}/${dir}/${audioKey}.wav`;
+  }
+
+
   // --- 기능 함수 ---
   const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentWord || !currentWord.audioKey) return;
 
-    const audioPath = currentWord.audioKey.startsWith("http")
-      ? currentWord.audioKey
-      : `/assets/audio/${type}/${levelDir}/${currentWord.audioKey}.wav`;
+    const audioPath = buildAudioPath({
+      type,
+      audioKey: currentWord.audioKey,
+      fallbackLevelDir: levelDir, // 기존 레벨 매핑은 fallback으로만 사용
+    });
+
+    if (!audioPath) return;
 
     const audio = new Audio(audioPath);
     audio.play().catch(() => console.error("오디오 재생 실패:", audioPath));

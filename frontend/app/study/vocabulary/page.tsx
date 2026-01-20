@@ -41,7 +41,7 @@ export default function VocabularyStudyPage() {
 
   // 3. 기능 함수
   const playLocalAudio = (type: 'voca' | 'example', e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // [중요] 오디오 버튼 클릭 시 카드 뒤집힘 방지
     const levelFolder = currentWord.audioKey.split('_')[0].toLowerCase();
     const audioPath = `/assets/audio/${type}/${levelFolder}/${currentWord.audioKey}.wav`;
     const audio = new Audio(audioPath);
@@ -132,7 +132,11 @@ export default function VocabularyStudyPage() {
 
       {/* 단어 카드 영역 */}
       <div className="flex-1 flex flex-col items-center justify-center mb-8">
-        <div onClick={() => !isFlipped && setIsFlipped(true)} className="w-full aspect-[4/5] bg-white rounded-[3.5rem] shadow-2xl border border-gray-100 p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 relative overflow-hidden active:scale-[0.98]">
+        {/* [수정] onClick 로직 변경: !isFlipped 조건 제거 -> 무조건 토글 */}
+        <div 
+          onClick={() => setIsFlipped(prev => !prev)} 
+          className="w-full aspect-[4/5] bg-white rounded-[3.5rem] shadow-2xl border border-gray-100 p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 relative overflow-hidden active:scale-[0.98]"
+        >
           {!isFlipped ? (
             <div className="flex flex-col items-center w-full animate-in fade-in duration-300">
               <h2 className="text-6xl font-black text-gray-900 mb-2">{currentWord.word}</h2>
@@ -153,6 +157,7 @@ export default function VocabularyStudyPage() {
                 {currentWord.example}
               </h3>
               <div className="grid grid-cols-1 w-full gap-4 px-2">
+                {/* [확인] 내부 버튼들은 stopPropagation이 적용되어 있어 클릭 시 카드가 뒤집히지 않음 */}
                 <button onClick={(e) => playLocalAudio('example', e)} className="w-full h-16 bg-blue-50 text-blue-600 font-black rounded-2xl flex items-center justify-center gap-3 shadow-sm"><Volume2 size={24} /><span>문장 듣기</span></button>
                 <div onClick={(e) => e.stopPropagation()}>
                   {recordingStatus === 'idle' && (
@@ -184,7 +189,7 @@ export default function VocabularyStudyPage() {
         ><span>다음</span><ChevronRight size={20} /></button>
       </div>
 
-      {/* --- [개선된 결과 상세 오버레이] --- */}
+      {/* 상세 결과 오버레이 */}
       {showResultOverlay && evaluationResult && (
         <div className="absolute inset-0 z-50 animate-in fade-in duration-300 overflow-hidden">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md" onClick={() => setShowResultOverlay(false)}></div>
@@ -208,7 +213,7 @@ export default function VocabularyStudyPage() {
               <p className="text-2xl font-black text-gray-900 tracking-tight">훌륭해요, {USER_ID}님! 👏</p>
             </div>
 
-            {/* 음절별 상세 피드백 (동적 데이터 바인딩) */}
+            {/* 음절별 상세 피드백 */}
             <div className="bg-gray-50 rounded-[3rem] p-8 mb-10 text-center border border-gray-100">
               <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-8 flex items-center justify-center gap-2">
                 <Sparkles size={14} className="text-blue-500" /> Syllable Analysis
@@ -226,7 +231,7 @@ export default function VocabularyStudyPage() {
               </div>
             </div>
 
-            {/* 상세 분석 지표 (공백 키 참조 수정 완료) */}
+            {/* 상세 분석 지표 */}
             <div className="grid grid-cols-1 gap-6 mb-10">
               {[
                 { label: "정확도 (Accuracy)", score: overallScore, icon: <Target size={16} />, color: "bg-green-500" },

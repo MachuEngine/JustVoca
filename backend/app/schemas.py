@@ -33,3 +33,19 @@ class EvaluationResponse(BaseModel):
     ai_feedback: str
     details: List[Dict[str, Any]]
     audio_url: str
+
+# [신규] 프로필 수정 요청 스키마
+class UserProfileUpdate(BaseModel):
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    country: Optional[str] = None
+
+# [신규] 학습 설정 수정 요청 스키마
+class UserSettingsUpdate(BaseModel):
+    dailyGoal: Optional[int] = None
+    reviewWrong: Optional[bool] = None
+
+# [신규] 비밀번호 변경 요청 스키마
+class UserPasswordUpdate(BaseModel):
+    old_password: str
+    new_password: str

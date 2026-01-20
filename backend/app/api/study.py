@@ -151,3 +151,82 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
         db.add(new_progress)
     db.commit()
     return {"status": "success", "next_page": progress.current_page if progress else 2}
+
+
+# app/api/study.py (기존 코드 하단에 추가)
+
+@router.get("/review-words")
+async def get_review_words(user_id: str, db: Session = Depends(get_session)):
+    """
+    [복습 기능]
+    최근 학습 로그 중 점수가 낮은 순서대로 최대 5개 단어를 가져옵니다.
+    """
+    # 1. 사용자의 학습 로그 조회 (점수 낮은 순)
+    statement = select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.score.asc()).limit(5)
+    logs = db.exec(statement).all()
+    
+    if not logs:
+        return []
+
+    # 2. 로그 기반으로 단어 리스트 반환 (프론트엔드 Word 타입에 맞춤)
+    review_list = []
+    for log in logs:
+        review_list.append({
+            "id": log.id,
+            "word": log.word,
+            "meaning": "", # 로그에는 뜻이 없으므로 빈값 혹은 DB 구조 변경 필요 (여기선 빈값 처리)
+            "eng_meaning": "",
+            "example": "",
+            "audio_path": "",
+            "level": "",
+            "topic": "Review"
+        })
+    return review_list
+
+@router.get("/quiz")
+async def get_quiz(level: str = "초급1"):
+    """
+    [퀴즈 기능]
+    해당 레벨의 엑셀 데이터에서 랜덤하게 3문제를 생성합니다.
+    """
+    if not os.path.exists(EXCEL_PATH):
+        return []
+
+    try:
+        # 1. 엑셀 로드
+        xls = pd.ExcelFile(EXCEL_PATH, engine="openpyxl")
+        target_sheet = next((s for s in xls.sheet_names if s.replace(" ", "") == level.replace(" ", "")), None)
+        if not target_sheet:
+            target_sheet = xls.sheet_names[0]
+            
+        df = pd.read_excel(xls, sheet_name=target_sheet).fillna("")
+        
+        # 컬럼 매핑 (단어, 의미 찾기)
+        df = df.rename(columns=COLUMN_MAPPING)
+        
+        # 데이터가 적으면 전체 사용, 많으면 3개 샘플링
+        sample_size = min(3, len(df))
+        quiz_samples = df.sample(n=sample_size).to_dict(orient="records")
+        
+        quizzes = []
+        for i, item in enumerate(quiz_samples):
+            correct_word = str(item.get('word', ''))
+            description = str(item.get('meaning', item.get('뜻', '')))
+            
+            # 오답 보기 3개 생성 (정답이 아닌 것 중에서 랜덤 샘플링)
+            distractors = df[df['word'] != correct_word]['word'].sample(n=3).tolist()
+            options = distractors + [correct_word]
+            random.shuffle(options)
+            
+            quizzes.append({
+                "id": i + 1,
+                "question": description, # 예: "가깝게 오래 사귄 사람"
+                "answer": correct_word,  # 예: "친구"
+                "options": options       # ["친구", "학교", "공부", "운동"]
+            })
+            
+        return quizzes
+
+    except Exception as e:
+        print(f"Quiz generation error: {e}")
+        return []

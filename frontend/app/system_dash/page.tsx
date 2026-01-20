@@ -9,10 +9,12 @@ export default function TeacherDash() {
   const [notice, setNotice] = useState({ title: "", content: "" });
 
   useEffect(() => { getStudents().then(setStudents); }, []);
-
+  const [isScheduled, setIsScheduled] = useState(false); 
+  const [scheduledDate, setScheduledDate] = useState<string | null>(null);
+  
   const handleSend = async () => {
     if(!notice.title) return alert("제목을 입력하세요");
-    await sendNotice({ ...notice, author: "teacher" });
+    await sendNotice({...notice, author: "teacher", scheduled_at: isScheduled ? scheduledDate : null});
     alert("발송 완료");
     setNotice({ title: "", content: "" });
   };

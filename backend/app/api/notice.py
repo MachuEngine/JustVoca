@@ -1,18 +1,14 @@
-# 1. Django 방식(Notice.objects.create)은 삭제하세요.
-# 2. FastAPI/SQLAlchemy 방식은 아래와 같습니다.
-
-from sqlalchemy.orm import Session
+# backend/app/api/notice.py
+from fastapi import APIRouter, Depends
+from sqlmodel import Session, select
+from app.core.database import get_session
 from app.models import Notice
+from typing import List
 
-def add_notice(db: Session, title, content, author, scheduled_at):
-    # 객체를 생성합니다.
-    new_notice = Notice(
-        title=title,
-        content=content,
-        author=author,
-        scheduled_at=scheduled_at
-    )
-    db.add(new_notice)    # DB에 추가
-    db.commit()           # 저장 확정
-    db.refresh(new_notice) # 생성된 ID 등 정보 동기화
-    return new_notice
+router = APIRouter()
+
+@router.get("/list", response_model=List[Notice])
+def get_notice_list(db: Session = Depends(get_session)):
+    """[학생용] 전체 공지사항 목록을 최신순으로 가져옵니다."""
+    statement = select(Notice).order_by(Notice.created_at.desc())
+    return db.exec(statement).all()

@@ -20,6 +20,7 @@ export default function TeacherDash() {
   const [scheduledDate, setScheduledDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+
   // --- 데이터 로드 ---
   useEffect(() => {
     fetchData();

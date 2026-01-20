@@ -1,18 +1,44 @@
 "use client";
 
-import React, { useState } from 'react';
-import { sendNotice } from '../api'; 
-import { Calendar, Send, ChevronLeft, Clock } from 'lucide-react'; 
+import React, { useState, useEffect } from 'react';
+import { 
+  Calendar, Send, ChevronLeft, Clock, Users, 
+  BarChart, CheckCircle, GraduationCap, Search, RotateCcw, List
+} from 'lucide-react'; 
 import Link from 'next/link';
-// [추가] 방금 만든 AuthGuard 임포트
 import AuthGuard from '../components/AuthGuard';
+// [추가] 필요한 API 함수들
+import { getStudents, sendNotice, getNotices } from '../api'; 
 
 export default function TeacherDash() {
+  // --- 상태 관리 ---
+  const [students, setStudents] = useState<any[]>([]);
+  const [noticeLogs, setNoticeLogs] = useState<any[]>([]); // 공지 이력
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
+  // --- 데이터 로드 ---
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const studentData = await getStudents();
+      setStudents(studentData);
+      
+      // 공지 이력 가져오기 (사양서 Page 42 반영)
+      const logs = await getNotices();
+      setNoticeLogs(logs || []);
+    } catch (error) {
+      console.error("데이터 로드 실패:", error);
+    }
+  };
+
+  // --- 공지 발송 ---
   const handleSend = async () => {
     if (!title || !content) {
       alert("제목과 내용을 입력해주세요.");
@@ -23,102 +49,129 @@ export default function TeacherDash() {
         title, content, author: "Teacher",
         scheduled_at: isScheduled ? scheduledDate : null
       });
-      if (response?.status === "ok" || response?.id) {
-        alert("공지사항 발송 완료");
-        setTitle(''); setContent(''); setScheduledDate('');
+      if (response?.status === "ok") {
+        alert("📢 공지사항 발송 완료!");
+        setTitle(''); setContent(''); 
+        fetchData(); // 로그 새로고침
       }
     } catch (error) {
-      console.error(error); alert("전송 실패");
+      alert("전송 실패");
     }
   };
 
   return (
-    // [핵심] AuthGuard로 감싸서 'teacher' 권한이 있는 사람만 접근 허용
     <AuthGuard allowedRoles={['teacher', 'admin']}>
-      <div className="h-full flex flex-col bg-white">
-        
-        {/* 1. 상단 헤더 (앱바) */}
-        <header className="h-14 flex items-center px-4 sticky top-0 bg-white z-10 border-b border-gray-100">
-          <Link href="/" className="p-2 -ml-2 hover:bg-gray-50 rounded-full transition-colors">
-            <ChevronLeft size={24} className="text-gray-800" />
-          </Link>
-          <h1 className="text-lg font-bold text-gray-900 ml-2">공지사항 작성</h1>
-        </header>
-
-        {/* 2. 메인 컨텐츠 영역 */}
-        <main className="flex-1 p-5 overflow-y-auto pb-24">
-          
-          {/* 발송 타입 토글 */}
-          <div className="flex bg-gray-100 p-1 rounded-xl mb-8 relative">
-            <div 
-              className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out ${isScheduled ? 'left-[calc(50%+2px)]' : 'left-1'}`}
-            ></div>
-            
-            <button
-              onClick={() => setIsScheduled(false)}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg z-10 transition-colors ${!isScheduled ? 'text-gray-900' : 'text-gray-400'}`}
-            >
-              즉시 발송
-            </button>
-            <button
-              onClick={() => setIsScheduled(true)}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-lg z-10 transition-colors ${isScheduled ? 'text-gray-900' : 'text-gray-400'}`}
-            >
-              예약 발송
-            </button>
-          </div>
-
-          {/* 예약 시간 설정 */}
-          <div className={`overflow-hidden transition-all duration-300 ${isScheduled ? 'max-h-24 opacity-100 mb-6' : 'max-h-0 opacity-0'}`}>
-            <label className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1">
-              <Clock size={14} /> 발송 시간 설정
-            </label>
-            <div className="flex items-center bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-              <input
-                type="datetime-local"
-                className="bg-transparent w-full text-sm font-bold text-blue-900 outline-none"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-              />
+      <div className="min-h-screen bg-gray-50 pb-20">
+        {/* 1. 상단 통계 카드 영역 (사양서 Page 43) */}
+        <div className="bg-white px-6 py-8 border-b border-gray-100 shadow-sm">
+          <h1 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+             <BarChart className="text-blue-600" /> 학습 통계
+          </h1>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-5 rounded-3xl border border-blue-100">
+              <Users className="text-blue-500 mb-2" size={20} />
+              <p className="text-2xl font-black text-blue-900">{students.length}</p>
+              <p className="text-[10px] font-bold text-blue-400 uppercase">전체 학생</p>
+            </div>
+            <div className="bg-green-50 p-5 rounded-3xl border border-green-100">
+              <CheckCircle className="text-green-500 mb-2" size={20} />
+              <p className="text-2xl font-black text-green-900">68%</p>
+              <p className="text-[10px] font-bold text-green-400 uppercase">진도 평균</p>
+            </div>
+            <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100">
+              <GraduationCap className="text-purple-500 mb-2" size={20} />
+              <p className="text-2xl font-black text-purple-900">82</p>
+              <p className="text-[10px] font-bold text-purple-400 uppercase">시험 평균</p>
+            </div>
+            <div className="bg-orange-50 p-5 rounded-3xl border border-orange-100">
+              <RotateCcw className="text-orange-500 mb-2" size={20} />
+              <p className="text-2xl font-black text-orange-900">12</p>
+              <p className="text-[10px] font-bold text-orange-400 uppercase">과제 제출</p>
             </div>
           </div>
-
-          {/* 제목 입력 */}
-          <div className="mb-8 group">
-            <label className="block text-xs font-bold text-gray-400 mb-1 group-focus-within:text-blue-500 transition-colors">
-              제목
-            </label>
-            <input
-              type="text"
-              placeholder="공지 제목을 입력하세요"
-              className="w-full text-xl font-bold placeholder-gray-300 border-b-2 border-gray-100 py-2 focus:border-blue-500 outline-none transition-all bg-transparent"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/* 내용 입력 */}
-          <div className="flex flex-col h-64">
-             <label className="block text-xs font-bold text-gray-400 mb-2">내용</label>
-            <textarea
-              placeholder="학생들에게 전달할 내용을 작성해주세요."
-              className="flex-1 w-full text-base leading-relaxed placeholder-gray-300 outline-none resize-none bg-gray-50 rounded-2xl p-5 focus:ring-2 focus:ring-blue-100 transition-all"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-          </div>
-        </main>
-
-        {/* 3. 하단 고정 버튼 */}
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-white/90 backdrop-blur-sm border-t border-gray-50">
-          <button
-            onClick={handleSend}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] transition-all text-white font-bold py-4 rounded-2xl text-lg flex items-center justify-center gap-2 shadow-xl shadow-blue-200"
-          >
-            <Send size={20} className="text-blue-100" />
-            <span>공지 발송하기</span>
-          </button>
         </div>
+
+        <main className="p-6 space-y-8">
+          {/* 2. 학생 목록 및 검색 (사양서 Page 43~44) */}
+          <section>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-black text-gray-900">학생 관리</h2>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                <input 
+                  type="text" placeholder="이름/이메일 검색"
+                  className="pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              {students.filter(s => s.name.includes(searchTerm)).map((student) => (
+                <Link key={student.uid} href={`/teacher_student/${student.uid}`}>
+                  <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center hover:shadow-md transition-all active:scale-[0.99] mb-3">
+                    <div>
+                      <p className="font-bold text-gray-900">{student.name}</p>
+                      <p className="text-xs text-gray-400">초급 1 A반 · 진도 65%</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-24 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="bg-blue-500 h-full w-[65%]"></div>
+                      </div>
+                      <span className="text-xs font-black text-blue-600">65%</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* 3. 공지사항 작성 (사양서 Page 38~40) */}
+          <section className="bg-white p-6 rounded-[2.5rem] shadow-xl border border-gray-50">
+            <h2 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
+              <Send size={20} className="text-blue-600" /> 전체 공지 발송
+            </h2>
+            <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+              <button onClick={() => setIsScheduled(false)} className={`flex-1 py-2 text-sm font-bold rounded-lg z-10 ${!isScheduled ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400'}`}>즉시 발송</button>
+              <button onClick={() => setIsScheduled(true)} className={`flex-1 py-2 text-sm font-bold rounded-lg z-10 ${isScheduled ? 'bg-white shadow-sm text-gray-900' : 'text-gray-400'}`}>예약 발송</button>
+            </div>
+
+            {isScheduled && (
+              <div className="mb-6 animate-in slide-in-from-top-2">
+                <label className="text-xs font-bold text-gray-500 mb-2 block flex items-center gap-1"><Clock size={14} /> 발송 시간 예약</label>
+                <input type="datetime-local" className="w-full bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm font-bold text-blue-900" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+              </div>
+            )}
+
+            <input type="text" placeholder="공지 제목" className="w-full text-lg font-bold border-b-2 border-gray-100 py-3 mb-4 outline-none focus:border-blue-500 bg-transparent" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <textarea placeholder="공지 내용을 입력하세요" className="w-full h-32 bg-gray-50 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-blue-100 mb-6" value={content} onChange={(e) => setContent(e.target.value)} />
+            
+            <button onClick={handleSend} className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
+               <Send size={18} /> 발송하기
+            </button>
+          </section>
+
+          {/* 4. 공지 발송 로그 (사양서 Page 42) */}
+          <section>
+            <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
+              <List size={20} className="text-gray-400" /> 공지 발송 로그
+            </h2>
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+              {noticeLogs.length > 0 ? noticeLogs.map((log: any, idx: number) => (
+                <div key={idx} className="p-4">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-[10px] font-black text-blue-500 uppercase">{log.scheduled_at ? '예약' : '즉시'}</span>
+                    <span className="text-[10px] text-gray-400">{new Date(log.created_at).toLocaleString()}</span>
+                  </div>
+                  <p className="text-sm font-bold text-gray-800 mb-1">{log.title}</p>
+                  <p className="text-xs text-gray-500 line-clamp-1">{log.content}</p>
+                </div>
+              )) : (
+                <p className="p-10 text-center text-gray-300 text-sm font-bold">발송된 공지가 없습니다.</p>
+              )}
+            </div>
+          </section>
+        </main>
       </div>
     </AuthGuard>
   );

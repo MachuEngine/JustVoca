@@ -4,28 +4,29 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Volume2, Mic, Square, BarChart, ChevronLeft, ChevronRight, RotateCcw,
-  CheckCircle2, XCircle, Star, Trophy, ArrowRight, MessageCircle, X,
-  Activity, Target, Sparkles, Loader2
+  Star, ArrowRight, X, ChevronDown, ChevronUp, Sparkles, Loader2, MessageSquareQuote
 } from 'lucide-react';
-// [해결] 경로 오류 ts(2307) 수정: 실제 프로젝트의 api 파일 경로로 맞추세요.
 import { uploadRecord } from '../../api'; 
 
 export default function VocabularyStudyPage() {
   const router = useRouter();
-  const USER_ID = "안종민"; 
+  const USER_ID = "학습자"; 
 
   // 1. 상태 관리
   const [isFlipped, setIsFlipped] = useState(false);
   const [recordingStatus, setRecordingStatus] = useState<'idle' | 'recording' | 'done'>('idle');
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // 결과 오버레이 관련
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [expandedWordIndex, setExpandedWordIndex] = useState<number | null>(null);
   
   // SpeechPro 데이터 상태
   const [evaluationResult, setEvaluationResult] = useState<any>(null);
   const [overallScore, setOverallScore] = useState(0);
 
-  // 녹음 관련 Ref 및 상태
+  // 녹음 관련
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const [recordBlob, setRecordBlob] = useState<Blob | null>(null);
@@ -41,7 +42,7 @@ export default function VocabularyStudyPage() {
 
   // 3. 기능 함수
   const playLocalAudio = (type: 'voca' | 'example', e: React.MouseEvent) => {
-    e.stopPropagation(); // [중요] 오디오 버튼 클릭 시 카드 뒤집힘 방지
+    e.stopPropagation();
     const levelFolder = currentWord.audioKey.split('_')[0].toLowerCase();
     const audioPath = `/assets/audio/${type}/${levelFolder}/${currentWord.audioKey}.wav`;
     const audio = new Audio(audioPath);
@@ -70,14 +71,16 @@ export default function VocabularyStudyPage() {
     if (mediaRecorderRef.current) mediaRecorderRef.current.stop();
   };
 
-  // [수정] 결과 보기 버튼 클릭 시 API 호출 및 오버레이 활성화
   const handleShowResult = async () => {
     if (!recordBlob) return;
     setIsProcessing(true);
     try {
       const formData = new FormData();
       formData.append('audio', recordBlob, 'record.wav');
-      formData.append('word', currentWord.word);
+      
+      // [수정 포인트] 단어 대신 '예문'을 전송
+      // 키 이름도 'word' -> 'text'로 변경하여 의미 명확화
+      formData.append('text', currentWord.example); 
       
       const response = await uploadRecord(formData);
       if (response.success) {
@@ -87,6 +90,7 @@ export default function VocabularyStudyPage() {
         setShowResultOverlay(true);
       }
     } catch (error) {
+      console.error(error);
       alert("AI 평가 중 오류가 발생했습니다.");
     } finally {
       setIsProcessing(false);
@@ -101,11 +105,21 @@ export default function VocabularyStudyPage() {
     setRecordBlob(null);
     setEvaluationResult(null);
     setShowResultOverlay(false);
+    setExpandedWordIndex(null);
   };
 
-  // 실시간 음절 데이터 추출
+  const toggleWordDetail = (index: number) => {
+    setExpandedWordIndex(expandedWordIndex === index ? null : index);
+  };
+
   const targetSentence = evaluationResult?.quality.sentences.find((s: any) => s.text !== "!SIL");
-  const syllables = targetSentence?.words[0]?.syll || [];
+  const words = targetSentence?.words || [];
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-blue-600 bg-blue-50 border-blue-100";
+    if (score >= 60) return "text-green-600 bg-green-50 border-green-100";
+    return "text-red-500 bg-red-50 border-red-100";
+  };
 
   return (
     <div className="relative flex flex-col min-h-screen bg-gray-50 p-6 select-none overflow-hidden">
@@ -132,7 +146,6 @@ export default function VocabularyStudyPage() {
 
       {/* 단어 카드 영역 */}
       <div className="flex-1 flex flex-col items-center justify-center mb-8">
-        {/* [수정] onClick 로직 변경: !isFlipped 조건 제거 -> 무조건 토글 */}
         <div 
           onClick={() => setIsFlipped(prev => !prev)} 
           className="w-full aspect-[4/5] bg-white rounded-[3.5rem] shadow-2xl border border-gray-100 p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 relative overflow-hidden active:scale-[0.98]"
@@ -157,7 +170,6 @@ export default function VocabularyStudyPage() {
                 {currentWord.example}
               </h3>
               <div className="grid grid-cols-1 w-full gap-4 px-2">
-                {/* [확인] 내부 버튼들은 stopPropagation이 적용되어 있어 클릭 시 카드가 뒤집히지 않음 */}
                 <button onClick={(e) => playLocalAudio('example', e)} className="w-full h-16 bg-blue-50 text-blue-600 font-black rounded-2xl flex items-center justify-center gap-3 shadow-sm"><Volume2 size={24} /><span>문장 듣기</span></button>
                 <div onClick={(e) => e.stopPropagation()}>
                   {recordingStatus === 'idle' && (
@@ -189,70 +201,130 @@ export default function VocabularyStudyPage() {
         ><span>다음</span><ChevronRight size={20} /></button>
       </div>
 
-      {/* 상세 결과 오버레이 */}
+      {/* --- 결과 상세 오버레이 --- */}
       {showResultOverlay && evaluationResult && (
         <div className="absolute inset-0 z-50 animate-in fade-in duration-300 overflow-hidden">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-md" onClick={() => setShowResultOverlay(false)}></div>
           
-          <div className="absolute inset-x-0 bottom-0 top-12 bg-white rounded-t-[4.5rem] p-8 flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-500 ease-out overflow-y-auto pb-12">
-            <div className="flex justify-center mb-6"><div className="w-12 h-1.5 bg-gray-200 rounded-full"></div></div>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-2xl font-black text-gray-900">발음 진단 리포트</h2>
-              <button onClick={() => setShowResultOverlay(false)} className="p-3 bg-gray-50 rounded-2xl text-gray-400 active:scale-90 transition-all"><X size={24} /></button>
+          <div className="absolute inset-x-0 bottom-0 top-20 bg-white rounded-t-[3rem] shadow-2xl animate-in slide-in-from-bottom duration-500 ease-out flex flex-col">
+            
+            <div className="px-8 pt-6 pb-4 flex justify-between items-center border-b border-gray-50">
+              <h2 className="text-xl font-black text-gray-900">발음 진단 리포트</h2>
+              <button onClick={() => setShowResultOverlay(false)} className="p-2 bg-gray-50 rounded-full text-gray-400 active:scale-90 transition-all"><X size={20} /></button>
             </div>
 
-            {/* 총점 원형 게이지 */}
-            <div className="flex flex-col items-center mb-12">
-              <div className="relative w-44 h-44 rounded-full border-[14px] border-green-500 flex items-center justify-center shadow-[0_20px_50px_rgba(34,197,94,0.2)] mb-6 bg-white">
-                <div className="flex flex-col items-center">
-                  <span className="text-6xl font-black text-gray-900">{overallScore}</span>
-                  <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest -mt-1">Score</span>
-                </div>
-                <Star className="absolute -top-2 -right-2 text-yellow-400 fill-yellow-400" size={32} />
-              </div>
-              <p className="text-2xl font-black text-gray-900 tracking-tight">훌륭해요, {USER_ID}님! 👏</p>
-            </div>
-
-            {/* 음절별 상세 피드백 */}
-            <div className="bg-gray-50 rounded-[3rem] p-8 mb-10 text-center border border-gray-100">
-              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-8 flex items-center justify-center gap-2">
-                <Sparkles size={14} className="text-blue-500" /> Syllable Analysis
-              </h3>
-              <div className="flex flex-wrap gap-4 justify-center">
-                {syllables.map((syll: any, idx: number) => (
-                  <div key={idx} className="flex flex-col items-center gap-3">
-                    <span className={`text-3xl font-black px-6 py-4 rounded-3xl shadow-sm border bg-white ${syll.score >= 80 ? 'text-green-600 border-green-100' : 'text-red-500 border-red-100'}`}>
-                      {syll.text}
-                    </span>
-                    {syll.score >= 80 ? <CheckCircle2 size={20} className="text-green-500" /> : <XCircle size={20} className="text-red-400" />}
-                    <span className="text-xs font-bold text-gray-400">{Math.round(syll.score)}점</span>
+            <div className="flex-1 overflow-y-auto p-6 pb-12">
+              
+              {/* 종합 점수 */}
+              <div className="bg-gray-900 text-white rounded-[2.5rem] p-8 mb-8 relative overflow-hidden shadow-xl">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full -mr-10 -mt-10 opacity-50"></div>
+                <div className="relative z-10 flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 font-bold mb-1">Total Score</p>
+                    <div className="text-5xl font-black tracking-tight">{overallScore}<span className="text-2xl text-gray-500 ml-1">점</span></div>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 상세 분석 지표 */}
-            <div className="grid grid-cols-1 gap-6 mb-10">
-              {[
-                { label: "정확도 (Accuracy)", score: overallScore, icon: <Target size={16} />, color: "bg-green-500" },
-                { label: "유창성 (Fluency)", score: Math.min(100, Math.round(evaluationResult.fluency['speech rate'] * 20)), icon: <Activity size={16} />, color: "bg-blue-500" },
-                { label: "명료도 (Clarity)", score: 95, icon: <Sparkles size={16} />, color: "bg-purple-500" }
-              ].map((m, idx) => (
-                <div key={idx} className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-                  <div className="flex justify-between items-center mb-3 px-1">
-                    <div className="flex items-center gap-2 text-[11px] font-black text-gray-400 uppercase tracking-tighter">{m.icon}{m.label}</div>
-                    <span className="text-sm font-black text-gray-900">{m.score}%</span>
-                  </div>
-                  <div className="w-full h-3 bg-gray-50 rounded-full overflow-hidden">
-                    <div className={`h-full ${m.color} rounded-full transition-all duration-1000 delay-500`} style={{ width: `${m.score}%` }}></div>
+                  <div className="w-16 h-16 bg-gradient-to-tr from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
+                    <Star className="text-white fill-white" size={32} />
                   </div>
                 </div>
-              ))}
+                <div className="mt-6 pt-6 border-t border-gray-800 flex items-start gap-3">
+                  <MessageSquareQuote className="text-blue-400 shrink-0 mt-1" size={20} />
+                  <div>
+                    <p className="text-sm font-bold text-gray-300 leading-relaxed">
+                      {overallScore >= 80 ? "아주 자연스러운 발음이에요! 억양이 한국인 같아요." : "전체적으로 좋지만, 받침 발음을 조금 더 신경 써보세요."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 상세 분석 (어절 > 음절 > 음소) */}
+              <div className="mb-6">
+                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Sparkles size={12} className="text-blue-500" /> 상세 분석 (단어를 눌러보세요)
+                </h3>
+                
+                <div className="space-y-3">
+                  {words.map((wordObj: any, idx: number) => {
+                    const isExpanded = expandedWordIndex === idx;
+                    const score = Math.round(wordObj.score);
+                    const colorClass = getScoreColor(score);
+
+                    return (
+                      <div key={idx} className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden transition-all duration-300">
+                        {/* 어절 */}
+                        <div 
+                          onClick={() => toggleWordDetail(idx)}
+                          className={`p-5 flex items-center justify-between cursor-pointer active:bg-gray-50 ${isExpanded ? 'bg-gray-50/50' : ''}`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <span className="text-lg font-black text-gray-800">{wordObj.text}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`text-sm font-black px-3 py-1 rounded-full border ${colorClass}`}>
+                              {score}점
+                            </span>
+                            {isExpanded ? <ChevronUp size={18} className="text-gray-300" /> : <ChevronDown size={18} className="text-gray-300" />}
+                          </div>
+                        </div>
+
+                        {/* 상세 내용 */}
+                        {isExpanded && (
+                          <div className="px-5 pb-5 pt-1 bg-gray-50/30 animate-in slide-in-from-top-2 duration-200">
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {wordObj.syll.map((syll: any, sIdx: number) => {
+                                const phones = syll.phones || syll.phonemes || []; 
+
+                                return (
+                                  <div key={sIdx} className="flex-1 min-w-[70px] bg-white border border-gray-100 rounded-2xl p-3 flex flex-col items-center shadow-sm">
+                                    <span className="text-sm font-bold text-gray-600 mb-1">{syll.text}</span>
+                                    <span className={`text-xs font-black mb-2 ${syll.score >= 80 ? 'text-green-500' : 'text-orange-500'}`}>
+                                      {Math.round(syll.score)}
+                                    </span>
+                                    
+                                    {/* 음소 (Symbol 사용) */}
+                                    {phones.length > 0 && (
+                                      <div className="flex gap-1.5 pt-2 border-t border-gray-100 w-full justify-center">
+                                        {phones.map((phone: any, pIdx: number) => {
+                                          // JSON의 symbol 사용
+                                          const displayChar = phone.symbol || phone.text || phone.label;
+                                          
+                                          return (
+                                            <div key={pIdx} className="flex flex-col items-center">
+                                              <span className="text-[10px] text-gray-500 mb-0.5 font-sans">{displayChar}</span>
+                                              <span className={`text-[9px] font-bold ${phone.score >= 80 ? 'text-green-600' : 'text-orange-400'}`}>
+                                                {Math.round(phone.score)}
+                                              </span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-5 mb-6">
-              <button onClick={() => { setShowResultOverlay(false); setRecordingStatus('idle'); }} className="h-20 bg-gray-50 text-gray-500 font-black rounded-[2rem] flex items-center justify-center gap-3 active:bg-gray-100 transition-all border border-gray-100 shadow-sm"><RotateCcw size={22} /><span>다시 녹음</span></button>
-              <button onClick={() => moveToWord('next')} className="h-20 bg-green-500 text-gray-900 font-black rounded-[2rem] flex items-center justify-center gap-3 shadow-xl shadow-green-100 active:scale-95 transition-all"><span>다음 단어</span><ArrowRight size={22} /></button>
+            <div className="p-6 pt-0 bg-white grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => { setShowResultOverlay(false); setRecordingStatus('idle'); }} 
+                className="h-16 bg-gray-100 text-gray-600 font-black rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+              >
+                <RotateCcw size={18} /> 다시 녹음
+              </button>
+              <button 
+                onClick={() => moveToWord('next')} 
+                className="h-16 bg-gray-900 text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+              >
+                다음 단어 <ArrowRight size={18} />
+              </button>
             </div>
           </div>
         </div>

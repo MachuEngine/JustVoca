@@ -1,6 +1,5 @@
 # backend/app/api/user.py
-from fastapi import APIRouter, HTTPException, Depends
-# [수정] load_notices 추가됨
+from fastapi import APIRouter, HTTPException
 from app.core.session import load_users, save_users, load_notices, hash_password, verify_password
 from app.schemas import UserProfileUpdate, UserSettingsUpdate, UserPasswordUpdate
 from datetime import datetime
@@ -18,7 +17,6 @@ async def get_stats(user_id: str):
     prog = u.get("progress", {}).get("topics", {})
     total_learned = sum(len(t.get("learned", {})) for t in prog.values())
     
-    # 차트 데이터 생성
     chart_data = [{"name": k, "score": v.get("stats", {}).get("avg_score", 0)} for k, v in prog.items()]
     
     return {
@@ -30,16 +28,15 @@ async def get_stats(user_id: str):
 
 @router.get("/{user_id}/notices")
 async def get_notices(user_id: str):
-    all_n = load_notices() # 이제 정상 동작합니다
+    all_n = load_notices()
     now = datetime.now().isoformat()
-    # 예약 시간 지난 공지 필터링
     valid = [n for n in all_n if n.get("scheduled_at", "") <= now]
     return sorted(valid, key=lambda x: x["created_at"], reverse=True)
 
 
-# --- [신규 추가 기능: 설정 화면용] ---
+# --- [신규 기능: 설정 페이지 연동] ---
 
-# 1. 사용자 프로필 및 설정 조회
+# 1. 프로필 조회 (에러 발생하던 부분 해결)
 @router.get("/{user_id}/profile")
 async def get_profile(user_id: str):
     users = load_users()
@@ -47,7 +44,6 @@ async def get_profile(user_id: str):
     if not u:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
-    # settings가 없는 경우를 대비한 안전한 접근
     progress = u.get("progress", {})
     settings = progress.get("settings", {})
     
@@ -62,7 +58,7 @@ async def get_profile(user_id: str):
         "reviewWrong": settings.get("review_wrong", True)
     }
 
-# 2. 프로필 정보 수정 (이메일, 전화번호, 국가)
+# 2. 프로필 수정 (이메일, 전화번호 등)
 @router.put("/{user_id}/profile")
 async def update_profile(user_id: str, data: UserProfileUpdate):
     users = load_users()
@@ -70,8 +66,6 @@ async def update_profile(user_id: str, data: UserProfileUpdate):
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
     user = users[user_id]
-    
-    # 변경된 필드만 업데이트
     if data.email is not None: user["email"] = data.email
     if data.phone is not None: user["phone"] = data.phone
     if data.country is not None: user["country"] = data.country
@@ -79,7 +73,7 @@ async def update_profile(user_id: str, data: UserProfileUpdate):
     save_users(users)
     return {"status": "ok", "message": "프로필이 업데이트되었습니다."}
 
-# 3. 학습 설정 수정 (목표량, 오답노트)
+# 3. 학습 설정 수정
 @router.put("/{user_id}/settings")
 async def update_settings(user_id: str, data: UserSettingsUpdate):
     users = load_users()
@@ -87,19 +81,15 @@ async def update_settings(user_id: str, data: UserSettingsUpdate):
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
     user = users[user_id]
-    
-    # progress 구조가 없으면 생성
     if "progress" not in user: user["progress"] = {}
     if "settings" not in user["progress"]: user["progress"]["settings"] = {}
     
     settings = user["progress"]["settings"]
-    
-    # 키값 매핑 (Frontend: camelCase -> Backend: snake_case/stored key)
     if data.dailyGoal is not None: settings["goal"] = data.dailyGoal
     if data.reviewWrong is not None: settings["review_wrong"] = data.reviewWrong
     
     save_users(users)
-    return {"status": "ok", "message": "학습 설정이 저장되었습니다."}
+    return {"status": "ok", "message": "설정이 저장되었습니다."}
 
 # 4. 비밀번호 변경
 @router.put("/{user_id}/password")
@@ -109,22 +99,15 @@ async def change_password(user_id: str, data: UserPasswordUpdate):
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
     user = users[user_id]
-    stored_pw = user["pw"]
     
-    # 기존 비밀번호 검증 (평문/해시 호환)
-    valid = False
-    if stored_pw == data.old_password:
-        valid = True
-    else:
-        valid, _ = verify_password(stored_pw, data.old_password)
-        
-    if not valid:
+    # 기존 비밀번호 확인
+    valid, _ = verify_password(user["pw"], data.old_password)
+    if not valid and user["pw"] != data.old_password: # 해시 안 된 구버전 비번 호환
         raise HTTPException(status_code=400, detail="현재 비밀번호가 일치하지 않습니다.")
     
-    # 새 비밀번호 해시 적용 후 저장
+    # 새 비밀번호 저장
     user["pw"] = hash_password(data.new_password)
     save_users(users)
-    
     return {"status": "ok", "message": "비밀번호가 변경되었습니다."}
 
 # 5. 회원 탈퇴
@@ -134,8 +117,6 @@ async def withdraw_user(user_id: str):
     if user_id not in users:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
-    # 사용자 삭제
     del users[user_id]
     save_users(users)
-    
-    return {"status": "ok", "message": "회원 탈퇴가 완료되었습니다."}
+    return {"status": "ok", "message": "탈퇴 처리되었습니다."}

@@ -400,7 +400,6 @@ export default function VocabularyStudyPage() {
   // - quiz: 정답이어야 다음 가능
   const isNextEnabled = () => {
     if (phase === "learning" || phase === "review") {
-      if (!isFlipped) return true;
       return evaluationResult !== null;
     }
     if (phase === "quiz") return isQuizCorrect === true;

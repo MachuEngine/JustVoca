@@ -3,12 +3,12 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from sqlmodel import Session
 import os
 import uuid
+import re  # [필수 추가]
 from pathlib import Path
 
 # [추가] DB 관련 모듈 임포트
 from app.core.database import get_session
 from app.models import StudyLog
-
 from app.audio_convert import convert_to_wav
 from app.speechpro_client import evaluate_pronunciation
 
@@ -25,11 +25,17 @@ async def evaluate_speech(
     word: str = Form(...),
     session: Session = Depends(get_session)
 ):
-    print(f"--- [진단] 요청 수신 시작: {text} (User: {user_id}) ---")
-    print(f"[DEBUG] 요청 수신: 텍스트='{text}', 파일명='{audio.filename}'")
+    # ✅ [수정] 엔진 전달용 텍스트 정규화
+    # 1. 마침표(.), 물음표(?), 느낌표(!), 쉼표(,) 등 문장 부호를 모두 제거하거나 공백으로 치환
+    clean_text = re.sub(r'[.\?\!,]', ' ', text)
+    # 2. 중복 공백 제거 및 앞뒤 공백 제거
+    clean_text = " ".join(clean_text.split()).strip()
+
+    print(f"--- [진단] 요청 수신 시작: {clean_text} (User: {user_id}) ---")
+    print(f"[DEBUG] 원본: '{text}' -> 엔진전달용: '{clean_text}'")
 
     temp_id = uuid.uuid4()
-    temp_dir = "/tmp"  # WSL 환경이므로 /tmp 사용
+    temp_dir = "/tmp" 
     input_path = Path(f"{temp_dir}/up_{temp_id}{os.path.splitext(audio.filename)[1]}")
     wav_path: Path | None = None
 
@@ -51,7 +57,8 @@ async def evaluate_speech(
 
         # 3) 엔진 호출 (기존 로직 유지)
         print("[DEBUG] 3. 엔진 호출 시작 (GTP -> Model -> Score)...")
-        score, full_result = evaluate_pronunciation(text, wav_path)
+        print(f"[DEBUG] 3. 엔진 호출 문장: '{clean_text}'")
+        score, full_result = evaluate_pronunciation(clean_text, wav_path)
         print(f"[DEBUG] 4. 엔진 응답 수신 완료. 점수: {score}")
 
         # ✅ 엔진 통신/응답 에러면 success False (기존 로직 유지)

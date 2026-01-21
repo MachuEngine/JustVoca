@@ -31,6 +31,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="JustVoca API", lifespan=lifespan)
 
+# [수정] 정적 파일 마운트 추가
+# 1. 파일 업로드용 임시 폴더
+os.makedirs(settings.TEMP_UPLOAD_DIR, exist_ok=True)
+app.mount("/files", StaticFiles(directory=settings.TEMP_UPLOAD_DIR), name="files")
+
+# 2. [추가됨] 학습용 에셋(이미지/오디오) 폴더 마운트
+# 실제 이미지가 저장된 폴더 경로를 지정해야 합니다. (예: backend/data/assets)
+# settings.DATA_DIR이 'backend/data'를 가리킨다고 가정합니다.
+assets_path = os.path.join(settings.DATA_DIR, "assets") 
+
+# 폴더가 없으면 에러가 날 수 있으므로 체크 후 생성
+os.makedirs(assets_path, exist_ok=True) 
+
+app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+
 # [수정] CORS 설정 강화: localhost와 127.0.0.1 모두 허용
 origins = [
     "http://localhost:3000",

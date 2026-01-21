@@ -2,90 +2,131 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Volume2, RefreshCw } from "lucide-react";
+import { Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-// 단어 데이터 타입 정의
-interface Word {
-  id: number;
-  word: string;
-  meaning: string;
-  eng_meaning: string;
-  example: string;
-  audio_path: string;
-  level: string;
-  topic: string;
-}
-
-// 컴포넌트 Props 정의
 interface StudyCardProps {
-  word: Word;
+  word: any;
   onPlayAudio?: () => void;
   autoPlay?: boolean;
 }
 
-// [핵심 수정] export default로 변경하여 import 에러 방지
-export default function StudyCard({ word, onPlayAudio, autoPlay = false }: StudyCardProps) {
+export default function StudyCard({
+  word,
+  onPlayAudio,
+  autoPlay = false,
+}: StudyCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const imageUrl = word?.imageKey || "";
 
-  // 단어가 변경될 때마다 앞면으로 초기화
+  // 발음 텍스트 포맷팅 (데이터가 있으면 대괄호 추가)
+  const pronText = word?.pronunciation
+    ? word.pronunciation.startsWith("[")
+      ? word.pronunciation
+      : `[${word.pronunciation}]`
+    : "";
+
   useEffect(() => {
     setIsFlipped(false);
+    setImageError(false);
     if (autoPlay) {
-      const timer = setTimeout(() => {
-        playAudio();
-      }, 500);
+      const timer = setTimeout(() => playAudio(), 500);
       return () => clearTimeout(timer);
     }
   }, [word, autoPlay]);
 
   const playAudio = () => {
-    if (onPlayAudio) {
-      onPlayAudio();
-    } else if (word?.audio_path) {
-      try {
-        const audioSrc = word.audio_path.startsWith("http")
-          ? word.audio_path
-          : `/assets/audio/${word.audio_path}`;
-        const audio = new Audio(audioSrc);
-        audio.play().catch((e) => console.log("Audio play failed", e));
-      } catch (e) {
-        console.error("Audio error", e);
-      }
+    if (onPlayAudio) onPlayAudio();
+    else if (word?.audioKey) {
+      const audio = new Audio(word.audioKey);
+      audio.play().catch((e) => console.error("Audio play error:", e));
     }
   };
 
-  // 데이터가 없을 경우 에러 방지용 빈 박스 렌더링
-  if (!word) return <div className="w-full aspect-[4/5] bg-gray-100 rounded-[2.5rem]" />;
+  if (!word)
+    return <div className="w-full aspect-[3/4] bg-gray-100 rounded-[2.5rem]" />;
 
   return (
     <div
-      className="relative w-full aspect-[4/5] perspective-1000 cursor-pointer group"
+      className="relative w-full aspect-[3/4] perspective-1000 cursor-pointer group"
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div
         className="w-full h-full relative preserve-3d transition-transform duration-500"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
         style={{ transformStyle: "preserve-3d" }}
       >
-        {/* --- [앞면] 단어 --- */}
-        <div
-          className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-8 flex flex-col items-center justify-center text-center"
-          style={{ backfaceVisibility: "hidden" }}
-        >
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <h2 className="text-5xl font-black text-gray-900 mb-6 break-keep">
-              {word.word}
-            </h2>
-            <div className="space-y-2">
-              <p className="text-2xl font-bold text-gray-700 break-keep leading-snug">
-                {word.meaning}
-              </p>
-              <p className="text-lg text-gray-400 font-medium">
-                {word.eng_meaning}
-              </p>
+        {/* ================= [앞면] ================= */}
+        <div className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-5 flex flex-col items-center justify-between text-center pb-7">
+          {/* 1. 이미지 영역 */}
+          <div className="w-full flex justify-center mt-1">
+            <div className="w-32 h-32 relative rounded-2xl overflow-hidden bg-gray-50 flex items-center justify-center shadow-inner">
+              {imageUrl && !imageError ? (
+                <img
+                  key={imageUrl}
+                  src={imageUrl}
+                  alt={word.word}
+                  className="w-full h-full object-cover"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <span className="text-6xl select-none opacity-20">📖</span>
+              )}
             </div>
+          </div>
+
+          {/* 2. 텍스트 영역 */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full gap-1">
+            {/* 단어 + [발음] (폰트 축소) */}
+            <h2 className="text-2xl font-black text-gray-900 mb-2 break-keep flex items-baseline gap-2 flex-wrap justify-center leading-tight">
+              {word.word}
+              {pronText && (
+                <span className="text-base font-normal text-gray-500 transform -translate-y-1">
+                  {pronText}
+                </span>
+              )}
+            </h2>
+
+            {/* 한글 뜻 (축소) */}
+            <p className="text-base font-bold text-gray-400 break-keep leading-snug">
+              {word.meaning || ""}
+            </p>
+
+            {/* 영어 뜻 (축소) */}
+            <p className="text-xs text-gray-200 font-medium">
+              {word.meaningEng || ""}
+            </p>
+          </div>
+
+          {/* 3. 하단 버튼 */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              playAudio();
+            }}
+            className="mb-1 px-6 py-3 bg-gray-900 text-white rounded-xl flex items-center gap-2 shadow-lg active:scale-95 transition-transform"
+          >
+            <Volume2 size={18} />
+            <span className="font-bold text-xs">발음 듣기</span>
+          </button>
+        </div>
+
+        {/* ================= [뒷면] ================= */}
+        <div
+          className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] shadow-xl border border-blue-100 p-7 flex flex-col items-center justify-center text-center bg-gradient-to-br from-blue-50 to-white"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          <div className="w-full flex justify-center mb-5">
+            <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-[11px] font-bold tracking-wide">
+              Example
+            </span>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-lg font-medium text-gray-800 leading-relaxed break-keep">
+              {word.example ? `"${word.example}"` : `"${word.word}"`}
+            </p>
           </div>
 
           <button
@@ -93,51 +134,10 @@ export default function StudyCard({ word, onPlayAudio, autoPlay = false }: Study
               e.stopPropagation();
               playAudio();
             }}
-            className="mb-4 px-8 py-4 bg-gray-900 text-white rounded-2xl flex items-center gap-2 shadow-lg active:scale-95 transition-transform hover:bg-gray-800"
+            className="mt-5 w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm text-gray-600 hover:text-blue-600 active:scale-90 transition-all"
           >
-            <Volume2 size={24} />
-            <span className="font-bold">발음 듣기</span>
+            <Volume2 size={18} />
           </button>
-
-          <div className="text-gray-300 text-sm font-medium flex items-center gap-1">
-            <RefreshCw size={12} />
-            터치하여 뒤집기
-          </div>
-        </div>
-
-        {/* --- [뒷면] 예문 --- */}
-        <div
-          className="absolute inset-0 backface-hidden bg-white rounded-[2.5rem] shadow-xl border border-blue-100 p-8 flex flex-col items-center justify-center text-center bg-gradient-to-br from-blue-50 to-white"
-          style={{
-            backfaceVisibility: "hidden",
-            transform: "rotateY(180deg)",
-          }}
-        >
-          <div className="w-full text-left border-l-4 border-blue-500 pl-4 mb-8">
-            <span className="text-xs font-black text-blue-500 uppercase tracking-widest">
-              Example
-            </span>
-            <h3 className="text-xl font-bold text-gray-900 mt-1">{word.word}</h3>
-          </div>
-
-          <div className="flex-1 flex items-center justify-center">
-            <p className="text-xl font-medium text-gray-800 leading-relaxed break-keep px-2">
-              "{word.example}"
-            </p>
-          </div>
-
-          <div className="w-full mt-8">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                playAudio();
-              }}
-              className="w-full py-4 bg-white border border-blue-200 text-blue-600 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-sm active:bg-blue-50"
-            >
-              <Volume2 size={20} />
-              듣기
-            </button>
-          </div>
         </div>
       </motion.div>
     </div>

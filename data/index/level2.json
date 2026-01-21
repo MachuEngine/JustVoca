@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "base_dir": "data",
+  "base_dir": "assets",
   "items": [
     {
       "id": "voca_001",
       "text": "잘 지내요",
       "resources": {
-        "image": { "file": "images/Level2_1.webp" },
+        "image": { "file": "images/level2/Level2_1.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_1.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_1.wav", "language": "ko", "speed": "normal" }
       }
@@ -15,7 +15,7 @@
       "id": "voca_002",
       "text": "어때요",
       "resources": {
-        "image": { "file": "images/Level2_2.webp" },
+        "image": { "file": "images/level2/Level2_2.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_2.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_2.wav", "language": "ko", "speed": "normal" }
       }
@@ -24,7 +24,7 @@
       "id": "voca_003",
       "text": "괜찮아요",
       "resources": {
-        "image": { "file": "images/Level2_3.webp" },
+        "image": { "file": "images/level2/Level2_3.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_3.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_3.wav", "language": "ko", "speed": "normal" }
       }
@@ -33,7 +33,7 @@
       "id": "voca_004",
       "text": "바빠요",
       "resources": {
-        "image": { "file": "images/Level2_4.webp" },
+        "image": { "file": "images/level2/Level2_4.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_4.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_4.wav", "language": "ko", "speed": "normal" }
       }
@@ -42,7 +42,7 @@
       "id": "voca_005",
       "text": "피곤해요",
       "resources": {
-        "image": { "file": "images/Level2_5.webp" },
+        "image": { "file": "images/level2/Level2_5.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_5.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_5.wav", "language": "ko", "speed": "normal" }
       }
@@ -51,7 +51,7 @@
       "id": "voca_006",
       "text": "잘 지내요",
       "resources": {
-        "image": { "file": "images/Level2_6.webp" },
+        "image": { "file": "images/level2/Level2_6.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_6.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_6.wav", "language": "ko", "speed": "normal" }
       }
@@ -60,7 +60,7 @@
       "id": "voca_007",
       "text": "괜찮아요",
       "resources": {
-        "image": { "file": "images/Level2_7.webp" },
+        "image": { "file": "images/level2/Level2_7.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_7.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_7.wav", "language": "ko", "speed": "normal" }
       }
@@ -69,7 +69,7 @@
       "id": "voca_008",
       "text": "좀 바빠요",
       "resources": {
-        "image": { "file": "images/Level2_8.webp" },
+        "image": { "file": "images/level2/Level2_8.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_8.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_8.wav", "language": "ko", "speed": "normal" }
       }
@@ -78,7 +78,7 @@
       "id": "voca_009",
       "text": "별로예요",
       "resources": {
-        "image": { "file": "images/Level2_9.webp" },
+        "image": { "file": "images/level2/Level2_9.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_9.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_9.wav", "language": "ko", "speed": "normal" }
       }
@@ -87,7 +87,7 @@
       "id": "voca_010",
       "text": "좋아요",
       "resources": {
-        "image": { "file": "images/Level2_10.webp" },
+        "image": { "file": "images/level2/Level2_10.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_10.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_10.wav", "language": "ko", "speed": "normal" }
       }
@@ -96,7 +96,7 @@
       "id": "voca_011",
       "text": "부탁하다",
       "resources": {
-        "image": { "file": "images/Level2_11.webp" },
+        "image": { "file": "images/level2/Level2_11.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_11.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_11.wav", "language": "ko", "speed": "normal" }
       }
@@ -105,7 +105,7 @@
       "id": "voca_012",
       "text": "괜찮으세요",
       "resources": {
-        "image": { "file": "images/Level2_12.webp" },
+        "image": { "file": "images/level2/Level2_12.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_12.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_12.wav", "language": "ko", "speed": "normal" }
       }
@@ -114,7 +114,7 @@
       "id": "voca_013",
       "text": "잠깐",
       "resources": {
-        "image": { "file": "images/Level2_13.webp" },
+        "image": { "file": "images/level2/Level2_13.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_13.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_13.wav", "language": "ko", "speed": "normal" }
       }
@@ -123,7 +123,7 @@
       "id": "voca_014",
       "text": "미안해요",
       "resources": {
-        "image": { "file": "images/Level2_14.webp" },
+        "image": { "file": "images/level2/Level2_14.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_14.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_14.wav", "language": "ko", "speed": "normal" }
       }
@@ -132,7 +132,7 @@
       "id": "voca_015",
       "text": "고마워요",
       "resources": {
-        "image": { "file": "images/Level2_15.webp" },
+        "image": { "file": "images/level2/Level2_15.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_15.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_15.wav", "language": "ko", "speed": "normal" }
       }
@@ -141,7 +141,7 @@
       "id": "voca_016",
       "text": "여보세요",
       "resources": {
-        "image": { "file": "images/Level2_16.webp" },
+        "image": { "file": "images/level2/Level2_16.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_16.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_16.wav", "language": "ko", "speed": "normal" }
       }
@@ -150,7 +150,7 @@
       "id": "voca_017",
       "text": "말씀하세요",
       "resources": {
-        "image": { "file": "images/Level2_17.webp" },
+        "image": { "file": "images/level2/Level2_17.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_17.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_17.wav", "language": "ko", "speed": "normal" }
       }
@@ -159,7 +159,7 @@
       "id": "voca_018",
       "text": "전화하다",
       "resources": {
-        "image": { "file": "images/Level2_18.webp" },
+        "image": { "file": "images/level2/Level2_18.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_18.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_18.wav", "language": "ko", "speed": "normal" }
       }
@@ -168,7 +168,7 @@
       "id": "voca_019",
       "text": "지금",
       "resources": {
-        "image": { "file": "images/Level2_19.webp" },
+        "image": { "file": "images/level2/Level2_19.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_19.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_19.wav", "language": "ko", "speed": "normal" }
       }
@@ -177,7 +177,7 @@
       "id": "voca_020",
       "text": "나중에",
       "resources": {
-        "image": { "file": "images/Level2_20.webp" },
+        "image": { "file": "images/level2/Level2_20.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_20.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_20.wav", "language": "ko", "speed": "normal" }
       }
@@ -186,7 +186,7 @@
       "id": "voca_021",
       "text": "조심히 가세요",
       "resources": {
-        "image": { "file": "images/Level2_21.webp" },
+        "image": { "file": "images/level2/Level2_21.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_21.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_21.wav", "language": "ko", "speed": "normal" }
       }
@@ -195,7 +195,7 @@
       "id": "voca_022",
       "text": "다음에 연락해요",
       "resources": {
-        "image": { "file": "images/Level2_22.webp" },
+        "image": { "file": "images/level2/Level2_22.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_22.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_22.wav", "language": "ko", "speed": "normal" }
       }
@@ -204,7 +204,7 @@
       "id": "voca_023",
       "text": "곧 봐요",
       "resources": {
-        "image": { "file": "images/Level2_23.webp" },
+        "image": { "file": "images/level2/Level2_23.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_23.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_23.wav", "language": "ko", "speed": "normal" }
       }
@@ -213,7 +213,7 @@
       "id": "voca_024",
       "text": "또 연락할게요",
       "resources": {
-        "image": { "file": "images/Level2_24.webp" },
+        "image": { "file": "images/level2/Level2_24.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_24.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_24.wav", "language": "ko", "speed": "normal" }
       }
@@ -222,7 +222,7 @@
       "id": "voca_025",
       "text": "안녕히 주무세요",
       "resources": {
-        "image": { "file": "images/Level2_25.webp" },
+        "image": { "file": "images/level2/Level2_25.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_25.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_25.wav", "language": "ko", "speed": "normal" }
       }
@@ -231,7 +231,7 @@
       "id": "voca_026",
       "text": "살다",
       "resources": {
-        "image": { "file": "images/Level2_26.webp" },
+        "image": { "file": "images/level2/Level2_26.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_26.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_26.wav", "language": "ko", "speed": "normal" }
       }
@@ -240,7 +240,7 @@
       "id": "voca_027",
       "text": "집",
       "resources": {
-        "image": { "file": "images/Level2_27.webp" },
+        "image": { "file": "images/level2/Level2_27.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_27.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_27.wav", "language": "ko", "speed": "normal" }
       }
@@ -249,7 +249,7 @@
       "id": "voca_028",
       "text": "동네",
       "resources": {
-        "image": { "file": "images/Level2_28.webp" },
+        "image": { "file": "images/level2/Level2_28.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_28.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_28.wav", "language": "ko", "speed": "normal" }
       }
@@ -258,7 +258,7 @@
       "id": "voca_029",
       "text": "아파트",
       "resources": {
-        "image": { "file": "images/Level2_29.webp" },
+        "image": { "file": "images/level2/Level2_29.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_29.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_29.wav", "language": "ko", "speed": "normal" }
       }
@@ -267,7 +267,7 @@
       "id": "voca_030",
       "text": "기숙사",
       "resources": {
-        "image": { "file": "images/Level2_30.webp" },
+        "image": { "file": "images/level2/Level2_30.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_30.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_30.wav", "language": "ko", "speed": "normal" }
       }
@@ -276,7 +276,7 @@
       "id": "voca_031",
       "text": "가족",
       "resources": {
-        "image": { "file": "images/Level2_31.webp" },
+        "image": { "file": "images/level2/Level2_31.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_31.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_31.wav", "language": "ko", "speed": "normal" }
       }
@@ -285,7 +285,7 @@
       "id": "voca_032",
       "text": "부모님",
       "resources": {
-        "image": { "file": "images/Level2_32.webp" },
+        "image": { "file": "images/level2/Level2_32.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_32.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_32.wav", "language": "ko", "speed": "normal" }
       }
@@ -294,7 +294,7 @@
       "id": "voca_033",
       "text": "어머니",
       "resources": {
-        "image": { "file": "images/Level2_33.webp" },
+        "image": { "file": "images/level2/Level2_33.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_33.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_33.wav", "language": "ko", "speed": "normal" }
       }
@@ -303,7 +303,7 @@
       "id": "voca_034",
       "text": "아버지",
       "resources": {
-        "image": { "file": "images/Level2_34.webp" },
+        "image": { "file": "images/level2/Level2_34.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_34.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_34.wav", "language": "ko", "speed": "normal" }
       }
@@ -312,7 +312,7 @@
       "id": "voca_035",
       "text": "형제",
       "resources": {
-        "image": { "file": "images/Level2_35.webp" },
+        "image": { "file": "images/level2/Level2_35.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_35.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_35.wav", "language": "ko", "speed": "normal" }
       }
@@ -321,7 +321,7 @@
       "id": "voca_036",
       "text": "취미",
       "resources": {
-        "image": { "file": "images/Level2_36.webp" },
+        "image": { "file": "images/level2/Level2_36.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_36.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_36.wav", "language": "ko", "speed": "normal" }
       }
@@ -330,7 +330,7 @@
       "id": "voca_037",
       "text": "운동",
       "resources": {
-        "image": { "file": "images/Level2_37.webp" },
+        "image": { "file": "images/level2/Level2_37.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_37.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_37.wav", "language": "ko", "speed": "normal" }
       }
@@ -339,7 +339,7 @@
       "id": "voca_038",
       "text": "여행",
       "resources": {
-        "image": { "file": "images/Level2_38.webp" },
+        "image": { "file": "images/level2/Level2_38.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_38.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_38.wav", "language": "ko", "speed": "normal" }
       }
@@ -348,7 +348,7 @@
       "id": "voca_039",
       "text": "영화",
       "resources": {
-        "image": { "file": "images/Level2_39.webp" },
+        "image": { "file": "images/level2/Level2_39.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_39.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_39.wav", "language": "ko", "speed": "normal" }
       }
@@ -357,7 +357,7 @@
       "id": "voca_040",
       "text": "음악",
       "resources": {
-        "image": { "file": "images/Level2_40.webp" },
+        "image": { "file": "images/level2/Level2_40.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_40.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_40.wav", "language": "ko", "speed": "normal" }
       }
@@ -366,7 +366,7 @@
       "id": "voca_041",
       "text": "관심",
       "resources": {
-        "image": { "file": "images/Level2_41.webp" },
+        "image": { "file": "images/level2/Level2_41.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_41.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_41.wav", "language": "ko", "speed": "normal" }
       }
@@ -375,7 +375,7 @@
       "id": "voca_042",
       "text": "좋아하다",
       "resources": {
-        "image": { "file": "images/Level2_42.webp" },
+        "image": { "file": "images/level2/Level2_42.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_42.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_42.wav", "language": "ko", "speed": "normal" }
       }
@@ -384,7 +384,7 @@
       "id": "voca_043",
       "text": "자주",
       "resources": {
-        "image": { "file": "images/Level2_43.webp" },
+        "image": { "file": "images/level2/Level2_43.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_43.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_43.wav", "language": "ko", "speed": "normal" }
       }
@@ -393,7 +393,7 @@
       "id": "voca_044",
       "text": "가끔",
       "resources": {
-        "image": { "file": "images/Level2_44.webp" },
+        "image": { "file": "images/level2/Level2_44.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_44.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_44.wav", "language": "ko", "speed": "normal" }
       }
@@ -402,7 +402,7 @@
       "id": "voca_045",
       "text": "요즘",
       "resources": {
-        "image": { "file": "images/Level2_45.webp" },
+        "image": { "file": "images/level2/Level2_45.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_45.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_45.wav", "language": "ko", "speed": "normal" }
       }
@@ -411,7 +411,7 @@
       "id": "voca_046",
       "text": "소개하다",
       "resources": {
-        "image": { "file": "images/Level2_46.webp" },
+        "image": { "file": "images/level2/Level2_46.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_46.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_46.wav", "language": "ko", "speed": "normal" }
       }
@@ -420,7 +420,7 @@
       "id": "voca_047",
       "text": "이야기하다",
       "resources": {
-        "image": { "file": "images/Level2_47.webp" },
+        "image": { "file": "images/level2/Level2_47.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_47.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_47.wav", "language": "ko", "speed": "normal" }
       }
@@ -429,7 +429,7 @@
       "id": "voca_048",
       "text": "설명하다",
       "resources": {
-        "image": { "file": "images/Level2_48.webp" },
+        "image": { "file": "images/level2/Level2_48.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_48.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_48.wav", "language": "ko", "speed": "normal" }
       }
@@ -438,7 +438,7 @@
       "id": "voca_049",
       "text": "경험",
       "resources": {
-        "image": { "file": "images/Level2_49.webp" },
+        "image": { "file": "images/level2/Level2_49.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_49.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_49.wav", "language": "ko", "speed": "normal" }
       }
@@ -447,7 +447,7 @@
       "id": "voca_050",
       "text": "이유",
       "resources": {
-        "image": { "file": "images/Level2_50.webp" },
+        "image": { "file": "images/level2/Level2_50.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_50.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_50.wav", "language": "ko", "speed": "normal" }
       }
@@ -456,7 +456,7 @@
       "id": "voca_051",
       "text": "살다",
       "resources": {
-        "image": { "file": "images/Level2_51.webp" },
+        "image": { "file": "images/level2/Level2_51.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_51.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_51.wav", "language": "ko", "speed": "normal" }
       }
@@ -465,7 +465,7 @@
       "id": "voca_052",
       "text": "이사하다",
       "resources": {
-        "image": { "file": "images/Level2_52.webp" },
+        "image": { "file": "images/level2/Level2_52.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_52.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_52.wav", "language": "ko", "speed": "normal" }
       }
@@ -474,7 +474,7 @@
       "id": "voca_053",
       "text": "외국",
       "resources": {
-        "image": { "file": "images/Level2_53.webp" },
+        "image": { "file": "images/level2/Level2_53.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_53.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_53.wav", "language": "ko", "speed": "normal" }
       }
@@ -483,7 +483,7 @@
       "id": "voca_054",
       "text": "한국",
       "resources": {
-        "image": { "file": "images/Level2_54.webp" },
+        "image": { "file": "images/level2/Level2_54.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_54.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_54.wav", "language": "ko", "speed": "normal" }
       }
@@ -492,7 +492,7 @@
       "id": "voca_055",
       "text": "지역",
       "resources": {
-        "image": { "file": "images/Level2_55.webp" },
+        "image": { "file": "images/level2/Level2_55.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_55.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_55.wav", "language": "ko", "speed": "normal" }
       }
@@ -501,7 +501,7 @@
       "id": "voca_056",
       "text": "잘하다",
       "resources": {
-        "image": { "file": "images/Level2_56.webp" },
+        "image": { "file": "images/level2/Level2_56.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_56.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_56.wav", "language": "ko", "speed": "normal" }
       }
@@ -510,7 +510,7 @@
       "id": "voca_057",
       "text": "조금",
       "resources": {
-        "image": { "file": "images/Level2_57.webp" },
+        "image": { "file": "images/level2/Level2_57.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_57.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_57.wav", "language": "ko", "speed": "normal" }
       }
@@ -519,7 +519,7 @@
       "id": "voca_058",
       "text": "못하다",
       "resources": {
-        "image": { "file": "images/Level2_58.webp" },
+        "image": { "file": "images/level2/Level2_58.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_58.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_58.wav", "language": "ko", "speed": "normal" }
       }
@@ -528,7 +528,7 @@
       "id": "voca_059",
       "text": "배우다",
       "resources": {
-        "image": { "file": "images/Level2_59.webp" },
+        "image": { "file": "images/level2/Level2_59.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_59.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_59.wav", "language": "ko", "speed": "normal" }
       }
@@ -537,7 +537,7 @@
       "id": "voca_060",
       "text": "공부하다",
       "resources": {
-        "image": { "file": "images/Level2_60.webp" },
+        "image": { "file": "images/level2/Level2_60.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_60.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_60.wav", "language": "ko", "speed": "normal" }
       }
@@ -546,7 +546,7 @@
       "id": "voca_061",
       "text": "집에서",
       "resources": {
-        "image": { "file": "images/Level2_61.webp" },
+        "image": { "file": "images/level2/Level2_61.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_61.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_61.wav", "language": "ko", "speed": "normal" }
       }
@@ -555,7 +555,7 @@
       "id": "voca_062",
       "text": "학교에서",
       "resources": {
-        "image": { "file": "images/Level2_62.webp" },
+        "image": { "file": "images/level2/Level2_62.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_62.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_62.wav", "language": "ko", "speed": "normal" }
       }
@@ -564,7 +564,7 @@
       "id": "voca_063",
       "text": "회사에서",
       "resources": {
-        "image": { "file": "images/Level2_63.webp" },
+        "image": { "file": "images/level2/Level2_63.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_63.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_63.wav", "language": "ko", "speed": "normal" }
       }
@@ -573,7 +573,7 @@
       "id": "voca_064",
       "text": "친구와",
       "resources": {
-        "image": { "file": "images/Level2_64.webp" },
+        "image": { "file": "images/level2/Level2_64.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_64.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_64.wav", "language": "ko", "speed": "normal" }
       }
@@ -582,7 +582,7 @@
       "id": "voca_065",
       "text": "수업",
       "resources": {
-        "image": { "file": "images/Level2_65.webp" },
+        "image": { "file": "images/level2/Level2_65.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_65.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_65.wav", "language": "ko", "speed": "normal" }
       }
@@ -591,7 +591,7 @@
       "id": "voca_066",
       "text": "문화",
       "resources": {
-        "image": { "file": "images/Level2_66.webp" },
+        "image": { "file": "images/level2/Level2_66.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_66.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_66.wav", "language": "ko", "speed": "normal" }
       }
@@ -600,7 +600,7 @@
       "id": "voca_067",
       "text": "다르다",
       "resources": {
-        "image": { "file": "images/Level2_67.webp" },
+        "image": { "file": "images/level2/Level2_67.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_67.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_67.wav", "language": "ko", "speed": "normal" }
       }
@@ -609,7 +609,7 @@
       "id": "voca_068",
       "text": "같다",
       "resources": {
-        "image": { "file": "images/Level2_68.webp" },
+        "image": { "file": "images/level2/Level2_68.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_68.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_68.wav", "language": "ko", "speed": "normal" }
       }
@@ -618,7 +618,7 @@
       "id": "voca_069",
       "text": "생활",
       "resources": {
-        "image": { "file": "images/Level2_69.webp" },
+        "image": { "file": "images/level2/Level2_69.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_69.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_69.wav", "language": "ko", "speed": "normal" }
       }
@@ -627,7 +627,7 @@
       "id": "voca_070",
       "text": "습관",
       "resources": {
-        "image": { "file": "images/Level2_70.webp" },
+        "image": { "file": "images/level2/Level2_70.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_70.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_70.wav", "language": "ko", "speed": "normal" }
       }
@@ -636,7 +636,7 @@
       "id": "voca_071",
       "text": "왜",
       "resources": {
-        "image": { "file": "images/Level2_71.webp" },
+        "image": { "file": "images/level2/Level2_71.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_71.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_71.wav", "language": "ko", "speed": "normal" }
       }
@@ -645,7 +645,7 @@
       "id": "voca_072",
       "text": "언제",
       "resources": {
-        "image": { "file": "images/Level2_72.webp" },
+        "image": { "file": "images/level2/Level2_72.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_72.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_72.wav", "language": "ko", "speed": "normal" }
       }
@@ -654,7 +654,7 @@
       "id": "voca_073",
       "text": "처음",
       "resources": {
-        "image": { "file": "images/Level2_73.webp" },
+        "image": { "file": "images/level2/Level2_73.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_73.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_73.wav", "language": "ko", "speed": "normal" }
       }
@@ -663,7 +663,7 @@
       "id": "voca_074",
       "text": "계속",
       "resources": {
-        "image": { "file": "images/Level2_74.webp" },
+        "image": { "file": "images/level2/Level2_74.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_74.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_74.wav", "language": "ko", "speed": "normal" }
       }
@@ -672,7 +672,7 @@
       "id": "voca_075",
       "text": "지금",
       "resources": {
-        "image": { "file": "images/Level2_75.webp" },
+        "image": { "file": "images/level2/Level2_75.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_75.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_75.wav", "language": "ko", "speed": "normal" }
       }
@@ -681,7 +681,7 @@
       "id": "voca_076",
       "text": "십",
       "resources": {
-        "image": { "file": "images/Level2_76.webp" },
+        "image": { "file": "images/level2/Level2_76.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_76.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_76.wav", "language": "ko", "speed": "normal" }
       }
@@ -690,7 +690,7 @@
       "id": "voca_077",
       "text": "백",
       "resources": {
-        "image": { "file": "images/Level2_77.webp" },
+        "image": { "file": "images/level2/Level2_77.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_77.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_77.wav", "language": "ko", "speed": "normal" }
       }
@@ -699,7 +699,7 @@
       "id": "voca_078",
       "text": "천",
       "resources": {
-        "image": { "file": "images/Level2_78.webp" },
+        "image": { "file": "images/level2/Level2_78.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_78.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_78.wav", "language": "ko", "speed": "normal" }
       }
@@ -708,7 +708,7 @@
       "id": "voca_079",
       "text": "만",
       "resources": {
-        "image": { "file": "images/Level2_79.webp" },
+        "image": { "file": "images/level2/Level2_79.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_79.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_79.wav", "language": "ko", "speed": "normal" }
       }
@@ -717,7 +717,7 @@
       "id": "voca_080",
       "text": "정도",
       "resources": {
-        "image": { "file": "images/Level2_80.webp" },
+        "image": { "file": "images/level2/Level2_80.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_80.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_80.wav", "language": "ko", "speed": "normal" }
       }
@@ -726,7 +726,7 @@
       "id": "voca_081",
       "text": "계산하다",
       "resources": {
-        "image": { "file": "images/Level2_81.webp" },
+        "image": { "file": "images/level2/Level2_81.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_81.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_81.wav", "language": "ko", "speed": "normal" }
       }
@@ -735,7 +735,7 @@
       "id": "voca_082",
       "text": "총",
       "resources": {
-        "image": { "file": "images/Level2_82.webp" },
+        "image": { "file": "images/level2/Level2_82.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_82.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_82.wav", "language": "ko", "speed": "normal" }
       }
@@ -744,7 +744,7 @@
       "id": "voca_083",
       "text": "할인",
       "resources": {
-        "image": { "file": "images/Level2_83.webp" },
+        "image": { "file": "images/level2/Level2_83.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_83.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_83.wav", "language": "ko", "speed": "normal" }
       }
@@ -753,7 +753,7 @@
       "id": "voca_084",
       "text": "비용",
       "resources": {
-        "image": { "file": "images/Level2_84.webp" },
+        "image": { "file": "images/level2/Level2_84.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_84.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_84.wav", "language": "ko", "speed": "normal" }
       }
@@ -762,7 +762,7 @@
       "id": "voca_085",
       "text": "값",
       "resources": {
-        "image": { "file": "images/Level2_85.webp" },
+        "image": { "file": "images/level2/Level2_85.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_85.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_85.wav", "language": "ko", "speed": "normal" }
       }
@@ -771,7 +771,7 @@
       "id": "voca_086",
       "text": "개",
       "resources": {
-        "image": { "file": "images/Level2_86.webp" },
+        "image": { "file": "images/level2/Level2_86.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_86.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_86.wav", "language": "ko", "speed": "normal" }
       }
@@ -780,7 +780,7 @@
       "id": "voca_087",
       "text": "명",
       "resources": {
-        "image": { "file": "images/Level2_87.webp" },
+        "image": { "file": "images/level2/Level2_87.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_87.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_87.wav", "language": "ko", "speed": "normal" }
       }
@@ -789,7 +789,7 @@
       "id": "voca_088",
       "text": "번",
       "resources": {
-        "image": { "file": "images/Level2_88.webp" },
+        "image": { "file": "images/level2/Level2_88.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_88.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_88.wav", "language": "ko", "speed": "normal" }
       }
@@ -798,7 +798,7 @@
       "id": "voca_089",
       "text": "병",
       "resources": {
-        "image": { "file": "images/Level2_89.webp" },
+        "image": { "file": "images/level2/Level2_89.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_89.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_89.wav", "language": "ko", "speed": "normal" }
       }
@@ -807,7 +807,7 @@
       "id": "voca_090",
       "text": "잔",
       "resources": {
-        "image": { "file": "images/Level2_90.webp" },
+        "image": { "file": "images/level2/Level2_90.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_90.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_90.wav", "language": "ko", "speed": "normal" }
       }
@@ -816,7 +816,7 @@
       "id": "voca_091",
       "text": "한 번",
       "resources": {
-        "image": { "file": "images/Level2_91.webp" },
+        "image": { "file": "images/level2/Level2_91.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_91.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_91.wav", "language": "ko", "speed": "normal" }
       }
@@ -825,7 +825,7 @@
       "id": "voca_092",
       "text": "두 번",
       "resources": {
-        "image": { "file": "images/Level2_92.webp" },
+        "image": { "file": "images/level2/Level2_92.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_92.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_92.wav", "language": "ko", "speed": "normal" }
       }
@@ -834,7 +834,7 @@
       "id": "voca_093",
       "text": "여러 번",
       "resources": {
-        "image": { "file": "images/Level2_93.webp" },
+        "image": { "file": "images/level2/Level2_93.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_93.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_93.wav", "language": "ko", "speed": "normal" }
       }
@@ -843,7 +843,7 @@
       "id": "voca_094",
       "text": "자주",
       "resources": {
-        "image": { "file": "images/Level2_94.webp" },
+        "image": { "file": "images/level2/Level2_94.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_94.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_94.wav", "language": "ko", "speed": "normal" }
       }
@@ -852,7 +852,7 @@
       "id": "voca_095",
       "text": "가끔",
       "resources": {
-        "image": { "file": "images/Level2_95.webp" },
+        "image": { "file": "images/level2/Level2_95.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_95.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_95.wav", "language": "ko", "speed": "normal" }
       }
@@ -861,7 +861,7 @@
       "id": "voca_096",
       "text": "얼마나",
       "resources": {
-        "image": { "file": "images/Level2_96.webp" },
+        "image": { "file": "images/level2/Level2_96.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_96.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_96.wav", "language": "ko", "speed": "normal" }
       }
@@ -870,7 +870,7 @@
       "id": "voca_097",
       "text": "몇 개",
       "resources": {
-        "image": { "file": "images/Level2_97.webp" },
+        "image": { "file": "images/level2/Level2_97.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_97.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_97.wav", "language": "ko", "speed": "normal" }
       }
@@ -879,7 +879,7 @@
       "id": "voca_098",
       "text": "몇 명",
       "resources": {
-        "image": { "file": "images/Level2_98.webp" },
+        "image": { "file": "images/level2/Level2_98.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_98.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_98.wav", "language": "ko", "speed": "normal" }
       }
@@ -888,7 +888,7 @@
       "id": "voca_099",
       "text": "얼마나 자주",
       "resources": {
-        "image": { "file": "images/Level2_99.webp" },
+        "image": { "file": "images/level2/Level2_99.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_99.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_99.wav", "language": "ko", "speed": "normal" }
       }
@@ -897,7 +897,7 @@
       "id": "voca_100",
       "text": "얼마 동안",
       "resources": {
-        "image": { "file": "images/Level2_100.webp" },
+        "image": { "file": "images/level2/Level2_100.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_100.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_100.wav", "language": "ko", "speed": "normal" }
       }
@@ -906,7 +906,7 @@
       "id": "voca_101",
       "text": "주말",
       "resources": {
-        "image": { "file": "images/Level2_101.webp" },
+        "image": { "file": "images/level2/Level2_101.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_101.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_101.wav", "language": "ko", "speed": "normal" }
       }
@@ -915,7 +915,7 @@
       "id": "voca_102",
       "text": "평일",
       "resources": {
-        "image": { "file": "images/Level2_102.webp" },
+        "image": { "file": "images/level2/Level2_102.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_102.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_102.wav", "language": "ko", "speed": "normal" }
       }
@@ -924,7 +924,7 @@
       "id": "voca_103",
       "text": "쉬다",
       "resources": {
-        "image": { "file": "images/Level2_103.webp" },
+        "image": { "file": "images/level2/Level2_103.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_103.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_103.wav", "language": "ko", "speed": "normal" }
       }
@@ -933,7 +933,7 @@
       "id": "voca_104",
       "text": "일하다",
       "resources": {
-        "image": { "file": "images/Level2_104.webp" },
+        "image": { "file": "images/level2/Level2_104.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_104.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_104.wav", "language": "ko", "speed": "normal" }
       }
@@ -942,7 +942,7 @@
       "id": "voca_105",
       "text": "바쁘다",
       "resources": {
-        "image": { "file": "images/Level2_105.webp" },
+        "image": { "file": "images/level2/Level2_105.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_105.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_105.wav", "language": "ko", "speed": "normal" }
       }
@@ -951,7 +951,7 @@
       "id": "voca_106",
       "text": "지난주",
       "resources": {
-        "image": { "file": "images/Level2_106.webp" },
+        "image": { "file": "images/level2/Level2_106.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_106.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_106.wav", "language": "ko", "speed": "normal" }
       }
@@ -960,7 +960,7 @@
       "id": "voca_107",
       "text": "어제",
       "resources": {
-        "image": { "file": "images/Level2_107.webp" },
+        "image": { "file": "images/level2/Level2_107.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_107.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_107.wav", "language": "ko", "speed": "normal" }
       }
@@ -969,7 +969,7 @@
       "id": "voca_108",
       "text": "작년",
       "resources": {
-        "image": { "file": "images/Level2_108.webp" },
+        "image": { "file": "images/level2/Level2_108.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_108.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_108.wav", "language": "ko", "speed": "normal" }
       }
@@ -978,7 +978,7 @@
       "id": "voca_109",
       "text": "그제",
       "resources": {
-        "image": { "file": "images/Level2_109.webp" },
+        "image": { "file": "images/level2/Level2_109.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_109.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_109.wav", "language": "ko", "speed": "normal" }
       }
@@ -987,7 +987,7 @@
       "id": "voca_110",
       "text": "전에",
       "resources": {
-        "image": { "file": "images/Level2_110.webp" },
+        "image": { "file": "images/level2/Level2_110.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_110.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_110.wav", "language": "ko", "speed": "normal" }
       }
@@ -996,7 +996,7 @@
       "id": "voca_111",
       "text": "다음 주",
       "resources": {
-        "image": { "file": "images/Level2_111.webp" },
+        "image": { "file": "images/level2/Level2_111.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_111.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_111.wav", "language": "ko", "speed": "normal" }
       }
@@ -1005,7 +1005,7 @@
       "id": "voca_112",
       "text": "내년",
       "resources": {
-        "image": { "file": "images/Level2_112.webp" },
+        "image": { "file": "images/level2/Level2_112.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_112.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_112.wav", "language": "ko", "speed": "normal" }
       }
@@ -1014,7 +1014,7 @@
       "id": "voca_113",
       "text": "곧",
       "resources": {
-        "image": { "file": "images/Level2_113.webp" },
+        "image": { "file": "images/level2/Level2_113.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_113.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_113.wav", "language": "ko", "speed": "normal" }
       }
@@ -1023,7 +1023,7 @@
       "id": "voca_114",
       "text": "나중에",
       "resources": {
-        "image": { "file": "images/Level2_114.webp" },
+        "image": { "file": "images/level2/Level2_114.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_114.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_114.wav", "language": "ko", "speed": "normal" }
       }
@@ -1032,7 +1032,7 @@
       "id": "voca_115",
       "text": "미리",
       "resources": {
-        "image": { "file": "images/Level2_115.webp" },
+        "image": { "file": "images/level2/Level2_115.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_115.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_115.wav", "language": "ko", "speed": "normal" }
       }
@@ -1041,7 +1041,7 @@
       "id": "voca_116",
       "text": "기념일",
       "resources": {
-        "image": { "file": "images/Level2_116.webp" },
+        "image": { "file": "images/level2/Level2_116.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_116.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_116.wav", "language": "ko", "speed": "normal" }
       }
@@ -1050,7 +1050,7 @@
       "id": "voca_117",
       "text": "명절",
       "resources": {
-        "image": { "file": "images/Level2_117.webp" },
+        "image": { "file": "images/level2/Level2_117.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_117.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_117.wav", "language": "ko", "speed": "normal" }
       }
@@ -1059,7 +1059,7 @@
       "id": "voca_118",
       "text": "휴일",
       "resources": {
-        "image": { "file": "images/Level2_118.webp" },
+        "image": { "file": "images/level2/Level2_118.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_118.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_118.wav", "language": "ko", "speed": "normal" }
       }
@@ -1068,7 +1068,7 @@
       "id": "voca_119",
       "text": "생일",
       "resources": {
-        "image": { "file": "images/Level2_119.webp" },
+        "image": { "file": "images/level2/Level2_119.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_119.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_119.wav", "language": "ko", "speed": "normal" }
       }
@@ -1077,7 +1077,7 @@
       "id": "voca_120",
       "text": "행사",
       "resources": {
-        "image": { "file": "images/Level2_120.webp" },
+        "image": { "file": "images/level2/Level2_120.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_120.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_120.wav", "language": "ko", "speed": "normal" }
       }
@@ -1086,7 +1086,7 @@
       "id": "voca_121",
       "text": "변경하다",
       "resources": {
-        "image": { "file": "images/Level2_121.webp" },
+        "image": { "file": "images/level2/Level2_121.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_121.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_121.wav", "language": "ko", "speed": "normal" }
       }
@@ -1095,7 +1095,7 @@
       "id": "voca_122",
       "text": "취소하다",
       "resources": {
-        "image": { "file": "images/Level2_122.webp" },
+        "image": { "file": "images/level2/Level2_122.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_122.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_122.wav", "language": "ko", "speed": "normal" }
       }
@@ -1104,7 +1104,7 @@
       "id": "voca_123",
       "text": "미루다",
       "resources": {
-        "image": { "file": "images/Level2_123.webp" },
+        "image": { "file": "images/level2/Level2_123.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_123.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_123.wav", "language": "ko", "speed": "normal" }
       }
@@ -1113,7 +1113,7 @@
       "id": "voca_124",
       "text": "정하다",
       "resources": {
-        "image": { "file": "images/Level2_124.webp" },
+        "image": { "file": "images/level2/Level2_124.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_124.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_124.wav", "language": "ko", "speed": "normal" }
       }
@@ -1122,7 +1122,7 @@
       "id": "voca_125",
       "text": "가능하다",
       "resources": {
-        "image": { "file": "images/Level2_125.webp" },
+        "image": { "file": "images/level2/Level2_125.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_125.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_125.wav", "language": "ko", "speed": "normal" }
       }
@@ -1131,7 +1131,7 @@
       "id": "voca_126",
       "text": "아침",
       "resources": {
-        "image": { "file": "images/Level2_126.webp" },
+        "image": { "file": "images/level2/Level2_126.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_126.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_126.wav", "language": "ko", "speed": "normal" }
       }
@@ -1140,7 +1140,7 @@
       "id": "voca_127",
       "text": "점심",
       "resources": {
-        "image": { "file": "images/Level2_127.webp" },
+        "image": { "file": "images/level2/Level2_127.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_127.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_127.wav", "language": "ko", "speed": "normal" }
       }
@@ -1149,7 +1149,7 @@
       "id": "voca_128",
       "text": "저녁",
       "resources": {
-        "image": { "file": "images/Level2_128.webp" },
+        "image": { "file": "images/level2/Level2_128.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_128.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_128.wav", "language": "ko", "speed": "normal" }
       }
@@ -1158,7 +1158,7 @@
       "id": "voca_129",
       "text": "밤",
       "resources": {
-        "image": { "file": "images/Level2_129.webp" },
+        "image": { "file": "images/level2/Level2_129.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_129.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_129.wav", "language": "ko", "speed": "normal" }
       }
@@ -1167,7 +1167,7 @@
       "id": "voca_130",
       "text": "하루",
       "resources": {
-        "image": { "file": "images/Level2_130.webp" },
+        "image": { "file": "images/level2/Level2_130.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_130.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_130.wav", "language": "ko", "speed": "normal" }
       }
@@ -1176,7 +1176,7 @@
       "id": "voca_131",
       "text": "걸리다",
       "resources": {
-        "image": { "file": "images/Level2_131.webp" },
+        "image": { "file": "images/level2/Level2_131.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_131.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_131.wav", "language": "ko", "speed": "normal" }
       }
@@ -1185,7 +1185,7 @@
       "id": "voca_132",
       "text": "정도",
       "resources": {
-        "image": { "file": "images/Level2_132.webp" },
+        "image": { "file": "images/level2/Level2_132.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_132.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_132.wav", "language": "ko", "speed": "normal" }
       }
@@ -1194,7 +1194,7 @@
       "id": "voca_133",
       "text": "쯤",
       "resources": {
-        "image": { "file": "images/Level2_133.webp" },
+        "image": { "file": "images/level2/Level2_133.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_133.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_133.wav", "language": "ko", "speed": "normal" }
       }
@@ -1203,7 +1203,7 @@
       "id": "voca_134",
       "text": "동안",
       "resources": {
-        "image": { "file": "images/Level2_134.webp" },
+        "image": { "file": "images/level2/Level2_134.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_134.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_134.wav", "language": "ko", "speed": "normal" }
       }
@@ -1212,7 +1212,7 @@
       "id": "voca_135",
       "text": "시간",
       "resources": {
-        "image": { "file": "images/Level2_135.webp" },
+        "image": { "file": "images/level2/Level2_135.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_135.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_135.wav", "language": "ko", "speed": "normal" }
       }
@@ -1221,7 +1221,7 @@
       "id": "voca_136",
       "text": "항상",
       "resources": {
-        "image": { "file": "images/Level2_136.webp" },
+        "image": { "file": "images/level2/Level2_136.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_136.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_136.wav", "language": "ko", "speed": "normal" }
       }
@@ -1230,7 +1230,7 @@
       "id": "voca_137",
       "text": "자주",
       "resources": {
-        "image": { "file": "images/Level2_137.webp" },
+        "image": { "file": "images/level2/Level2_137.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_137.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_137.wav", "language": "ko", "speed": "normal" }
       }
@@ -1239,7 +1239,7 @@
       "id": "voca_138",
       "text": "가끔",
       "resources": {
-        "image": { "file": "images/Level2_138.webp" },
+        "image": { "file": "images/level2/Level2_138.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_138.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_138.wav", "language": "ko", "speed": "normal" }
       }
@@ -1248,7 +1248,7 @@
       "id": "voca_139",
       "text": "거의",
       "resources": {
-        "image": { "file": "images/Level2_139.webp" },
+        "image": { "file": "images/level2/Level2_139.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_139.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_139.wav", "language": "ko", "speed": "normal" }
       }
@@ -1257,7 +1257,7 @@
       "id": "voca_140",
       "text": "전혀",
       "resources": {
-        "image": { "file": "images/Level2_140.webp" },
+        "image": { "file": "images/level2/Level2_140.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_140.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_140.wav", "language": "ko", "speed": "normal" }
       }
@@ -1266,7 +1266,7 @@
       "id": "voca_141",
       "text": "늦다",
       "resources": {
-        "image": { "file": "images/Level2_141.webp" },
+        "image": { "file": "images/level2/Level2_141.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_141.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_141.wav", "language": "ko", "speed": "normal" }
       }
@@ -1275,7 +1275,7 @@
       "id": "voca_142",
       "text": "일찍",
       "resources": {
-        "image": { "file": "images/Level2_142.webp" },
+        "image": { "file": "images/level2/Level2_142.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_142.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_142.wav", "language": "ko", "speed": "normal" }
       }
@@ -1284,7 +1284,7 @@
       "id": "voca_143",
       "text": "맞추다",
       "resources": {
-        "image": { "file": "images/Level2_143.webp" },
+        "image": { "file": "images/level2/Level2_143.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_143.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_143.wav", "language": "ko", "speed": "normal" }
       }
@@ -1293,7 +1293,7 @@
       "id": "voca_144",
       "text": "기다리다",
       "resources": {
-        "image": { "file": "images/Level2_144.webp" },
+        "image": { "file": "images/level2/Level2_144.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_144.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_144.wav", "language": "ko", "speed": "normal" }
       }
@@ -1302,7 +1302,7 @@
       "id": "voca_145",
       "text": "약속",
       "resources": {
-        "image": { "file": "images/Level2_145.webp" },
+        "image": { "file": "images/level2/Level2_145.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_145.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_145.wav", "language": "ko", "speed": "normal" }
       }
@@ -1311,7 +1311,7 @@
       "id": "voca_146",
       "text": "언제",
       "resources": {
-        "image": { "file": "images/Level2_146.webp" },
+        "image": { "file": "images/level2/Level2_146.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_146.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_146.wav", "language": "ko", "speed": "normal" }
       }
@@ -1320,7 +1320,7 @@
       "id": "voca_147",
       "text": "얼마나",
       "resources": {
-        "image": { "file": "images/Level2_147.webp" },
+        "image": { "file": "images/level2/Level2_147.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_147.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_147.wav", "language": "ko", "speed": "normal" }
       }
@@ -1329,7 +1329,7 @@
       "id": "voca_148",
       "text": "몇 시쯤",
       "resources": {
-        "image": { "file": "images/Level2_148.webp" },
+        "image": { "file": "images/level2/Level2_148.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_148.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_148.wav", "language": "ko", "speed": "normal" }
       }
@@ -1338,7 +1338,7 @@
       "id": "voca_149",
       "text": "부터",
       "resources": {
-        "image": { "file": "images/Level2_149.webp" },
+        "image": { "file": "images/level2/Level2_149.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_149.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_149.wav", "language": "ko", "speed": "normal" }
       }
@@ -1347,7 +1347,7 @@
       "id": "voca_150",
       "text": "까지",
       "resources": {
-        "image": { "file": "images/Level2_150.webp" },
+        "image": { "file": "images/level2/Level2_150.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_150.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_150.wav", "language": "ko", "speed": "normal" }
       }
@@ -1356,7 +1356,7 @@
       "id": "voca_151",
       "text": "한식",
       "resources": {
-        "image": { "file": "images/Level2_151.webp" },
+        "image": { "file": "images/level2/Level2_151.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_151.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_151.wav", "language": "ko", "speed": "normal" }
       }
@@ -1365,7 +1365,7 @@
       "id": "voca_152",
       "text": "양식",
       "resources": {
-        "image": { "file": "images/Level2_152.webp" },
+        "image": { "file": "images/level2/Level2_152.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_152.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_152.wav", "language": "ko", "speed": "normal" }
       }
@@ -1374,7 +1374,7 @@
       "id": "voca_153",
       "text": "중식",
       "resources": {
-        "image": { "file": "images/Level2_153.webp" },
+        "image": { "file": "images/level2/Level2_153.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_153.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_153.wav", "language": "ko", "speed": "normal" }
       }
@@ -1383,7 +1383,7 @@
       "id": "voca_154",
       "text": "일식",
       "resources": {
-        "image": { "file": "images/Level2_154.webp" },
+        "image": { "file": "images/level2/Level2_154.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_154.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_154.wav", "language": "ko", "speed": "normal" }
       }
@@ -1392,7 +1392,7 @@
       "id": "voca_155",
       "text": "분식",
       "resources": {
-        "image": { "file": "images/Level2_155.webp" },
+        "image": { "file": "images/level2/Level2_155.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_155.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_155.wav", "language": "ko", "speed": "normal" }
       }
@@ -1401,7 +1401,7 @@
       "id": "voca_156",
       "text": "고기",
       "resources": {
-        "image": { "file": "images/Level2_156.webp" },
+        "image": { "file": "images/level2/Level2_156.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_156.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_156.wav", "language": "ko", "speed": "normal" }
       }
@@ -1410,7 +1410,7 @@
       "id": "voca_157",
       "text": "채소",
       "resources": {
-        "image": { "file": "images/Level2_157.webp" },
+        "image": { "file": "images/level2/Level2_157.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_157.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_157.wav", "language": "ko", "speed": "normal" }
       }
@@ -1419,7 +1419,7 @@
       "id": "voca_158",
       "text": "쌀",
       "resources": {
-        "image": { "file": "images/Level2_158.webp" },
+        "image": { "file": "images/level2/Level2_158.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_158.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_158.wav", "language": "ko", "speed": "normal" }
       }
@@ -1428,7 +1428,7 @@
       "id": "voca_159",
       "text": "면",
       "resources": {
-        "image": { "file": "images/Level2_159.webp" },
+        "image": { "file": "images/level2/Level2_159.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_159.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_159.wav", "language": "ko", "speed": "normal" }
       }
@@ -1437,7 +1437,7 @@
       "id": "voca_160",
       "text": "계란",
       "resources": {
-        "image": { "file": "images/Level2_160.webp" },
+        "image": { "file": "images/level2/Level2_160.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_160.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_160.wav", "language": "ko", "speed": "normal" }
       }
@@ -1446,7 +1446,7 @@
       "id": "voca_161",
       "text": "달콤하다",
       "resources": {
-        "image": { "file": "images/Level2_161.webp" },
+        "image": { "file": "images/level2/Level2_161.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_161.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_161.wav", "language": "ko", "speed": "normal" }
       }
@@ -1455,7 +1455,7 @@
       "id": "voca_162",
       "text": "짭짤하다",
       "resources": {
-        "image": { "file": "images/Level2_162.webp" },
+        "image": { "file": "images/level2/Level2_162.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_162.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_162.wav", "language": "ko", "speed": "normal" }
       }
@@ -1464,7 +1464,7 @@
       "id": "voca_163",
       "text": "싱겁다",
       "resources": {
-        "image": { "file": "images/Level2_163.webp" },
+        "image": { "file": "images/level2/Level2_163.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_163.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_163.wav", "language": "ko", "speed": "normal" }
       }
@@ -1473,7 +1473,7 @@
       "id": "voca_164",
       "text": "고소하다",
       "resources": {
-        "image": { "file": "images/Level2_164.webp" },
+        "image": { "file": "images/level2/Level2_164.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_164.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_164.wav", "language": "ko", "speed": "normal" }
       }
@@ -1482,7 +1482,7 @@
       "id": "voca_165",
       "text": "매콤하다",
       "resources": {
-        "image": { "file": "images/Level2_165.webp" },
+        "image": { "file": "images/level2/Level2_165.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_165.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_165.wav", "language": "ko", "speed": "normal" }
       }
@@ -1491,7 +1491,7 @@
       "id": "voca_166",
       "text": "혼자",
       "resources": {
-        "image": { "file": "images/Level2_166.webp" },
+        "image": { "file": "images/level2/Level2_166.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_166.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_166.wav", "language": "ko", "speed": "normal" }
       }
@@ -1500,7 +1500,7 @@
       "id": "voca_167",
       "text": "같이",
       "resources": {
-        "image": { "file": "images/Level2_167.webp" },
+        "image": { "file": "images/level2/Level2_167.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_167.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_167.wav", "language": "ko", "speed": "normal" }
       }
@@ -1509,7 +1509,7 @@
       "id": "voca_168",
       "text": "밖에서",
       "resources": {
-        "image": { "file": "images/Level2_168.webp" },
+        "image": { "file": "images/level2/Level2_168.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_168.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_168.wav", "language": "ko", "speed": "normal" }
       }
@@ -1518,7 +1518,7 @@
       "id": "voca_169",
       "text": "집에서",
       "resources": {
-        "image": { "file": "images/Level2_169.webp" },
+        "image": { "file": "images/level2/Level2_169.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_169.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_169.wav", "language": "ko", "speed": "normal" }
       }
@@ -1527,7 +1527,7 @@
       "id": "voca_170",
       "text": "식사하다",
       "resources": {
-        "image": { "file": "images/Level2_170.webp" },
+        "image": { "file": "images/level2/Level2_170.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_170.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_170.wav", "language": "ko", "speed": "normal" }
       }
@@ -1536,7 +1536,7 @@
       "id": "voca_171",
       "text": "좋아하다",
       "resources": {
-        "image": { "file": "images/Level2_171.webp" },
+        "image": { "file": "images/level2/Level2_171.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_171.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_171.wav", "language": "ko", "speed": "normal" }
       }
@@ -1545,7 +1545,7 @@
       "id": "voca_172",
       "text": "싫어하다",
       "resources": {
-        "image": { "file": "images/Level2_172.webp" },
+        "image": { "file": "images/level2/Level2_172.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_172.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_172.wav", "language": "ko", "speed": "normal" }
       }
@@ -1554,7 +1554,7 @@
       "id": "voca_173",
       "text": "괜찮다",
       "resources": {
-        "image": { "file": "images/Level2_173.webp" },
+        "image": { "file": "images/level2/Level2_173.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_173.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_173.wav", "language": "ko", "speed": "normal" }
       }
@@ -1563,7 +1563,7 @@
       "id": "voca_174",
       "text": "별로",
       "resources": {
-        "image": { "file": "images/Level2_174.webp" },
+        "image": { "file": "images/level2/Level2_174.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_174.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_174.wav", "language": "ko", "speed": "normal" }
       }
@@ -1572,7 +1572,7 @@
       "id": "voca_175",
       "text": "추천하다",
       "resources": {
-        "image": { "file": "images/Level2_175.webp" },
+        "image": { "file": "images/level2/Level2_175.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_175.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_175.wav", "language": "ko", "speed": "normal" }
       }
@@ -1581,7 +1581,7 @@
       "id": "voca_176",
       "text": "바꾸다",
       "resources": {
-        "image": { "file": "images/Level2_176.webp" },
+        "image": { "file": "images/level2/Level2_176.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_176.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_176.wav", "language": "ko", "speed": "normal" }
       }
@@ -1590,7 +1590,7 @@
       "id": "voca_177",
       "text": "추가하다",
       "resources": {
-        "image": { "file": "images/Level2_177.webp" },
+        "image": { "file": "images/level2/Level2_177.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_177.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_177.wav", "language": "ko", "speed": "normal" }
       }
@@ -1599,7 +1599,7 @@
       "id": "voca_178",
       "text": "빼다",
       "resources": {
-        "image": { "file": "images/Level2_178.webp" },
+        "image": { "file": "images/level2/Level2_178.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_178.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_178.wav", "language": "ko", "speed": "normal" }
       }
@@ -1608,7 +1608,7 @@
       "id": "voca_179",
       "text": "더",
       "resources": {
-        "image": { "file": "images/Level2_179.webp" },
+        "image": { "file": "images/level2/Level2_179.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_179.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_179.wav", "language": "ko", "speed": "normal" }
       }
@@ -1617,7 +1617,7 @@
       "id": "voca_180",
       "text": "덜",
       "resources": {
-        "image": { "file": "images/Level2_180.webp" },
+        "image": { "file": "images/level2/Level2_180.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_180.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_180.wav", "language": "ko", "speed": "normal" }
       }
@@ -1626,7 +1626,7 @@
       "id": "voca_181",
       "text": "좀",
       "resources": {
-        "image": { "file": "images/Level2_181.webp" },
+        "image": { "file": "images/level2/Level2_181.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_181.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_181.wav", "language": "ko", "speed": "normal" }
       }
@@ -1635,7 +1635,7 @@
       "id": "voca_182",
       "text": "미리",
       "resources": {
-        "image": { "file": "images/Level2_182.webp" },
+        "image": { "file": "images/level2/Level2_182.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_182.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_182.wav", "language": "ko", "speed": "normal" }
       }
@@ -1644,7 +1644,7 @@
       "id": "voca_183",
       "text": "천천히",
       "resources": {
-        "image": { "file": "images/Level2_183.webp" },
+        "image": { "file": "images/level2/Level2_183.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_183.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_183.wav", "language": "ko", "speed": "normal" }
       }
@@ -1653,7 +1653,7 @@
       "id": "voca_184",
       "text": "빨리",
       "resources": {
-        "image": { "file": "images/Level2_184.webp" },
+        "image": { "file": "images/level2/Level2_184.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_184.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_184.wav", "language": "ko", "speed": "normal" }
       }
@@ -1662,7 +1662,7 @@
       "id": "voca_185",
       "text": "부탁하다",
       "resources": {
-        "image": { "file": "images/Level2_185.webp" },
+        "image": { "file": "images/level2/Level2_185.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_185.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_185.wav", "language": "ko", "speed": "normal" }
       }
@@ -1671,7 +1671,7 @@
       "id": "voca_186",
       "text": "틀리다",
       "resources": {
-        "image": { "file": "images/Level2_186.webp" },
+        "image": { "file": "images/level2/Level2_186.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_186.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_186.wav", "language": "ko", "speed": "normal" }
       }
@@ -1680,7 +1680,7 @@
       "id": "voca_187",
       "text": "차갑다",
       "resources": {
-        "image": { "file": "images/Level2_187.webp" },
+        "image": { "file": "images/level2/Level2_187.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_187.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_187.wav", "language": "ko", "speed": "normal" }
       }
@@ -1689,7 +1689,7 @@
       "id": "voca_188",
       "text": "뜨겁다",
       "resources": {
-        "image": { "file": "images/Level2_188.webp" },
+        "image": { "file": "images/level2/Level2_188.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_188.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_188.wav", "language": "ko", "speed": "normal" }
       }
@@ -1698,7 +1698,7 @@
       "id": "voca_189",
       "text": "늦다",
       "resources": {
-        "image": { "file": "images/Level2_189.webp" },
+        "image": { "file": "images/level2/Level2_189.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_189.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_189.wav", "language": "ko", "speed": "normal" }
       }
@@ -1707,7 +1707,7 @@
       "id": "voca_190",
       "text": "문제",
       "resources": {
-        "image": { "file": "images/Level2_190.webp" },
+        "image": { "file": "images/level2/Level2_190.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_190.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_190.wav", "language": "ko", "speed": "normal" }
       }
@@ -1716,7 +1716,7 @@
       "id": "voca_191",
       "text": "카드",
       "resources": {
-        "image": { "file": "images/Level2_191.webp" },
+        "image": { "file": "images/level2/Level2_191.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_191.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_191.wav", "language": "ko", "speed": "normal" }
       }
@@ -1725,7 +1725,7 @@
       "id": "voca_192",
       "text": "현금",
       "resources": {
-        "image": { "file": "images/Level2_192.webp" },
+        "image": { "file": "images/level2/Level2_192.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_192.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_192.wav", "language": "ko", "speed": "normal" }
       }
@@ -1734,7 +1734,7 @@
       "id": "voca_193",
       "text": "계좌",
       "resources": {
-        "image": { "file": "images/Level2_193.webp" },
+        "image": { "file": "images/level2/Level2_193.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_193.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_193.wav", "language": "ko", "speed": "normal" }
       }
@@ -1743,7 +1743,7 @@
       "id": "voca_194",
       "text": "결제",
       "resources": {
-        "image": { "file": "images/Level2_194.webp" },
+        "image": { "file": "images/level2/Level2_194.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_194.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_194.wav", "language": "ko", "speed": "normal" }
       }
@@ -1752,7 +1752,7 @@
       "id": "voca_195",
       "text": "영수증",
       "resources": {
-        "image": { "file": "images/Level2_195.webp" },
+        "image": { "file": "images/level2/Level2_195.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_195.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_195.wav", "language": "ko", "speed": "normal" }
       }
@@ -1761,7 +1761,7 @@
       "id": "voca_196",
       "text": "잘 먹었습니다",
       "resources": {
-        "image": { "file": "images/Level2_196.webp" },
+        "image": { "file": "images/level2/Level2_196.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_196.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_196.wav", "language": "ko", "speed": "normal" }
       }
@@ -1770,7 +1770,7 @@
       "id": "voca_197",
       "text": "맛있었어요",
       "resources": {
-        "image": { "file": "images/Level2_197.webp" },
+        "image": { "file": "images/level2/Level2_197.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_197.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_197.wav", "language": "ko", "speed": "normal" }
       }
@@ -1779,7 +1779,7 @@
       "id": "voca_198",
       "text": "감사합니다",
       "resources": {
-        "image": { "file": "images/Level2_198.webp" },
+        "image": { "file": "images/level2/Level2_198.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_198.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_198.wav", "language": "ko", "speed": "normal" }
       }
@@ -1788,7 +1788,7 @@
       "id": "voca_199",
       "text": "다음에 올게요",
       "resources": {
-        "image": { "file": "images/Level2_199.webp" },
+        "image": { "file": "images/level2/Level2_199.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_199.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_199.wav", "language": "ko", "speed": "normal" }
       }
@@ -1797,7 +1797,7 @@
       "id": "voca_200",
       "text": "안녕히 계세요",
       "resources": {
-        "image": { "file": "images/Level2_200.webp" },
+        "image": { "file": "images/level2/Level2_200.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_200.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_200.wav", "language": "ko", "speed": "normal" }
       }
@@ -1806,7 +1806,7 @@
       "id": "voca_201",
       "text": "은행",
       "resources": {
-        "image": { "file": "images/Level2_201.webp" },
+        "image": { "file": "images/level2/Level2_201.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_201.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_201.wav", "language": "ko", "speed": "normal" }
       }
@@ -1815,7 +1815,7 @@
       "id": "voca_202",
       "text": "우체국",
       "resources": {
-        "image": { "file": "images/Level2_202.webp" },
+        "image": { "file": "images/level2/Level2_202.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_202.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_202.wav", "language": "ko", "speed": "normal" }
       }
@@ -1824,7 +1824,7 @@
       "id": "voca_203",
       "text": "병원",
       "resources": {
-        "image": { "file": "images/Level2_203.webp" },
+        "image": { "file": "images/level2/Level2_203.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_203.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_203.wav", "language": "ko", "speed": "normal" }
       }
@@ -1833,7 +1833,7 @@
       "id": "voca_204",
       "text": "도서관",
       "resources": {
-        "image": { "file": "images/Level2_204.webp" },
+        "image": { "file": "images/level2/Level2_204.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_204.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_204.wav", "language": "ko", "speed": "normal" }
       }
@@ -1842,7 +1842,7 @@
       "id": "voca_205",
       "text": "시청",
       "resources": {
-        "image": { "file": "images/Level2_205.webp" },
+        "image": { "file": "images/level2/Level2_205.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_205.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_205.wav", "language": "ko", "speed": "normal" }
       }
@@ -1851,7 +1851,7 @@
       "id": "voca_206",
       "text": "가게",
       "resources": {
-        "image": { "file": "images/Level2_206.webp" },
+        "image": { "file": "images/level2/Level2_206.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_206.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_206.wav", "language": "ko", "speed": "normal" }
       }
@@ -1860,7 +1860,7 @@
       "id": "voca_207",
       "text": "마트",
       "resources": {
-        "image": { "file": "images/Level2_207.webp" },
+        "image": { "file": "images/level2/Level2_207.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_207.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_207.wav", "language": "ko", "speed": "normal" }
       }
@@ -1869,7 +1869,7 @@
       "id": "voca_208",
       "text": "편의점",
       "resources": {
-        "image": { "file": "images/Level2_208.webp" },
+        "image": { "file": "images/level2/Level2_208.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_208.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_208.wav", "language": "ko", "speed": "normal" }
       }
@@ -1878,7 +1878,7 @@
       "id": "voca_209",
       "text": "시장",
       "resources": {
-        "image": { "file": "images/Level2_209.webp" },
+        "image": { "file": "images/level2/Level2_209.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_209.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_209.wav", "language": "ko", "speed": "normal" }
       }
@@ -1887,7 +1887,7 @@
       "id": "voca_210",
       "text": "백화점",
       "resources": {
-        "image": { "file": "images/Level2_210.webp" },
+        "image": { "file": "images/level2/Level2_210.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_210.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_210.wav", "language": "ko", "speed": "normal" }
       }
@@ -1896,7 +1896,7 @@
       "id": "voca_211",
       "text": "층",
       "resources": {
-        "image": { "file": "images/Level2_211.webp" },
+        "image": { "file": "images/level2/Level2_211.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_211.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_211.wav", "language": "ko", "speed": "normal" }
       }
@@ -1905,7 +1905,7 @@
       "id": "voca_212",
       "text": "엘리베이터",
       "resources": {
-        "image": { "file": "images/Level2_212.webp" },
+        "image": { "file": "images/level2/Level2_212.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_212.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_212.wav", "language": "ko", "speed": "normal" }
       }
@@ -1914,7 +1914,7 @@
       "id": "voca_213",
       "text": "계단",
       "resources": {
-        "image": { "file": "images/Level2_213.webp" },
+        "image": { "file": "images/level2/Level2_213.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_213.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_213.wav", "language": "ko", "speed": "normal" }
       }
@@ -1923,7 +1923,7 @@
       "id": "voca_214",
       "text": "입구",
       "resources": {
-        "image": { "file": "images/Level2_214.webp" },
+        "image": { "file": "images/level2/Level2_214.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_214.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_214.wav", "language": "ko", "speed": "normal" }
       }
@@ -1932,7 +1932,7 @@
       "id": "voca_215",
       "text": "출구",
       "resources": {
-        "image": { "file": "images/Level2_215.webp" },
+        "image": { "file": "images/level2/Level2_215.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_215.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_215.wav", "language": "ko", "speed": "normal" }
       }
@@ -1941,7 +1941,7 @@
       "id": "voca_216",
       "text": "맞은편",
       "resources": {
-        "image": { "file": "images/Level2_216.webp" },
+        "image": { "file": "images/level2/Level2_216.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_216.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_216.wav", "language": "ko", "speed": "normal" }
       }
@@ -1950,7 +1950,7 @@
       "id": "voca_217",
       "text": "건너편",
       "resources": {
-        "image": { "file": "images/Level2_217.webp" },
+        "image": { "file": "images/level2/Level2_217.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_217.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_217.wav", "language": "ko", "speed": "normal" }
       }
@@ -1959,7 +1959,7 @@
       "id": "voca_218",
       "text": "사이",
       "resources": {
-        "image": { "file": "images/Level2_218.webp" },
+        "image": { "file": "images/level2/Level2_218.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_218.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_218.wav", "language": "ko", "speed": "normal" }
       }
@@ -1968,7 +1968,7 @@
       "id": "voca_219",
       "text": "안쪽",
       "resources": {
-        "image": { "file": "images/Level2_219.webp" },
+        "image": { "file": "images/level2/Level2_219.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_219.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_219.wav", "language": "ko", "speed": "normal" }
       }
@@ -1977,7 +1977,7 @@
       "id": "voca_220",
       "text": "바깥",
       "resources": {
-        "image": { "file": "images/Level2_220.webp" },
+        "image": { "file": "images/level2/Level2_220.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_220.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_220.wav", "language": "ko", "speed": "normal" }
       }
@@ -1986,7 +1986,7 @@
       "id": "voca_221",
       "text": "이용하다",
       "resources": {
-        "image": { "file": "images/Level2_221.webp" },
+        "image": { "file": "images/level2/Level2_221.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_221.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_221.wav", "language": "ko", "speed": "normal" }
       }
@@ -1995,7 +1995,7 @@
       "id": "voca_222",
       "text": "열다",
       "resources": {
-        "image": { "file": "images/Level2_222.webp" },
+        "image": { "file": "images/level2/Level2_222.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_222.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_222.wav", "language": "ko", "speed": "normal" }
       }
@@ -2004,7 +2004,7 @@
       "id": "voca_223",
       "text": "닫다",
       "resources": {
-        "image": { "file": "images/Level2_223.webp" },
+        "image": { "file": "images/level2/Level2_223.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_223.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_223.wav", "language": "ko", "speed": "normal" }
       }
@@ -2013,7 +2013,7 @@
       "id": "voca_224",
       "text": "사용하다",
       "resources": {
-        "image": { "file": "images/Level2_224.webp" },
+        "image": { "file": "images/level2/Level2_224.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_224.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_224.wav", "language": "ko", "speed": "normal" }
       }
@@ -2022,7 +2022,7 @@
       "id": "voca_225",
       "text": "들어가다",
       "resources": {
-        "image": { "file": "images/Level2_225.webp" },
+        "image": { "file": "images/level2/Level2_225.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_225.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_225.wav", "language": "ko", "speed": "normal" }
       }
@@ -2031,7 +2031,7 @@
       "id": "voca_226",
       "text": "쭉",
       "resources": {
-        "image": { "file": "images/Level2_226.webp" },
+        "image": { "file": "images/level2/Level2_226.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_226.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_226.wav", "language": "ko", "speed": "normal" }
       }
@@ -2040,7 +2040,7 @@
       "id": "voca_227",
       "text": "계속",
       "resources": {
-        "image": { "file": "images/Level2_227.webp" },
+        "image": { "file": "images/level2/Level2_227.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_227.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_227.wav", "language": "ko", "speed": "normal" }
       }
@@ -2049,7 +2049,7 @@
       "id": "voca_228",
       "text": "지나가다",
       "resources": {
-        "image": { "file": "images/Level2_228.webp" },
+        "image": { "file": "images/level2/Level2_228.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_228.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_228.wav", "language": "ko", "speed": "normal" }
       }
@@ -2058,7 +2058,7 @@
       "id": "voca_229",
       "text": "건너다",
       "resources": {
-        "image": { "file": "images/Level2_229.webp" },
+        "image": { "file": "images/level2/Level2_229.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_229.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_229.wav", "language": "ko", "speed": "normal" }
       }
@@ -2067,7 +2067,7 @@
       "id": "voca_230",
       "text": "따라가다",
       "resources": {
-        "image": { "file": "images/Level2_230.webp" },
+        "image": { "file": "images/level2/Level2_230.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_230.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_230.wav", "language": "ko", "speed": "normal" }
       }
@@ -2076,7 +2076,7 @@
       "id": "voca_231",
       "text": "가깝다",
       "resources": {
-        "image": { "file": "images/Level2_231.webp" },
+        "image": { "file": "images/level2/Level2_231.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_231.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_231.wav", "language": "ko", "speed": "normal" }
       }
@@ -2085,7 +2085,7 @@
       "id": "voca_232",
       "text": "멀다",
       "resources": {
-        "image": { "file": "images/Level2_232.webp" },
+        "image": { "file": "images/level2/Level2_232.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_232.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_232.wav", "language": "ko", "speed": "normal" }
       }
@@ -2094,7 +2094,7 @@
       "id": "voca_233",
       "text": "조금",
       "resources": {
-        "image": { "file": "images/Level2_233.webp" },
+        "image": { "file": "images/level2/Level2_233.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_233.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_233.wav", "language": "ko", "speed": "normal" }
       }
@@ -2103,7 +2103,7 @@
       "id": "voca_234",
       "text": "많이",
       "resources": {
-        "image": { "file": "images/Level2_234.webp" },
+        "image": { "file": "images/level2/Level2_234.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_234.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_234.wav", "language": "ko", "speed": "normal" }
       }
@@ -2112,7 +2112,7 @@
       "id": "voca_235",
       "text": "금방",
       "resources": {
-        "image": { "file": "images/Level2_235.webp" },
+        "image": { "file": "images/level2/Level2_235.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_235.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_235.wav", "language": "ko", "speed": "normal" }
       }
@@ -2121,7 +2121,7 @@
       "id": "voca_236",
       "text": "갈아타다",
       "resources": {
-        "image": { "file": "images/Level2_236.webp" },
+        "image": { "file": "images/level2/Level2_236.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_236.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_236.wav", "language": "ko", "speed": "normal" }
       }
@@ -2130,7 +2130,7 @@
       "id": "voca_237",
       "text": "환승",
       "resources": {
-        "image": { "file": "images/Level2_237.webp" },
+        "image": { "file": "images/level2/Level2_237.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_237.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_237.wav", "language": "ko", "speed": "normal" }
       }
@@ -2139,7 +2139,7 @@
       "id": "voca_238",
       "text": "정류장",
       "resources": {
-        "image": { "file": "images/Level2_238.webp" },
+        "image": { "file": "images/level2/Level2_238.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_238.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_238.wav", "language": "ko", "speed": "normal" }
       }
@@ -2148,7 +2148,7 @@
       "id": "voca_239",
       "text": "노선",
       "resources": {
-        "image": { "file": "images/Level2_239.webp" },
+        "image": { "file": "images/level2/Level2_239.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_239.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_239.wav", "language": "ko", "speed": "normal" }
       }
@@ -2157,7 +2157,7 @@
       "id": "voca_240",
       "text": "방향",
       "resources": {
-        "image": { "file": "images/Level2_240.webp" },
+        "image": { "file": "images/level2/Level2_240.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_240.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_240.wav", "language": "ko", "speed": "normal" }
       }
@@ -2166,7 +2166,7 @@
       "id": "voca_241",
       "text": "맞다",
       "resources": {
-        "image": { "file": "images/Level2_241.webp" },
+        "image": { "file": "images/level2/Level2_241.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_241.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_241.wav", "language": "ko", "speed": "normal" }
       }
@@ -2175,7 +2175,7 @@
       "id": "voca_242",
       "text": "틀리다",
       "resources": {
-        "image": { "file": "images/Level2_242.webp" },
+        "image": { "file": "images/level2/Level2_242.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_242.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_242.wav", "language": "ko", "speed": "normal" }
       }
@@ -2184,7 +2184,7 @@
       "id": "voca_243",
       "text": "확인하다",
       "resources": {
-        "image": { "file": "images/Level2_243.webp" },
+        "image": { "file": "images/level2/Level2_243.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_243.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_243.wav", "language": "ko", "speed": "normal" }
       }
@@ -2193,7 +2193,7 @@
       "id": "voca_244",
       "text": "다시",
       "resources": {
-        "image": { "file": "images/Level2_244.webp" },
+        "image": { "file": "images/level2/Level2_244.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_244.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_244.wav", "language": "ko", "speed": "normal" }
       }
@@ -2202,7 +2202,7 @@
       "id": "voca_245",
       "text": "돌아가다",
       "resources": {
-        "image": { "file": "images/Level2_245.webp" },
+        "image": { "file": "images/level2/Level2_245.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_245.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_245.wav", "language": "ko", "speed": "normal" }
       }
@@ -2211,7 +2211,7 @@
       "id": "voca_246",
       "text": "실례합니다",
       "resources": {
-        "image": { "file": "images/Level2_246.webp" },
+        "image": { "file": "images/level2/Level2_246.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_246.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_246.wav", "language": "ko", "speed": "normal" }
       }
@@ -2220,7 +2220,7 @@
       "id": "voca_247",
       "text": "혹시",
       "resources": {
-        "image": { "file": "images/Level2_247.webp" },
+        "image": { "file": "images/level2/Level2_247.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_247.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_247.wav", "language": "ko", "speed": "normal" }
       }
@@ -2229,7 +2229,7 @@
       "id": "voca_248",
       "text": "여쭤보다",
       "resources": {
-        "image": { "file": "images/Level2_248.webp" },
+        "image": { "file": "images/level2/Level2_248.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_248.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_248.wav", "language": "ko", "speed": "normal" }
       }
@@ -2238,7 +2238,7 @@
       "id": "voca_249",
       "text": "도와주세요",
       "resources": {
-        "image": { "file": "images/Level2_249.webp" },
+        "image": { "file": "images/level2/Level2_249.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_249.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_249.wav", "language": "ko", "speed": "normal" }
       }
@@ -2247,7 +2247,7 @@
       "id": "voca_250",
       "text": "감사합니다",
       "resources": {
-        "image": { "file": "images/Level2_250.webp" },
+        "image": { "file": "images/level2/Level2_250.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_250.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_250.wav", "language": "ko", "speed": "normal" }
       }
@@ -2256,7 +2256,7 @@
       "id": "voca_251",
       "text": "일어나다",
       "resources": {
-        "image": { "file": "images/Level2_251.webp" },
+        "image": { "file": "images/level2/Level2_251.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_251.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_251.wav", "language": "ko", "speed": "normal" }
       }
@@ -2265,7 +2265,7 @@
       "id": "voca_252",
       "text": "자다",
       "resources": {
-        "image": { "file": "images/Level2_252.webp" },
+        "image": { "file": "images/level2/Level2_252.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_252.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_252.wav", "language": "ko", "speed": "normal" }
       }
@@ -2274,7 +2274,7 @@
       "id": "voca_253",
       "text": "씻다",
       "resources": {
-        "image": { "file": "images/Level2_253.webp" },
+        "image": { "file": "images/level2/Level2_253.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_253.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_253.wav", "language": "ko", "speed": "normal" }
       }
@@ -2283,7 +2283,7 @@
       "id": "voca_254",
       "text": "나가다",
       "resources": {
-        "image": { "file": "images/Level2_254.webp" },
+        "image": { "file": "images/level2/Level2_254.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_254.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_254.wav", "language": "ko", "speed": "normal" }
       }
@@ -2292,7 +2292,7 @@
       "id": "voca_255",
       "text": "들어오다",
       "resources": {
-        "image": { "file": "images/Level2_255.webp" },
+        "image": { "file": "images/level2/Level2_255.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_255.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_255.wav", "language": "ko", "speed": "normal" }
       }
@@ -2301,7 +2301,7 @@
       "id": "voca_256",
       "text": "공부하다",
       "resources": {
-        "image": { "file": "images/Level2_256.webp" },
+        "image": { "file": "images/level2/Level2_256.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_256.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_256.wav", "language": "ko", "speed": "normal" }
       }
@@ -2310,7 +2310,7 @@
       "id": "voca_257",
       "text": "일하다",
       "resources": {
-        "image": { "file": "images/Level2_257.webp" },
+        "image": { "file": "images/level2/Level2_257.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_257.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_257.wav", "language": "ko", "speed": "normal" }
       }
@@ -2319,7 +2319,7 @@
       "id": "voca_258",
       "text": "쉬다",
       "resources": {
-        "image": { "file": "images/Level2_258.webp" },
+        "image": { "file": "images/level2/Level2_258.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_258.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_258.wav", "language": "ko", "speed": "normal" }
       }
@@ -2328,7 +2328,7 @@
       "id": "voca_259",
       "text": "연습하다",
       "resources": {
-        "image": { "file": "images/Level2_259.webp" },
+        "image": { "file": "images/level2/Level2_259.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_259.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_259.wav", "language": "ko", "speed": "normal" }
       }
@@ -2337,7 +2337,7 @@
       "id": "voca_260",
       "text": "사용하다",
       "resources": {
-        "image": { "file": "images/Level2_260.webp" },
+        "image": { "file": "images/level2/Level2_260.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_260.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_260.wav", "language": "ko", "speed": "normal" }
       }
@@ -2346,7 +2346,7 @@
       "id": "voca_261",
       "text": "전화하다",
       "resources": {
-        "image": { "file": "images/Level2_261.webp" },
+        "image": { "file": "images/level2/Level2_261.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_261.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_261.wav", "language": "ko", "speed": "normal" }
       }
@@ -2355,7 +2355,7 @@
       "id": "voca_262",
       "text": "연락하다",
       "resources": {
-        "image": { "file": "images/Level2_262.webp" },
+        "image": { "file": "images/level2/Level2_262.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_262.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_262.wav", "language": "ko", "speed": "normal" }
       }
@@ -2364,7 +2364,7 @@
       "id": "voca_263",
       "text": "이메일",
       "resources": {
-        "image": { "file": "images/Level2_263.webp" },
+        "image": { "file": "images/level2/Level2_263.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_263.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_263.wav", "language": "ko", "speed": "normal" }
       }
@@ -2373,7 +2373,7 @@
       "id": "voca_264",
       "text": "메시지",
       "resources": {
-        "image": { "file": "images/Level2_264.webp" },
+        "image": { "file": "images/level2/Level2_264.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_264.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_264.wav", "language": "ko", "speed": "normal" }
       }
@@ -2382,7 +2382,7 @@
       "id": "voca_265",
       "text": "답장",
       "resources": {
-        "image": { "file": "images/Level2_265.webp" },
+        "image": { "file": "images/level2/Level2_265.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_265.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_265.wav", "language": "ko", "speed": "normal" }
       }
@@ -2391,7 +2391,7 @@
       "id": "voca_266",
       "text": "출발하다",
       "resources": {
-        "image": { "file": "images/Level2_266.webp" },
+        "image": { "file": "images/level2/Level2_266.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_266.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_266.wav", "language": "ko", "speed": "normal" }
       }
@@ -2400,7 +2400,7 @@
       "id": "voca_267",
       "text": "도착하다",
       "resources": {
-        "image": { "file": "images/Level2_267.webp" },
+        "image": { "file": "images/level2/Level2_267.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_267.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_267.wav", "language": "ko", "speed": "normal" }
       }
@@ -2409,7 +2409,7 @@
       "id": "voca_268",
       "text": "방문하다",
       "resources": {
-        "image": { "file": "images/Level2_268.webp" },
+        "image": { "file": "images/level2/Level2_268.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_268.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_268.wav", "language": "ko", "speed": "normal" }
       }
@@ -2418,7 +2418,7 @@
       "id": "voca_269",
       "text": "여행하다",
       "resources": {
-        "image": { "file": "images/Level2_269.webp" },
+        "image": { "file": "images/level2/Level2_269.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_269.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_269.wav", "language": "ko", "speed": "normal" }
       }
@@ -2427,7 +2427,7 @@
       "id": "voca_270",
       "text": "다니다",
       "resources": {
-        "image": { "file": "images/Level2_270.webp" },
+        "image": { "file": "images/level2/Level2_270.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_270.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_270.wav", "language": "ko", "speed": "normal" }
       }
@@ -2436,7 +2436,7 @@
       "id": "voca_271",
       "text": "좋아하다",
       "resources": {
-        "image": { "file": "images/Level2_271.webp" },
+        "image": { "file": "images/level2/Level2_271.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_271.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_271.wav", "language": "ko", "speed": "normal" }
       }
@@ -2445,7 +2445,7 @@
       "id": "voca_272",
       "text": "싫어하다",
       "resources": {
-        "image": { "file": "images/Level2_272.webp" },
+        "image": { "file": "images/level2/Level2_272.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_272.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_272.wav", "language": "ko", "speed": "normal" }
       }
@@ -2454,7 +2454,7 @@
       "id": "voca_273",
       "text": "기쁘다",
       "resources": {
-        "image": { "file": "images/Level2_273.webp" },
+        "image": { "file": "images/level2/Level2_273.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_273.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_273.wav", "language": "ko", "speed": "normal" }
       }
@@ -2463,7 +2463,7 @@
       "id": "voca_274",
       "text": "힘들다",
       "resources": {
-        "image": { "file": "images/Level2_274.webp" },
+        "image": { "file": "images/level2/Level2_274.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_274.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_274.wav", "language": "ko", "speed": "normal" }
       }
@@ -2472,7 +2472,7 @@
       "id": "voca_275",
       "text": "재미있다",
       "resources": {
-        "image": { "file": "images/Level2_275.webp" },
+        "image": { "file": "images/level2/Level2_275.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_275.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_275.wav", "language": "ko", "speed": "normal" }
       }
@@ -2481,7 +2481,7 @@
       "id": "voca_276",
       "text": "그리고",
       "resources": {
-        "image": { "file": "images/Level2_276.webp" },
+        "image": { "file": "images/level2/Level2_276.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_276.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_276.wav", "language": "ko", "speed": "normal" }
       }
@@ -2490,7 +2490,7 @@
       "id": "voca_277",
       "text": "그래서",
       "resources": {
-        "image": { "file": "images/Level2_277.webp" },
+        "image": { "file": "images/level2/Level2_277.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_277.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_277.wav", "language": "ko", "speed": "normal" }
       }
@@ -2499,7 +2499,7 @@
       "id": "voca_278",
       "text": "하지만",
       "resources": {
-        "image": { "file": "images/Level2_278.webp" },
+        "image": { "file": "images/level2/Level2_278.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_278.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_278.wav", "language": "ko", "speed": "normal" }
       }
@@ -2508,7 +2508,7 @@
       "id": "voca_279",
       "text": "또",
       "resources": {
-        "image": { "file": "images/Level2_279.webp" },
+        "image": { "file": "images/level2/Level2_279.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_279.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_279.wav", "language": "ko", "speed": "normal" }
       }
@@ -2517,7 +2517,7 @@
       "id": "voca_280",
       "text": "그런데",
       "resources": {
-        "image": { "file": "images/Level2_280.webp" },
+        "image": { "file": "images/level2/Level2_280.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_280.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_280.wav", "language": "ko", "speed": "normal" }
       }
@@ -2526,7 +2526,7 @@
       "id": "voca_281",
       "text": "왜냐하면",
       "resources": {
-        "image": { "file": "images/Level2_281.webp" },
+        "image": { "file": "images/level2/Level2_281.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_281.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_281.wav", "language": "ko", "speed": "normal" }
       }
@@ -2535,7 +2535,7 @@
       "id": "voca_282",
       "text": "때문에",
       "resources": {
-        "image": { "file": "images/Level2_282.webp" },
+        "image": { "file": "images/level2/Level2_282.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_282.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_282.wav", "language": "ko", "speed": "normal" }
       }
@@ -2544,7 +2544,7 @@
       "id": "voca_283",
       "text": "그래서",
       "resources": {
-        "image": { "file": "images/Level2_283.webp" },
+        "image": { "file": "images/level2/Level2_283.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_283.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_283.wav", "language": "ko", "speed": "normal" }
       }
@@ -2553,7 +2553,7 @@
       "id": "voca_284",
       "text": "이유",
       "resources": {
-        "image": { "file": "images/Level2_284.webp" },
+        "image": { "file": "images/level2/Level2_284.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_284.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_284.wav", "language": "ko", "speed": "normal" }
       }
@@ -2562,7 +2562,7 @@
       "id": "voca_285",
       "text": "문제",
       "resources": {
-        "image": { "file": "images/Level2_285.webp" },
+        "image": { "file": "images/level2/Level2_285.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_285.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_285.wav", "language": "ko", "speed": "normal" }
       }
@@ -2571,7 +2571,7 @@
       "id": "voca_286",
       "text": "하고 싶다",
       "resources": {
-        "image": { "file": "images/Level2_286.webp" },
+        "image": { "file": "images/level2/Level2_286.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_286.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_286.wav", "language": "ko", "speed": "normal" }
       }
@@ -2580,7 +2580,7 @@
       "id": "voca_287",
       "text": "계획",
       "resources": {
-        "image": { "file": "images/Level2_287.webp" },
+        "image": { "file": "images/level2/Level2_287.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_287.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_287.wav", "language": "ko", "speed": "normal" }
       }
@@ -2589,7 +2589,7 @@
       "id": "voca_288",
       "text": "생각하다",
       "resources": {
-        "image": { "file": "images/Level2_288.webp" },
+        "image": { "file": "images/level2/Level2_288.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_288.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_288.wav", "language": "ko", "speed": "normal" }
       }
@@ -2598,7 +2598,7 @@
       "id": "voca_289",
       "text": "예정",
       "resources": {
-        "image": { "file": "images/Level2_289.webp" },
+        "image": { "file": "images/level2/Level2_289.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_289.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_289.wav", "language": "ko", "speed": "normal" }
       }
@@ -2607,7 +2607,7 @@
       "id": "voca_290",
       "text": "준비",
       "resources": {
-        "image": { "file": "images/Level2_290.webp" },
+        "image": { "file": "images/level2/Level2_290.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_290.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_290.wav", "language": "ko", "speed": "normal" }
       }
@@ -2616,7 +2616,7 @@
       "id": "voca_291",
       "text": "해 보다",
       "resources": {
-        "image": { "file": "images/Level2_291.webp" },
+        "image": { "file": "images/level2/Level2_291.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_291.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_291.wav", "language": "ko", "speed": "normal" }
       }
@@ -2625,7 +2625,7 @@
       "id": "voca_292",
       "text": "적이 있다",
       "resources": {
-        "image": { "file": "images/Level2_292.webp" },
+        "image": { "file": "images/level2/Level2_292.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_292.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_292.wav", "language": "ko", "speed": "normal" }
       }
@@ -2634,7 +2634,7 @@
       "id": "voca_293",
       "text": "처음",
       "resources": {
-        "image": { "file": "images/Level2_293.webp" },
+        "image": { "file": "images/level2/Level2_293.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_293.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_293.wav", "language": "ko", "speed": "normal" }
       }
@@ -2643,7 +2643,7 @@
       "id": "voca_294",
       "text": "이미",
       "resources": {
-        "image": { "file": "images/Level2_294.webp" },
+        "image": { "file": "images/level2/Level2_294.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_294.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_294.wav", "language": "ko", "speed": "normal" }
       }
@@ -2652,7 +2652,7 @@
       "id": "voca_295",
       "text": "아직",
       "resources": {
-        "image": { "file": "images/Level2_295.webp" },
+        "image": { "file": "images/level2/Level2_295.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_295.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_295.wav", "language": "ko", "speed": "normal" }
       }
@@ -2661,7 +2661,7 @@
       "id": "voca_296",
       "text": "조금",
       "resources": {
-        "image": { "file": "images/Level2_296.webp" },
+        "image": { "file": "images/level2/Level2_296.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_296.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_296.wav", "language": "ko", "speed": "normal" }
       }
@@ -2670,7 +2670,7 @@
       "id": "voca_297",
       "text": "아주",
       "resources": {
-        "image": { "file": "images/Level2_297.webp" },
+        "image": { "file": "images/level2/Level2_297.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_297.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_297.wav", "language": "ko", "speed": "normal" }
       }
@@ -2679,7 +2679,7 @@
       "id": "voca_298",
       "text": "정말",
       "resources": {
-        "image": { "file": "images/Level2_298.webp" },
+        "image": { "file": "images/level2/Level2_298.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_298.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_298.wav", "language": "ko", "speed": "normal" }
       }
@@ -2688,7 +2688,7 @@
       "id": "voca_299",
       "text": "너무",
       "resources": {
-        "image": { "file": "images/Level2_299.webp" },
+        "image": { "file": "images/level2/Level2_299.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_299.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_299.wav", "language": "ko", "speed": "normal" }
       }
@@ -2697,7 +2697,7 @@
       "id": "voca_300",
       "text": "많이",
       "resources": {
-        "image": { "file": "images/Level2_300.webp" },
+        "image": { "file": "images/level2/Level2_300.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_300.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_300.wav", "language": "ko", "speed": "normal" }
       }
@@ -2706,7 +2706,7 @@
       "id": "voca_301",
       "text": "에",
       "resources": {
-        "image": { "file": "images/Level2_301.webp" },
+        "image": { "file": "images/level2/Level2_301.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_301.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_301.wav", "language": "ko", "speed": "normal" }
       }
@@ -2715,7 +2715,7 @@
       "id": "voca_302",
       "text": "에서",
       "resources": {
-        "image": { "file": "images/Level2_302.webp" },
+        "image": { "file": "images/level2/Level2_302.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_302.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_302.wav", "language": "ko", "speed": "normal" }
       }
@@ -2724,7 +2724,7 @@
       "id": "voca_303",
       "text": "와",
       "resources": {
-        "image": { "file": "images/Level2_303.webp" },
+        "image": { "file": "images/level2/Level2_303.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_303.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_303.wav", "language": "ko", "speed": "normal" }
       }
@@ -2733,7 +2733,7 @@
       "id": "voca_304",
       "text": "과",
       "resources": {
-        "image": { "file": "images/Level2_304.webp" },
+        "image": { "file": "images/level2/Level2_304.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_304.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_304.wav", "language": "ko", "speed": "normal" }
       }
@@ -2742,7 +2742,7 @@
       "id": "voca_305",
       "text": "하고",
       "resources": {
-        "image": { "file": "images/Level2_305.webp" },
+        "image": { "file": "images/level2/Level2_305.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_305.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_305.wav", "language": "ko", "speed": "normal" }
       }
@@ -2751,7 +2751,7 @@
       "id": "voca_306",
       "text": "도",
       "resources": {
-        "image": { "file": "images/Level2_306.webp" },
+        "image": { "file": "images/level2/Level2_306.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_306.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_306.wav", "language": "ko", "speed": "normal" }
       }
@@ -2760,7 +2760,7 @@
       "id": "voca_307",
       "text": "만",
       "resources": {
-        "image": { "file": "images/Level2_307.webp" },
+        "image": { "file": "images/level2/Level2_307.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_307.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_307.wav", "language": "ko", "speed": "normal" }
       }
@@ -2769,7 +2769,7 @@
       "id": "voca_308",
       "text": "까지",
       "resources": {
-        "image": { "file": "images/Level2_308.webp" },
+        "image": { "file": "images/level2/Level2_308.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_308.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_308.wav", "language": "ko", "speed": "normal" }
       }
@@ -2778,7 +2778,7 @@
       "id": "voca_309",
       "text": "부터",
       "resources": {
-        "image": { "file": "images/Level2_309.webp" },
+        "image": { "file": "images/level2/Level2_309.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_309.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_309.wav", "language": "ko", "speed": "normal" }
       }
@@ -2787,7 +2787,7 @@
       "id": "voca_310",
       "text": "으로",
       "resources": {
-        "image": { "file": "images/Level2_310.webp" },
+        "image": { "file": "images/level2/Level2_310.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_310.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_310.wav", "language": "ko", "speed": "normal" }
       }
@@ -2796,7 +2796,7 @@
       "id": "voca_311",
       "text": "로",
       "resources": {
-        "image": { "file": "images/Level2_311.webp" },
+        "image": { "file": "images/level2/Level2_311.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_311.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_311.wav", "language": "ko", "speed": "normal" }
       }
@@ -2805,7 +2805,7 @@
       "id": "voca_312",
       "text": "은/는",
       "resources": {
-        "image": { "file": "images/Level2_312.webp" },
+        "image": { "file": "images/level2/Level2_312.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_312.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_312.wav", "language": "ko", "speed": "normal" }
       }
@@ -2814,7 +2814,7 @@
       "id": "voca_313",
       "text": "이/가",
       "resources": {
-        "image": { "file": "images/Level2_313.webp" },
+        "image": { "file": "images/level2/Level2_313.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_313.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_313.wav", "language": "ko", "speed": "normal" }
       }
@@ -2823,10 +2823,64 @@
       "id": "voca_314",
       "text": "에서",
       "resources": {
-        "image": { "file": "images/Level2_314.webp" },
+        "image": { "file": "images/level2/Level2_314.webp" },
         "audio_voca": { "file": "audio/voca/level2/Level2_314.wav", "language": "ko", "speed": "normal" },
         "audio_ex": { "file": "audio/example/level2/Level2_314.wav", "language": "ko", "speed": "normal" }
       }
-    }
+    },
+    {
+      "id": "voca_315",
+      "text": "선택하다",
+      "resources": {
+        "image": { "file": "images/level2/Level2_315.webp" },
+        "audio_voca": { "file": "audio/voca/level2/Level2_315.wav", "language": "ko", "speed": "normal" },
+        "audio_ex": { "file": "audio/example/level2/Level2_315.wav", "language": "ko", "speed": "normal" }
+      }
+    },
+    {
+      "id": "voca_316",
+      "text": "고르다",
+      "resources": {
+        "image": { "file": "images/level2/Level2_316.webp" },
+        "audio_voca": { "file": "audio/voca/level2/Level2_316.wav", "language": "ko", "speed": "normal" },
+        "audio_ex": { "file": "audio/example/level2/Level2_316.wav", "language": "ko", "speed": "normal" }
+      }
+    },
+    {
+      "id": "voca_317",
+      "text": "결정하다",
+      "resources": {
+        "image": { "file": "images/level2/Level2_317.webp" },
+        "audio_voca": { "file": "audio/voca/level2/Level2_317.wav", "language": "ko", "speed": "normal" },
+        "audio_ex": { "file": "audio/example/level2/Level2_317.wav", "language": "ko", "speed": "normal" }
+      }
+    },
+    {
+      "id": "voca_318",
+      "text": "바꾸다",
+      "resources": {
+        "image": { "file": "images/level2/Level2_318.webp" },
+        "audio_voca": { "file": "audio/voca/level2/Level2_318.wav", "language": "ko", "speed": "normal" },
+        "audio_ex": { "file": "audio/example/level2/Level2_318.wav", "language": "ko", "speed": "normal" }
+      }
+    },
+    {
+      "id": "voca_319",
+      "text": "취소하다",
+      "resources": {
+        "image": { "file": "images/level2/Level2_319.webp" },
+        "audio_voca": { "file": "audio/voca/level2/Level2_319.wav", "language": "ko", "speed": "normal" },
+        "audio_ex": { "file": "audio/example/level2/Level2_319.wav", "language": "ko", "speed": "normal" }
+      }
+    },
+    {
+      "id": "voca_320",
+      "text": "미루다",
+      "resources": {
+        "image": { "file": "images/level2/Level2_320.webp" },
+        "audio_voca": { "file": "audio/voca/level2/Level2_320.wav", "language": "ko", "speed": "normal" },
+        "audio_ex": { "file": "audio/example/level2/Level2_320.wav", "language": "ko", "speed": "normal" }
+      }
+	}
   ]
 }

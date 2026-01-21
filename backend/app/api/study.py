@@ -5,38 +5,147 @@ from sqlmodel import Session, select
 import shutil
 import os
 import pandas as pd
-from typing import List, Optional
+import json
+from typing import List, Optional, Dict
 import random
 from datetime import datetime, timedelta
+import unicodedata  # [추가] 한글 자소 분리 방지용
 
 from app.core.database import get_session
 from app.models import StudyProgress, StudyLog, User
 
 router = APIRouter()
 
-# 엑셀 파일 경로 설정
+# --- [경로 설정] ---
 CURRENT_FILE_PATH = os.path.abspath(__file__)
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_FILE_PATH)))
 EXCEL_PATH = os.path.join(BACKEND_DIR, "data", "vocab", "vocabulary.xlsx")
+JSON_DATA_DIR = os.path.abspath(os.path.join(BACKEND_DIR, "..", "data", "index"))
 
 class WordSchema(BaseModel):
     id: int
     level: str
     topic: str
     word: str
+    pronunciation: str # 발음 필드
     meaning: str
     eng_meaning: str
     example: str
-    audio_path: str # 오디오 정보 포함
+    audio_path: str 
+    audio_example_path: str  # [추가] 예문 오디오 경로 필드
+    image_path: str  # 이미지 경로 필드
 
 # 기본 매핑 (고정 컬럼)
 COLUMN_MAPPING = {
     "주제": "topic", 
     "단어": "word", 
-    "분류": "meaning", 
-    "CEFR Level": "eng_meaning", 
+    "발음": "pronunciation", 
+    "한글 뜻": "meaning",     
+    "영어 뜻": "eng_meaning", 
     "예문1": "example"
 }
+
+# 레벨별 JSON 파일 매핑
+LEVEL_JSON_MAP = {
+    "초급1": "level1.json",
+    "초급2": "level2.json",
+    "중급1": "level3.json",
+    "중급2": "level4.json",
+    "고급1": "level5.json",
+    "고급2": "level6.json",
+}
+
+def load_resource_map_by_id(level: str) -> Dict[str, Dict[str, str]]:
+    """
+    파일명(ID)을 키로 하여 리소스 경로를 반환합니다.
+    (예: "Level1_1" -> {"image_path": "...", "audio_path": "..."})
+    """
+    json_filename = LEVEL_JSON_MAP.get(level, "level1.json")
+    json_path = os.path.join(JSON_DATA_DIR, json_filename)
+    
+    id_resource_map = {}
+    
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                items = data.get("items", [])
+                for item in items:
+                    resources = item.get("resources", {})
+                    
+                    # 1. 오디오 파일명에서 ID 추출 (예: "audio/voca/Level1_1.wav" -> "Level1_1")
+                    aud_file_raw = resources.get("audio_voca", {}).get("file", "")
+                    if not aud_file_raw: continue
+                    
+                    # 경로와 확장자를 제거하고 순수 파일명만 ID로 사용
+                    file_id = os.path.splitext(os.path.basename(aud_file_raw))[0]
+                    
+                    # 2. 경로 보정
+                    img_file = resources.get("image", {}).get("file", "")
+                    aud_file = aud_file_raw
+                    aud_ex_file = resources.get("audio_ex", {}).get("file", "")
+                    
+                    if img_file and not img_file.startswith("/"): img_file = f"/assets/{img_file}"
+                    if aud_file and not aud_file.startswith("/"): aud_file = f"/assets/{aud_file}"
+                    if aud_ex_file and not aud_ex_file.startswith("/"): aud_ex_file = f"/assets/{aud_ex_file}"
+                        
+                    id_resource_map[file_id] = {
+                        "image_path": img_file,
+                        "audio_path": aud_file,
+                        "audio_example_path": aud_ex_file
+                    }
+        except Exception as e:
+            print(f"[Warning] Failed to load JSON by ID: {e}")
+            
+    return id_resource_map
+
+# [헬퍼] 문자열 정규화 (NFC: 'ㅎ'+'ㅏ' -> '하')
+def normalize_text(text: str) -> str:
+    if not text: return ""
+    return unicodedata.normalize('NFC', str(text)).strip()
+
+def load_resource_map(level: str) -> Dict[str, Dict[str, str]]:
+    """
+    해당 레벨의 JSON 파일을 읽어 { "단어": { "image": "...", "audio": "..." } } 형태의 맵을 반환합니다.
+    (NFC 정규화 적용)
+    """
+    json_filename = LEVEL_JSON_MAP.get(level, "level1.json")
+    json_path = os.path.join(JSON_DATA_DIR, json_filename)
+    
+    resource_map = {}
+    
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                items = data.get("items", [])
+                for item in items:
+                    # [수정] 정규화 적용하여 키 저장
+                    text_key = normalize_text(item.get("text", ""))
+                    resources = item.get("resources", {})
+                    
+                    # 경로 추출 (JSON 구조: resources > image > file)
+                    img_file = resources.get("image", {}).get("file", "")
+                    aud_file = resources.get("audio_voca", {}).get("file", "")
+                    aud_ex_file = resources.get("audio_ex", {}).get("file", "") # [추가] 예문 오디오 추출
+                    
+                    # 프론트엔드용 경로 보정 (/assets/ 추가)
+                    if img_file and not img_file.startswith("/"):
+                        img_file = f"/assets/{img_file}"
+                    if aud_file and not aud_file.startswith("/"):
+                        aud_file = f"/assets/{aud_file}"
+                    if aud_ex_file and not aud_ex_file.startswith("/"):
+                        aud_ex_file = f"/assets/{aud_ex_file}"
+                        
+                    resource_map[text_key] = {
+                        "image_path": img_file,
+                        "audio_path": aud_file,
+                        "audio_example_path": aud_ex_file # [추가]
+                    }
+        except Exception as e:
+            print(f"[Warning] Failed to load JSON resources for {level}: {e}")
+            
+    return resource_map
 
 @router.get("/current-progress")
 async def get_current_progress(user_id: str, db: Session = Depends(get_session)):
@@ -47,13 +156,8 @@ async def get_current_progress(user_id: str, db: Session = Depends(get_session))
     return {"level": progress.level, "current_page": progress.current_page}
 
 @router.get("/words", response_model=List[WordSchema])
-async def get_words(
-    level: str = "초급1", 
-    user_id: Optional[str] = None, 
-    db: Session = Depends(get_session)
-):
-    if not os.path.exists(EXCEL_PATH):
-        return []
+async def get_words(level: str = "초급1", user_id: Optional[str] = None, db: Session = Depends(get_session)):
+    if not os.path.exists(EXCEL_PATH): return []
 
     try:
         current_page = 1
@@ -61,39 +165,27 @@ async def get_words(
             user = db.get(User, user_id)
             if not user:
                 user = User(uid=user_id, name=user_id, role="student")
-                db.add(user)
-                db.commit()
-            
+                db.add(user); db.commit()
             statement = select(StudyProgress).where(StudyProgress.user_id == user_id, StudyProgress.level == level)
             progress = db.exec(statement).first()
-            if progress:
-                current_page = progress.current_page
+            if progress: current_page = progress.current_page
 
         xls = pd.ExcelFile(EXCEL_PATH, engine="openpyxl")
         target_sheet = next((s for s in xls.sheet_names if s.replace(" ", "") == level.replace(" ", "")), None)
+        if not target_sheet: target_sheet = random.choice(xls.sheet_names)
         
-        if not target_sheet:
-            target_sheet = random.choice(xls.sheet_names)
-            
         df = pd.read_excel(xls, sheet_name=target_sheet)
         
-        # --- [오디오 컬럼 유연한 매핑 로직 추가] ---
+        # 오디오 컬럼 처리
         actual_cols = df.columns.tolist()
-        # "Audio_Voca" 또는 "파일 명"이라는 단어가 포함된 컬럼을 찾습니다.
         audio_col = next((c for c in actual_cols if "Audio_Voca" in str(c) or "파일 명" in str(c)), None)
-        
-        # 찾은 오디오 컬럼을 audio_path로 이름 변경
         temp_mapping = COLUMN_MAPPING.copy()
-        if audio_col:
-            temp_mapping[audio_col] = "audio_path"
-            
+        if audio_col: temp_mapping[audio_col] = "audio_path"
         df = df.rename(columns=temp_mapping)
 
-        # 필수 컬럼이 없을 경우 빈 값 생성
         required_fields = list(COLUMN_MAPPING.values()) + ["audio_path"]
         for col in required_fields:
             if col not in df.columns: df[col] = ""
-        
         df = df.fillna("")
 
         start_idx = (current_page - 1) * 10
@@ -103,17 +195,39 @@ async def get_words(
         if 'level' not in paged_df.columns: paged_df['level'] = target_sheet
         if 'topic' not in paged_df.columns: paged_df['topic'] = "General"
 
-        data_list = paged_df.to_dict(orient="records")
-        for idx, item in enumerate(data_list):
-            item['id'] = start_idx + idx + 1
-            item['word'] = str(item.get('word', ''))
-            item['meaning'] = str(item.get('meaning', ''))
-            item['eng_meaning'] = str(item.get('eng_meaning', ''))
-            item['example'] = str(item.get('example', ''))
-            item['audio_path'] = str(item.get('audio_path', '')) # 데이터를 문자열로 확실히 변환
+        # JSON 리소스 로드
+        resource_map = load_resource_map_by_id(level) 
+        data_list = []
+        
+        for idx, item in enumerate(paged_df.to_dict(orient="records")):
+            # 2단계: 매칭 기준을 word_text에서 파일명(audio_path)으로 변경
+            # 엑셀의 '파일 명' 혹은 'Audio_Voca' 컬럼 값이 이미 audio_path로 매핑되어 있습니다.
+            file_id = str(item.get('audio_path', '')).strip()
+            
+            # ID(파일명)를 키로 사용하여 JSON에서 가져온 리소스를 찾습니다.
+            res = resource_map.get(file_id, {})
+            
+            # [안전장치] 만약 ID로 못 찾았을 경우에만 기존처럼 단어 텍스트로 시도 (선택 사항)
+            if not res:
+                word_text = normalize_text(item.get('word', ''))
+                # 이 경우를 위해 load_resource_map_by_id에서 텍스트 기반 맵도 같이 관리하면 좋으나,
+                # 파일명이 확실하다면 file_id만으로 충분합니다.
 
+            data_list.append({
+                "id": start_idx + idx + 1,
+                "level": level,
+                "topic": item.get('topic', 'General'),
+                "word": normalize_text(item.get('word', '')), # 엑셀의 단어
+                "pronunciation": str(item.get('pronunciation', '')),
+                "meaning": str(item.get('meaning', '')),
+                "eng_meaning": str(item.get('eng_meaning', '')),
+                "example": str(item.get('example', '')),
+                # JSON에서 찾은 오디오/이미지 경로를 우선 사용하고, 없으면 엑셀 값 유지
+                "audio_path": res.get("audio_path", str(item.get('audio_path', ''))),
+                "audio_example_path": res.get("audio_example_path", ""), 
+                "image_path": res.get("image_path", "")
+            })
         return data_list
-
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Data Load Error: {str(e)}")
 
@@ -152,34 +266,16 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
     db.commit()
     return {"status": "success", "next_page": progress.current_page if progress else 2}
 
-
-# app/api/study.py (기존 코드 하단에 추가)
-
 @router.get("/review-words")
 async def get_review_words(user_id: str, db: Session = Depends(get_session)):
-    """
-    [복습 기능]
-    최근 학습 로그 중 점수가 낮은 순서대로 최대 5개 단어를 가져옵니다.
-    """
-    # 1. 사용자의 학습 로그 조회 (점수 낮은 순)
     statement = select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.score.asc()).limit(5)
     logs = db.exec(statement).all()
-    
-    if not logs:
-        return []
-
-    # 2. 로그 기반으로 단어 리스트 반환 (프론트엔드 Word 타입에 맞춤)
+    if not logs: return []
     review_list = []
     for log in logs:
         review_list.append({
-            "id": log.id,
-            "word": log.word,
-            "meaning": "", # 로그에는 뜻이 없으므로 빈값 혹은 DB 구조 변경 필요 (여기선 빈값 처리)
-            "eng_meaning": "",
-            "example": "",
-            "audio_path": "",
-            "level": "",
-            "topic": "Review"
+            "id": log.id, "word": log.word, "pronunciation": "", "meaning": "", "eng_meaning": "", 
+            "example": "", "audio_path": "", "image_path": "", "level": "", "topic": "Review"
         })
     return review_list
 
@@ -231,8 +327,6 @@ async def get_quiz(level: str = "초급1"):
         print(f"Quiz generation error: {e}")
         return []
 
-
-# [신규 추가] 통계 API 엔드포인트
 @router.get("/stats")
 async def get_student_stats(user_id: str, db: Session = Depends(get_session)):
     """

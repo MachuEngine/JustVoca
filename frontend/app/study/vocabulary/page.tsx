@@ -25,6 +25,7 @@ import {
   completeStudy,
 } from "../../api";
 import AuthGuard from "../../components/AuthGuard";
+import StudyCard from "../../components/StudyCard";
 
 export default function VocabularyStudyPage() {
   const router = useRouter();
@@ -35,6 +36,14 @@ export default function VocabularyStudyPage() {
     typeof window !== "undefined"
       ? localStorage.getItem("userId") || "student"
       : "student";
+
+const getImageUrl = (path: string) => {
+  if (!path) return "";
+  
+  // 이미 전체 주소(http)가 있으면 그대로 쓰고, 
+  // 아니면 백엔드 주소 없이 경로(/assets/...)만 그대로 반환합니다.
+  return path; 
+};
 
   // --- 상태 관리 ---
   const [phase, setPhase] = useState<
@@ -69,6 +78,8 @@ export default function VocabularyStudyPage() {
   const chunksRef = useRef<Blob[]>([]);
   const [recordBlob, setRecordBlob] = useState<Blob | null>(null);
 
+  const [imageError, setImageError] = useState(false); // 이미지 에러 상태
+
   // --- 레벨 폴더 매핑 (로컬 오디오 경로 안정화) ---
   const levelDirMap: Record<string, string> = {
     초급1: "level1",
@@ -78,6 +89,9 @@ export default function VocabularyStudyPage() {
     고급: "level5",
   };
   const levelDir = levelDirMap[level] ?? "level1";
+
+  // 백엔드 주소 (환경 변수로 관리하면 더 좋습니다)
+  const API_BASE_URL = "http://localhost:8000"; // 또는 http://127.0.0.1:8000
 
   // --- 초기 데이터 로드 ---
   useEffect(() => {
@@ -114,7 +128,6 @@ export default function VocabularyStudyPage() {
     }
 
     fetchInitialData();
-    // searchParams는 객체라 dep에 넣으면 불필요 렌더링이 잦을 수 있어 level/userId로 충분
   }, [level, userId]);
 
   useEffect(() => {
@@ -127,30 +140,35 @@ export default function VocabularyStudyPage() {
     }
   }, [phase]);
 
-  const mapWordData = (list: any[]) => {
-    if (!list || list.length === 0) return [];
-    return list.map((w: any) => ({
-      id: w.id,
-      word: w.word,
-      pronunciation: w.pronunciation || `[${w.word}]`,
-      meaning: w.meaning,
-      meaningEng: w.meaning_en || "Meaning",
-      example: w.example || w.word,
-      audioKey: w.audio_path || "",
-    }));
-  };
+const mapWordData = (list: any[]) => {
+  if (!list || list.length === 0) return [];
+  return list.map((w: any) => ({
+    id: w.id,
+    word: w.word,
+    pronunciation: w.pronunciation || "",
+    meaning: w.meaning,
+    meaningEng: w.eng_meaning,
+    example: w.example,
+    audioKey: w.audio_path || "",               // 단어 오디오 경로
+    audioExamplePath: w.audio_example_path || "", // 예문 오디오 경로 (새로 추가)
+    imageKey: w.image_path || "",
+  }));
+};
 
   const currentList = phase === "review" ? reviewData : wordData;
   const currentWord = currentList[currentIndex];
   const currentQuiz = quizData[currentIndex];
 
   let totalSteps = wordData.length;
-  if (phase === "review" || phase === "review_intro") totalSteps = reviewData.length;
-  else if (phase === "quiz" || phase === "quiz_intro") totalSteps = quizData.length;
+  if (phase === "review" || phase === "review_intro")
+    totalSteps = reviewData.length;
+  else if (phase === "quiz" || phase === "quiz_intro")
+    totalSteps = quizData.length;
 
   // --- 상태 리셋 ---
   const resetCardState = () => {
     setIsFlipped(false);
+    setImageError(false);
     setRecordingStatus("idle");
     setRecordBlob(null);
     setEvaluationResult(null);
@@ -159,44 +177,50 @@ export default function VocabularyStudyPage() {
     setIsProcessing(false);
   };
 
-  function parseLevelDirFromAudioKey(audioKey: string, fallbackLevelDir: string) {
-    // 예: "Level6_1" / "level6_1" / "LEVEL6_1" -> "level6"
+  function parseLevelDirFromAudioKey(
+    audioKey: string,
+    fallbackLevelDir: string
+  ) {
     const m = String(audioKey).match(/level\s*(\d+)/i);
     if (m && m[1]) return `level${m[1]}`;
     return fallbackLevelDir;
   }
 
-  function buildAudioPath(params: {
-    type: "voca" | "example";
-    audioKey: string;
-    fallbackLevelDir: string;
-  }) {
-    const { type, audioKey, fallbackLevelDir } = params;
+function buildAudioPath(params: {
+  audioKey: string;
+}) {
+  const { audioKey } = params;
 
-    if (!audioKey) return "";
-    if (audioKey.startsWith("http")) return audioKey;
+  if (!audioKey) return "";
 
-    const dir = parseLevelDirFromAudioKey(audioKey, fallbackLevelDir);
-    return `/assets/audio/${type}/${dir}/${audioKey}.wav`;
+  // 백엔드에서 이미 /assets/... 로 시작하는 완성된 경로를 보내주므로
+  // 별도의 조립 없이 그대로 반환합니다.
+  if (audioKey.startsWith("/") || audioKey.startsWith("http")) {
+    return audioKey;
   }
 
+  // 혹시라도 순수 파일명만 올 경우를 대비한 안전장치 (필요 시 유지)
+  return `/assets/audio/voca/${audioKey}.wav`;
+}
 
   // --- 기능 함수 ---
-  const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!currentWord || !currentWord.audioKey) return;
+const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
+  e.stopPropagation();
+  if (!currentWord) return;
 
-    const audioPath = buildAudioPath({
-      type,
-      audioKey: currentWord.audioKey,
-      fallbackLevelDir: levelDir, // 기존 레벨 매핑은 fallback으로만 사용
-    });
+  // type에 따라 백엔드에서 받은 적절한 경로를 선택합니다.
+  const audioPath = type === "voca" 
+    ? currentWord.audioKey 
+    : currentWord.audioExamplePath;
 
-    if (!audioPath) return;
+  if (!audioPath) {
+    console.error(`${type} 오디오 경로가 없습니다.`);
+    return;
+  }
 
-    const audio = new Audio(audioPath);
-    audio.play().catch(() => console.error("오디오 재생 실패:", audioPath));
-  };
+  const audio = new Audio(audioPath);
+  audio.play().catch((err) => console.error("오디오 재생 실패:", err));
+};
 
   const handleNext = async () => {
     if (phase === "learning") {
@@ -256,7 +280,9 @@ export default function VocabularyStudyPage() {
         "audio/webm;codecs=opus"
       )
         ? "audio/webm;codecs=opus"
-        : (MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "");
+        : MediaRecorder.isTypeSupported("audio/webm")
+        ? "audio/webm"
+        : "";
 
       mediaRecorderRef.current = preferredType
         ? new MediaRecorder(stream, { mimeType: preferredType })
@@ -269,7 +295,6 @@ export default function VocabularyStudyPage() {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        // 마이크 트랙 중지(점유 해제)
         stream.getTracks().forEach((track) => track.stop());
 
         if (chunksRef.current.length === 0) {
@@ -281,6 +306,15 @@ export default function VocabularyStudyPage() {
         const mimeType =
           preferredType || mediaRecorderRef.current?.mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type: mimeType });
+
+        // ✅ [추가] 너무 짧은 녹음 방지 (환경에 따라 숫자 조정)
+        const MIN_SIZE = 12000; // webm/opus 기준 경험값. 너무 엄격하면 8000으로 낮춰도 됨.
+        if (blob.size < MIN_SIZE) {
+          alert("녹음이 너무 짧아요. 1초 이상 말해 주세요.");
+          setRecordingStatus("idle");
+          setRecordBlob(null);
+          return;
+        }
         setRecordBlob(blob);
         setRecordingStatus("done");
       };
@@ -304,21 +338,31 @@ export default function VocabularyStudyPage() {
 
     setIsProcessing(true);
     try {
-      const ext =
-      recordBlob.type.includes("webm") ? "webm" :
-      recordBlob.type.includes("ogg") ? "ogg" :
-      recordBlob.type.includes("wav") ? "wav" : "webm";
+      const ext = recordBlob.type.includes("webm")
+        ? "webm"
+        : recordBlob.type.includes("ogg")
+        ? "ogg"
+        : recordBlob.type.includes("wav")
+        ? "wav"
+        : "webm";
 
-      const file = new File([recordBlob], `record.${ext}`, { type: recordBlob.type });
+      const file = new File([recordBlob], `record.${ext}`, {
+        type: recordBlob.type,
+      });
 
-      console.log("[UPLOAD] file.name=", file.name, "type=", file.type, "size=", file.size);
+      console.log(
+        "[UPLOAD] file.name=",
+        file.name,
+        "type=",
+        file.type,
+        "size=",
+        file.size
+      );
 
       const formData = new FormData();
       formData.append("audio", file);
       formData.append("text", targetText);
-      // [추가] 누가 학습했는지 userId 전송
-      formData.append("user_id", userId); 
-      // [추가] 어떤 단어인지 word 전송 (로그 저장용)
+      formData.append("user_id", userId);
       formData.append("word", currentWord.word);
 
       console.log("[UPLOAD] fd audio =", formData.get("audio"));
@@ -328,24 +372,29 @@ export default function VocabularyStudyPage() {
       console.log("[UPLOAD] 6 response =", response);
 
       if (response?.success === false) {
-        alert(`에러 발생: ${response.error || "알 수 없는 오류"}`);
+        alert(response?.error || "분석이 어려워요. 문장을 다시 천천히 읽어보세요.");
         return;
       }
+
 
       console.log("[UPLOAD] response JSON =", JSON.stringify(response));
 
       const raw = response?.result ?? response ?? {};
-
-      // 1) raw.result가 객체이고 그 안에 quality/score가 있으면 그게 진짜 본체일 가능성이 큼
       const candidate =
-        (raw && typeof raw === "object" && raw.result && typeof raw.result === "object") ? raw.result : raw;
+        raw && typeof raw === "object" && raw.result && typeof raw.result === "object"
+          ? raw.result
+          : raw;
 
       const resultData =
-        candidate?.quality ? candidate :
-        candidate?.score !== undefined ? candidate :
-        candidate?.score_result ? candidate.score_result :
-        candidate?.data ? candidate.data :
-        candidate;
+        candidate?.quality
+          ? candidate
+          : candidate?.score !== undefined
+          ? candidate
+          : candidate?.score_result
+          ? candidate.score_result
+          : candidate?.data
+          ? candidate.data
+          : candidate;
 
       console.log("[UPLOAD] raw =", raw);
       console.log("[UPLOAD] resultData(normalized) =", resultData);
@@ -355,25 +404,20 @@ export default function VocabularyStudyPage() {
 
         let finalScore = 0;
 
-        // 1. 최상위 score가 있다면 그것이 정답 (로그의 맨 마지막 "score": 73.186)
-        if (typeof resultData.score === 'number') {
+        if (typeof resultData.score === "number") {
           finalScore = resultData.score;
-        } 
-        // 2. quality.score 확인
-        else if (resultData.quality?.score) {
+        } else if (resultData.quality?.score) {
           finalScore = resultData.quality.score;
-        }
-        // 3. sentences 배열에서 !SIL이 아닌 실제 문장 찾기 (안전장치)
-        else if (resultData.quality?.sentences) {
-           const realSentence = resultData.quality.sentences.find(
-             (s: any) => s.text && s.text !== "!SIL"
-           );
-           if (realSentence) {
-             finalScore = realSentence.score;
-           }
+        } else if (resultData.quality?.sentences) {
+          const realSentence = resultData.quality.sentences.find(
+            (s: any) => s.text && s.text !== "!SIL"
+          );
+          if (realSentence) {
+            finalScore = realSentence.score;
+          }
         }
 
-        console.log("[DEBUG] 최종 결정된 점수:", finalScore); // 73.186 예상
+        console.log("[DEBUG] 최종 결정된 점수:", finalScore);
 
         setOverallScore(Math.round(finalScore));
         setShowResultOverlay(true);
@@ -395,9 +439,8 @@ export default function VocabularyStudyPage() {
     setIsQuizCorrect(isCorrect);
   };
 
-  // ✅ 다음 버튼 활성화 조건 수정:
-  // - learning/review: 앞면(단어 모드)은 자유롭게 다음 가능, 뒷면(연습 모드)은 결과 있어야 다음 가능
-  // - quiz: 정답이어야 다음 가능
+  // learning/review: 평가 결과 있어야 다음 가능(현재 로직 유지)
+  // quiz: 정답이어야 다음 가능
   const isNextEnabled = () => {
     if (phase === "learning" || phase === "review") {
       return evaluationResult !== null;
@@ -479,10 +522,11 @@ export default function VocabularyStudyPage() {
       </div>
     );
   }
+
   type PhoneItem = {
-  symbol: string;
-  score: number;
-  text?: string;
+    symbol: string;
+    score: number;
+    text?: string;
   };
 
   function extractPhonesFromWord(wordObj: any): PhoneItem[] {
@@ -507,7 +551,7 @@ export default function VocabularyStudyPage() {
     (s: any) => s.text !== "!SIL"
   );
   const resultWords = (targetSentence?.words || []).filter(
-  (w: any) => w?.text && w.text !== "!SIL"
+    (w: any) => w?.text && w.text !== "!SIL"
   );
 
   return (
@@ -571,22 +615,23 @@ export default function VocabularyStudyPage() {
         </div>
 
         {/* --- [메인 콘텐츠 영역: 카드 + 버튼] --- */}
-        <div className="flex-1 flex flex-col items-center justify-start w-full max-w-md mx-auto">
+        {/* ✅ 카드 “더 크게”: max-w-md -> max-w-lg */}
+        <div className="flex-1 flex flex-col items-center justify-start w-full max-w-2xl mx-auto">
           {/* 1. 카드 영역 */}
           <div className="w-full mb-6">
             {phase === "quiz" ? (
-              <div className="w-full aspect-[4/5] bg-white rounded-[3.5rem] shadow-2xl border border-gray-100 p-8 flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-full aspect-[3/4] bg-white rounded-[3.25rem] shadow-2xl border border-gray-100 p-7 flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex-1 w-full flex flex-col justify-center">
                   <span className="text-center text-xs font-black text-blue-500 uppercase tracking-widest mb-4">
                     Quiz
                   </span>
-                  <h3 className="text-2xl font-black text-gray-900 text-center break-keep leading-relaxed mb-8">
+                  <h3 className="text-xl font-black text-gray-900 text-center break-keep leading-relaxed mb-7">
                     "{currentQuiz?.question}"
                   </h3>
                   <div className="space-y-3 w-full">
                     {currentQuiz?.options?.map((option: string, idx: number) => {
                       let btnClass =
-                        "w-full py-4 rounded-xl text-lg font-bold border-2 transition-all shadow-sm ";
+                        "w-full py-4 rounded-xl text-base font-bold border-2 transition-all shadow-sm ";
 
                       if (selectedOption === option) {
                         if (isQuizCorrect) {
@@ -611,12 +656,12 @@ export default function VocabularyStudyPage() {
                     })}
                   </div>
                   {selectedOption && isQuizCorrect === false && (
-                    <p className="text-center text-red-500 font-bold mt-4 animate-pulse">
+                    <p className="text-center text-red-500 font-bold mt-4 animate-pulse text-sm">
                       오답입니다. 다시 선택해보세요!
                     </p>
                   )}
                   {isQuizCorrect === true && (
-                    <p className="text-center text-green-600 font-bold mt-4 animate-in zoom-in">
+                    <p className="text-center text-green-600 font-bold mt-4 animate-in zoom-in text-sm">
                       정답입니다! 🎉
                     </p>
                   )}
@@ -625,24 +670,59 @@ export default function VocabularyStudyPage() {
             ) : (
               <div
                 onClick={() => setIsFlipped((prev) => !prev)}
-                className="w-full aspect-[4/5] bg-white rounded-[3.5rem] shadow-2xl border border-gray-100 p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 relative overflow-hidden active:scale-[0.99]"
+                // ✅ 더 커 보이게: aspect[3/4] + padding 축소(p-10->p-8)
+                className="w-full aspect-[3/4] bg-white rounded-[3.25rem] shadow-2xl border border-gray-100 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 relative overflow-hidden active:scale-[0.99]"
               >
                 {!isFlipped ? (
                   <div className="flex flex-col items-center w-full animate-in fade-in duration-300">
-                    <h2 className="text-6xl font-black text-gray-900 mb-2">
-                      {currentWord?.word}
-                    </h2>
-                    <p className="text-xl font-bold text-green-600 mb-10">
-                      {currentWord?.pronunciation}
-                    </p>
-                    <div className="space-y-4 mb-12 px-4">
-                      <p className="text-gray-700 font-bold text-lg leading-relaxed">
-                        {currentWord?.meaning}
-                      </p>
-                      <p className="text-gray-400 text-sm italic">
-                        {currentWord?.meaningEng}
-                      </p>
+                    {/* 이미지 영역 */}
+                    <div className="flex-1 w-full flex items-center justify-center mb-2">
+                      <div className="w-40 h-40 relative rounded-3xl overflow-hidden bg-gray-50 flex items-center justify-center shadow-inner border border-gray-100">
+                        {currentWord?.imageKey && !imageError ? (
+                          <img
+                            key={currentWord.imageKey} // [중요] key 추가: URL이 바뀌면 이미지를 새로 그리기 위함
+                            src={getImageUrl(currentWord.imageKey)}
+                            alt={currentWord.word}
+                            className="w-full h-full object-cover"
+                            onError={() => setImageError(true)}
+                          />
+                        ) : (
+                          <span className="text-6xl select-none opacity-20">📖</span>
+                        )}
+                      </div>
                     </div>
+
+                    {/* ✅ 단어/발음 폰트 축소 */}
+                    <div className="mb-5 w-full px-1">
+                      <h2 className="text-2xl font-black text-gray-900 flex items-baseline justify-center gap-2 flex-wrap break-keep leading-tight">
+                        {currentWord?.word}
+                        {currentWord?.pronunciation && (
+                          <span className="text-base font-medium text-gray-400 font-mono tracking-tight transform translate-y-[-2px]">
+                            [{currentWord.pronunciation}]
+                          </span>
+                        )}
+                      </h2>
+                    </div>
+
+                    {/* 뜻 영역 (폰트 축소) */}
+                    <div className="w-full px-6 mb-7">
+                      <div className="w-full bg-yellow-50 rounded-2xl p-1 border border-yellow-100 flex flex-col items-center shadow-sm">
+                        <p className="text-gray-800 font-bold text-base leading-snug break-keep text-center">
+                          {currentWord?.meaning}
+                        </p>
+
+                        {currentWord?.meaningEng && (
+                          <div className="w-full h-px bg-yellow-200 my-3"></div>
+                        )}
+
+                        {currentWord?.meaningEng && (
+                          <p className="text-gray-500 text-xs font-medium italic break-keep text-center">
+                            {currentWord.meaningEng}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
                     <button
                       onClick={(e) => playLocalAudio("voca", e)}
                       className={`flex items-center gap-3 px-10 py-5 text-white font-black rounded-2xl shadow-lg transition-all ${
@@ -651,22 +731,25 @@ export default function VocabularyStudyPage() {
                           : "bg-gray-900 active:scale-95"
                       }`}
                     >
-                      <Volume2 size={24} /> <span>발음 듣기</span>
+                      <Volume2 size={22} /> <span className="text-sm">발음 듣기</span>
                     </button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center w-full animate-in fade-in duration-300">
-                    <div className="w-full text-left mb-8 border-l-4 border-blue-500 pl-4">
-                      <h4 className="text-2xl font-black text-gray-900">
+                    <div className="w-full text-left mb-7 border-l-4 border-blue-500 pl-4">
+                      <h4 className="text-xl font-black text-gray-900">
                         {currentWord?.word}
                       </h4>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 opacity-60">
                         Speak Now
                       </p>
                     </div>
-                    <h3 className="text-2xl font-black text-gray-900 leading-snug mb-12 text-left w-full break-keep px-2">
+
+                    {/* ✅ 예문 폰트 축소 (text-2xl -> text-xl) */}
+                    <h3 className="text-xl font-black text-gray-900 leading-snug mb-10 text-left w-full break-keep px-2">
                       {currentWord?.example}
                     </h3>
+
                     <div className="grid grid-cols-1 w-full gap-4 px-2">
                       <button
                         onClick={(e) => playLocalAudio("example", e)}
@@ -676,8 +759,8 @@ export default function VocabularyStudyPage() {
                             : "bg-blue-50 text-blue-600 active:bg-blue-100"
                         }`}
                       >
-                        <Volume2 size={24} />
-                        <span>문장 듣기</span>
+                        <Volume2 size={22} />
+                        <span className="text-sm">문장 듣기</span>
                       </button>
 
                       <div onClick={(e) => e.stopPropagation()}>
@@ -686,8 +769,8 @@ export default function VocabularyStudyPage() {
                             onClick={startRecording}
                             className="w-full h-16 bg-gray-900 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all"
                           >
-                            <Mic size={24} />
-                            <span>문장 녹음</span>
+                            <Mic size={22} />
+                            <span className="text-sm">문장 녹음</span>
                           </button>
                         )}
                         {recordingStatus === "recording" && (
@@ -695,8 +778,8 @@ export default function VocabularyStudyPage() {
                             onClick={stopRecording}
                             className="w-full h-16 bg-red-500 text-white font-black rounded-2xl flex items-center justify-center gap-3 animate-pulse shadow-lg"
                           >
-                            <Square size={24} fill="white" />
-                            <span>중지</span>
+                            <Square size={22} fill="white" />
+                            <span className="text-sm">중지</span>
                           </button>
                         )}
                         {recordingStatus === "done" && (
@@ -710,9 +793,9 @@ export default function VocabularyStudyPage() {
                             {isProcessing ? (
                               <Loader2 className="animate-spin" />
                             ) : (
-                              <BarChart size={24} />
+                              <BarChart size={22} />
                             )}
-                            <span>
+                            <span className="text-sm">
                               {isProcessing
                                 ? "분석 중..."
                                 : evaluationResult
@@ -735,7 +818,6 @@ export default function VocabularyStudyPage() {
               disabled={currentIndex === 0}
               onClick={() => {
                 setCurrentIndex((prev) => Math.max(0, prev - 1));
-                // ✅ 이전 이동 시 상태 리셋
                 resetCardState();
                 if (phase === "quiz") {
                   setSelectedOption(null);
@@ -751,14 +833,13 @@ export default function VocabularyStudyPage() {
             <button
               onClick={handleNext}
               disabled={!isNextEnabled()}
-              className={`flex-1 h-16 border rounded-3xl flex items-center justify-center gap-2 font-black transition-all shadow-sm
-                ${
-                  !isNextEnabled()
-                    ? "bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed"
-                    : phase === "quiz"
-                    ? "bg-blue-500 text-white shadow-blue-200"
-                    : "bg-white border-green-200 text-green-600 active:bg-green-50"
-                }`}
+              className={`flex-1 h-16 border rounded-3xl flex items-center justify-center gap-2 font-black transition-all shadow-sm ${
+                !isNextEnabled()
+                  ? "bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed"
+                  : phase === "quiz"
+                  ? "bg-blue-500 text-white shadow-blue-200"
+                  : "bg-white border-green-200 text-green-600 active:bg-green-50"
+              }`}
             >
               <span>
                 {phase === "quiz" && currentIndex >= quizData.length - 1
@@ -780,9 +861,7 @@ export default function VocabularyStudyPage() {
 
             <div className="absolute inset-x-0 bottom-0 top-20 bg-white rounded-t-[3rem] shadow-2xl animate-in slide-in-from-bottom duration-500 ease-out flex flex-col">
               <div className="px-8 pt-6 pb-4 flex justify-between items-center border-b border-gray-50">
-                <h2 className="text-xl font-black text-gray-900">
-                  발음 진단 리포트
-                </h2>
+                <h2 className="text-xl font-black text-gray-900">발음 진단 리포트</h2>
                 <button
                   onClick={() => setShowResultOverlay(false)}
                   className="p-2 bg-gray-50 rounded-full text-gray-400 active:scale-90 transition-all"
@@ -813,8 +892,10 @@ export default function VocabularyStudyPage() {
                     const isExpanded = expandedWordIndex === idx;
                     const score = Math.round(wordObj.score);
                     let colorClass = "text-red-500 bg-red-50 border-red-100";
-                    if (score >= 80) colorClass = "text-blue-600 bg-blue-50 border-blue-100";
-                    else if (score >= 60) colorClass = "text-green-600 bg-green-50 border-green-100";
+                    if (score >= 80)
+                      colorClass = "text-blue-600 bg-blue-50 border-blue-100";
+                    else if (score >= 60)
+                      colorClass = "text-green-600 bg-green-50 border-green-100";
 
                     return (
                       <div
@@ -869,7 +950,9 @@ export default function VocabularyStudyPage() {
                               })}
 
                               {extractPhonesFromWord(wordObj).length === 0 && (
-                                <div className="text-xs text-gray-400 p-2">상세 음소 정보 없음</div>
+                                <div className="text-xs text-gray-400 p-2">
+                                  상세 음소 정보 없음
+                                </div>
                               )}
                             </div>
                           </div>

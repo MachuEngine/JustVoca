@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Tuple
+import wave
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -64,6 +65,16 @@ def _make_session() -> requests.Session:
     s.mount("https://", adapter)
     return s
 
+def wav_duration_seconds(path: str) -> float:
+    try:
+        with wave.open(path, "rb") as wf:
+            frames = wf.getnframes()
+            rate = wf.getframerate() or 1
+            return frames / float(rate)
+    except Exception:
+        return 0.0
+
+
 
 # ----------------------------------------------------------------------
 # SpeechPro 호출
@@ -80,6 +91,7 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
     headers = {"Connection": "close"}
 
     s = _make_session()
+    r_score = None
     try:
         # 1) GTP
         r_gtp = s.post(
@@ -132,11 +144,26 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
         score_payload: Dict[str, Any] = {
             "id": req_id,
             "text": clean_text,
+
+            # 기존 키
             "syll ltrs": model_syll_ltrs,
             "syll phns": model_syll_phns,
             "fst": fst,
             "wav usr": wav_b64,
+
+            # ✅ 호환 키(엔진 구현별로 다름)
+            "syll_ltrs": model_syll_ltrs,
+            "syll_phns": model_syll_phns,
+            "wav_usr": wav_b64,
+            "wav": wav_b64,
+            "wav_b64": wav_b64,
         }
+        wav_size = os.path.getsize(wav_path)
+        print("[DEBUG] wav_path size =", wav_size)
+
+        print("[DEBUG] wav_b64 len =", len(wav_b64))
+        print("[DEBUG] wav_b64 head =", wav_b64[:40])
+
 
         r_score = s.post(
             f"{ENGINE_URL}/scorejson",
@@ -145,8 +172,28 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
             headers=headers,
         )
 
+        # (선택) 디버그
+        print("[DEBUG] SCOREJSON status=", r_score.status_code, "len(text)=", len(r_score.text or ""))
+
         if r_score.status_code != 200:
             body = (r_score.text or "").strip()
+            print("[DEBUG] SCOREJSON error body repr =", repr(r_score.text))
+
+            # ✅ 엔진 특정 에러(짧은 발화/입력 없음으로 추정)를 사용자 안내로 변환
+            if (
+                "json.exception.parse_error.101" in body
+                and "empty input" in body
+            ):
+                return {
+                    "success": False,
+                    "error": "문장에 비해 너무 짧은 음성은 분석할 수 없습니다. 문장을 다시 천천히 읽어보세요.",
+                }
+
+            if not body:
+                return {
+                    "success": False,
+                    "error": f"SCOREJSON 실패: HTTP {r_score.status_code} (응답 바디 없음 - 음성이 너무 짧거나 무음일 수 있음)",
+                }
             if len(body) > 800:
                 body = body[:800] + "...(truncated)"
             return {
@@ -154,7 +201,26 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
                 "error": f"SCOREJSON 실패: HTTP {r_score.status_code} - {body}",
             }
 
-        score_data = r_score.json()
+
+
+        body_ok = (r_score.text or "").strip()
+        if not body_ok:
+            return {
+                "success": False,
+                "error": "SCOREJSON 실패: 엔진 응답이 비어있습니다(음성이 너무 짧거나 무음일 수 있음).",
+            }
+
+        try:
+            score_data = r_score.json()
+        except Exception as e:
+            snippet = (r_score.text or "").strip()
+            if len(snippet) > 300:
+                snippet = snippet[:300] + "...(truncated)"
+            return {
+                "success": False,
+                "error": f"SCOREJSON 실패: JSON 파싱 실패 - {e} - body={snippet}",
+            }
+
 
         if isinstance(score_data, dict) and isinstance(score_data.get("result"), str):
             try:
@@ -165,7 +231,12 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
         return {"success": True, "score_result": score_data}
 
     except Exception as e:
-        return {"success": False, "error": f"엔진 통신 장애: {str(e)}"}
+        score_status = getattr(r_score, "status_code", None)
+        score_len = len((getattr(r_score, "text", "") or ""))
+        return {
+            "success": False,
+            "error": f"엔진 통신 장애: {str(e)} (scorejson_status={score_status}, scorejson_body_len={score_len})",
+        }
     finally:
         try:
             s.close()
@@ -177,6 +248,12 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
 # [수정됨] 점수 추출 로직 개선 함수
 # ----------------------------------------------------------------------
 def evaluate_pronunciation(text: str, wav_path: Path) -> Tuple[float, Dict[str, Any]]:
+    dur = wav_duration_seconds(str(wav_path))
+    if dur < 1.0:  # ✅ 기준: 0.8초 (원하면 1.0초로)
+        return 0.0, {
+            "error": f"녹음이 너무 짧아 분석할 수 없습니다. 1초 이상 말해 주세요. (현재 {dur:.2f}초)"
+        }
+
     result = call_speechpro_evaluation_scorejson(text=text, wav_path=str(wav_path))
 
     if not result.get("success"):

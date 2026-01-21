@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "base_dir": "data",
+  "base_dir": "assets",
   "items": [
     {
       "id": "voca_001",
       "text": "개념",
       "resources": {
         "image": {
-          "file": "images/Level5_1.webp"
+          "file": "images/level5/Level5_1.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_1.wav",
@@ -26,7 +26,7 @@
       "text": "의미",
       "resources": {
         "image": {
-          "file": "images/Level5_2.webp"
+          "file": "images/level5/Level5_2.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_2.wav",
@@ -45,7 +45,7 @@
       "text": "정의",
       "resources": {
         "image": {
-          "file": "images/Level5_3.webp"
+          "file": "images/level5/Level5_3.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_3.wav",
@@ -64,7 +64,7 @@
       "text": "가치",
       "resources": {
         "image": {
-          "file": "images/Level5_4.webp"
+          "file": "images/level5/Level5_4.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_4.wav",
@@ -83,7 +83,7 @@
       "text": "관점",
       "resources": {
         "image": {
-          "file": "images/Level5_5.webp"
+          "file": "images/level5/Level5_5.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_5.wav",
@@ -102,7 +102,7 @@
       "text": "시각",
       "resources": {
         "image": {
-          "file": "images/Level5_6.webp"
+          "file": "images/level5/Level5_6.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_6.wav",
@@ -121,7 +121,7 @@
       "text": "입장",
       "resources": {
         "image": {
-          "file": "images/Level5_7.webp"
+          "file": "images/level5/Level5_7.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_7.wav",
@@ -140,7 +140,7 @@
       "text": "고려하다",
       "resources": {
         "image": {
-          "file": "images/Level5_8.webp"
+          "file": "images/level5/Level5_8.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_8.wav",
@@ -159,7 +159,7 @@
       "text": "평가하다",
       "resources": {
         "image": {
-          "file": "images/Level5_9.webp"
+          "file": "images/level5/Level5_9.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_9.wav",
@@ -178,7 +178,7 @@
       "text": "판단하다",
       "resources": {
         "image": {
-          "file": "images/Level5_10.webp"
+          "file": "images/level5/Level5_10.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_10.wav",
@@ -197,7 +197,7 @@
       "text": "설명하다",
       "resources": {
         "image": {
-          "file": "images/Level5_11.webp"
+          "file": "images/level5/Level5_11.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_11.wav",
@@ -216,7 +216,7 @@
       "text": "분류하다",
       "resources": {
         "image": {
-          "file": "images/Level5_12.webp"
+          "file": "images/level5/Level5_12.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_12.wav",
@@ -235,7 +235,7 @@
       "text": "정리하다",
       "resources": {
         "image": {
-          "file": "images/Level5_13.webp"
+          "file": "images/level5/Level5_13.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_13.wav",
@@ -254,7 +254,7 @@
       "text": "원인",
       "resources": {
         "image": {
-          "file": "images/Level5_14.webp"
+          "file": "images/level5/Level5_14.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_14.wav",
@@ -273,7 +273,7 @@
       "text": "결과",
       "resources": {
         "image": {
-          "file": "images/Level5_15.webp"
+          "file": "images/level5/Level5_15.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_15.wav",
@@ -292,7 +292,7 @@
       "text": "서론",
       "resources": {
         "image": {
-          "file": "images/Level5_16.webp"
+          "file": "images/level5/Level5_16.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_16.wav",
@@ -311,7 +311,7 @@
       "text": "본론",
       "resources": {
         "image": {
-          "file": "images/Level5_17.webp"
+          "file": "images/level5/Level5_17.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_17.wav",
@@ -330,7 +330,7 @@
       "text": "결론",
       "resources": {
         "image": {
-          "file": "images/Level5_18.webp"
+          "file": "images/level5/Level5_18.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_18.wav",
@@ -349,7 +349,7 @@
       "text": "조건",
       "resources": {
         "image": {
-          "file": "images/Level5_19.webp"
+          "file": "images/level5/Level5_19.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_19.wav",
@@ -368,7 +368,7 @@
       "text": "경우",
       "resources": {
         "image": {
-          "file": "images/Level5_20.webp"
+          "file": "images/level5/Level5_20.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_20.wav",
@@ -387,7 +387,7 @@
       "text": "주장",
       "resources": {
         "image": {
-          "file": "images/Level5_21.webp"
+          "file": "images/level5/Level5_21.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_21.wav",
@@ -406,7 +406,7 @@
       "text": "근거",
       "resources": {
         "image": {
-          "file": "images/Level5_22.webp"
+          "file": "images/level5/Level5_22.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_22.wav",
@@ -425,7 +425,7 @@
       "text": "원인",
       "resources": {
         "image": {
-          "file": "images/Level5_23.webp"
+          "file": "images/level5/Level5_23.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_23.wav",
@@ -444,7 +444,7 @@
       "text": "대책",
       "resources": {
         "image": {
-          "file": "images/Level5_24.webp"
+          "file": "images/level5/Level5_24.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_24.wav",
@@ -463,7 +463,7 @@
       "text": "정책",
       "resources": {
         "image": {
-          "file": "images/Level5_25.webp"
+          "file": "images/level5/Level5_25.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_25.wav",
@@ -482,7 +482,7 @@
       "text": "행정",
       "resources": {
         "image": {
-          "file": "images/Level5_26.webp"
+          "file": "images/level5/Level5_26.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_26.wav",
@@ -501,7 +501,7 @@
       "text": "변화",
       "resources": {
         "image": {
-          "file": "images/Level5_27.webp"
+          "file": "images/level5/Level5_27.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_27.wav",
@@ -520,7 +520,7 @@
       "text": "흐름",
       "resources": {
         "image": {
-          "file": "images/Level5_28.webp"
+          "file": "images/level5/Level5_28.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_28.wav",
@@ -539,7 +539,7 @@
       "text": "연구",
       "resources": {
         "image": {
-          "file": "images/Level5_29.webp"
+          "file": "images/level5/Level5_29.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_29.wav",
@@ -558,7 +558,7 @@
       "text": "조사",
       "resources": {
         "image": {
-          "file": "images/Level5_30.webp"
+          "file": "images/level5/Level5_30.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_30.wav",
@@ -577,7 +577,7 @@
       "text": "결과",
       "resources": {
         "image": {
-          "file": "images/Level5_31.webp"
+          "file": "images/level5/Level5_31.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_31.wav",
@@ -596,7 +596,7 @@
       "text": "자료",
       "resources": {
         "image": {
-          "file": "images/Level5_32.webp"
+          "file": "images/level5/Level5_32.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_32.wav",
@@ -615,7 +615,7 @@
       "text": "객관적",
       "resources": {
         "image": {
-          "file": "images/Level5_33.webp"
+          "file": "images/level5/Level5_33.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_33.wav",
@@ -634,7 +634,7 @@
       "text": "주관적",
       "resources": {
         "image": {
-          "file": "images/Level5_34.webp"
+          "file": "images/level5/Level5_34.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_34.wav",
@@ -653,7 +653,7 @@
       "text": "사실",
       "resources": {
         "image": {
-          "file": "images/Level5_35.webp"
+          "file": "images/level5/Level5_35.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_35.wav",
@@ -672,7 +672,7 @@
       "text": "정리하다",
       "resources": {
         "image": {
-          "file": "images/Level5_36.webp"
+          "file": "images/level5/Level5_36.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_36.wav",
@@ -691,7 +691,7 @@
       "text": "자료",
       "resources": {
         "image": {
-          "file": "images/Level5_37.webp"
+          "file": "images/level5/Level5_37.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_37.wav",
@@ -710,7 +710,7 @@
       "text": "발표",
       "resources": {
         "image": {
-          "file": "images/Level5_38.webp"
+          "file": "images/level5/Level5_38.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_38.wav",
@@ -729,7 +729,7 @@
       "text": "주제",
       "resources": {
         "image": {
-          "file": "images/Level5_39.webp"
+          "file": "images/level5/Level5_39.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_39.wav",
@@ -748,7 +748,7 @@
       "text": "목차",
       "resources": {
         "image": {
-          "file": "images/Level5_40.webp"
+          "file": "images/level5/Level5_40.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_40.wav",
@@ -767,7 +767,7 @@
       "text": "설명",
       "resources": {
         "image": {
-          "file": "images/Level5_41.webp"
+          "file": "images/level5/Level5_41.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_41.wav",
@@ -786,7 +786,7 @@
       "text": "정리",
       "resources": {
         "image": {
-          "file": "images/Level5_42.webp"
+          "file": "images/level5/Level5_42.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_42.wav",
@@ -805,7 +805,7 @@
       "text": "의견",
       "resources": {
         "image": {
-          "file": "images/Level5_43.webp"
+          "file": "images/level5/Level5_43.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_43.wav",
@@ -824,7 +824,7 @@
       "text": "주장",
       "resources": {
         "image": {
-          "file": "images/Level5_44.webp"
+          "file": "images/level5/Level5_44.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_44.wav",
@@ -843,7 +843,7 @@
       "text": "동의",
       "resources": {
         "image": {
-          "file": "images/Level5_45.webp"
+          "file": "images/level5/Level5_45.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_45.wav",
@@ -862,7 +862,7 @@
       "text": "질문",
       "resources": {
         "image": {
-          "file": "images/Level5_46.webp"
+          "file": "images/level5/Level5_46.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_46.wav",
@@ -881,7 +881,7 @@
       "text": "응답",
       "resources": {
         "image": {
-          "file": "images/Level5_47.webp"
+          "file": "images/level5/Level5_47.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_47.wav",
@@ -900,7 +900,7 @@
       "text": "청중",
       "resources": {
         "image": {
-          "file": "images/Level5_48.webp"
+          "file": "images/level5/Level5_48.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_48.wav",
@@ -919,7 +919,7 @@
       "text": "이해하다",
       "resources": {
         "image": {
-          "file": "images/Level5_49.webp"
+          "file": "images/level5/Level5_49.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_49.wav",
@@ -938,7 +938,7 @@
       "text": "발언",
       "resources": {
         "image": {
-          "file": "images/Level5_50.webp"
+          "file": "images/level5/Level5_50.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_50.wav",
@@ -957,7 +957,7 @@
       "text": "구성",
       "resources": {
         "image": {
-          "file": "images/Level5_51.webp"
+          "file": "images/level5/Level5_51.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_51.wav",
@@ -976,7 +976,7 @@
       "text": "문단",
       "resources": {
         "image": {
-          "file": "images/Level5_52.webp"
+          "file": "images/level5/Level5_52.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_52.wav",
@@ -995,7 +995,7 @@
       "text": "흐름",
       "resources": {
         "image": {
-          "file": "images/Level5_53.webp"
+          "file": "images/level5/Level5_53.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_53.wav",
@@ -1014,7 +1014,7 @@
       "text": "전개",
       "resources": {
         "image": {
-          "file": "images/Level5_54.webp"
+          "file": "images/level5/Level5_54.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_54.wav",
@@ -1033,7 +1033,7 @@
       "text": "문체",
       "resources": {
         "image": {
-          "file": "images/Level5_55.webp"
+          "file": "images/level5/Level5_55.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_55.wav",
@@ -1052,7 +1052,7 @@
       "text": "주장",
       "resources": {
         "image": {
-          "file": "images/Level5_56.webp"
+          "file": "images/level5/Level5_56.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_56.wav",
@@ -1071,7 +1071,7 @@
       "text": "결론",
       "resources": {
         "image": {
-          "file": "images/Level5_57.webp"
+          "file": "images/level5/Level5_57.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_57.wav",
@@ -1090,7 +1090,7 @@
       "text": "설명문",
       "resources": {
         "image": {
-          "file": "images/Level5_58.webp"
+          "file": "images/level5/Level5_58.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_58.wav",
@@ -1109,7 +1109,7 @@
       "text": "정의",
       "resources": {
         "image": {
-          "file": "images/Level5_59.webp"
+          "file": "images/level5/Level5_59.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_59.wav",
@@ -1128,7 +1128,7 @@
       "text": "예시",
       "resources": {
         "image": {
-          "file": "images/Level5_60.webp"
+          "file": "images/level5/Level5_60.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_60.wav",
@@ -1147,7 +1147,7 @@
       "text": "의견",
       "resources": {
         "image": {
-          "file": "images/Level5_61.webp"
+          "file": "images/level5/Level5_61.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_61.wav",
@@ -1166,7 +1166,7 @@
       "text": "차이",
       "resources": {
         "image": {
-          "file": "images/Level5_62.webp"
+          "file": "images/level5/Level5_62.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_62.wav",
@@ -1185,7 +1185,7 @@
       "text": "구분",
       "resources": {
         "image": {
-          "file": "images/Level5_63.webp"
+          "file": "images/level5/Level5_63.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_63.wav",
@@ -1204,7 +1204,7 @@
       "text": "유의어",
       "resources": {
         "image": {
-          "file": "images/Level5_64.webp"
+          "file": "images/level5/Level5_64.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_64.wav",
@@ -1223,7 +1223,7 @@
       "text": "비슷하다",
       "resources": {
         "image": {
-          "file": "images/Level5_65.webp"
+          "file": "images/level5/Level5_65.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_65.wav",
@@ -1242,7 +1242,7 @@
       "text": "다소",
       "resources": {
         "image": {
-          "file": "images/Level5_66.webp"
+          "file": "images/level5/Level5_66.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_66.wav",
@@ -1261,7 +1261,7 @@
       "text": "가정",
       "resources": {
         "image": {
-          "file": "images/Level5_67.webp"
+          "file": "images/level5/Level5_67.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_67.wav",
@@ -1280,7 +1280,7 @@
       "text": "가치관",
       "resources": {
         "image": {
-          "file": "images/Level5_68.webp"
+          "file": "images/level5/Level5_68.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_68.wav",
@@ -1299,7 +1299,7 @@
       "text": "간섭",
       "resources": {
         "image": {
-          "file": "images/Level5_69.webp"
+          "file": "images/level5/Level5_69.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_69.wav",
@@ -1318,7 +1318,7 @@
       "text": "간접적",
       "resources": {
         "image": {
-          "file": "images/Level5_70.webp"
+          "file": "images/level5/Level5_70.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_70.wav",
@@ -1337,7 +1337,7 @@
       "text": "감시",
       "resources": {
         "image": {
-          "file": "images/Level5_71.webp"
+          "file": "images/level5/Level5_71.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_71.wav",
@@ -1356,7 +1356,7 @@
       "text": "강수량",
       "resources": {
         "image": {
-          "file": "images/Level5_72.webp"
+          "file": "images/level5/Level5_72.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_72.wav",
@@ -1375,7 +1375,7 @@
       "text": "강요",
       "resources": {
         "image": {
-          "file": "images/Level5_73.webp"
+          "file": "images/level5/Level5_73.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_73.wav",
@@ -1394,7 +1394,7 @@
       "text": "강제",
       "resources": {
         "image": {
-          "file": "images/Level5_74.webp"
+          "file": "images/level5/Level5_74.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_74.wav",
@@ -1413,7 +1413,7 @@
       "text": "개혁",
       "resources": {
         "image": {
-          "file": "images/Level5_75.webp"
+          "file": "images/level5/Level5_75.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_75.wav",
@@ -1432,7 +1432,7 @@
       "text": "객관적",
       "resources": {
         "image": {
-          "file": "images/Level5_76.webp"
+          "file": "images/level5/Level5_76.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_76.wav",
@@ -1451,7 +1451,7 @@
       "text": "견해",
       "resources": {
         "image": {
-          "file": "images/Level5_77.webp"
+          "file": "images/level5/Level5_77.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_77.wav",
@@ -1470,7 +1470,7 @@
       "text": "경영",
       "resources": {
         "image": {
-          "file": "images/Level5_78.webp"
+          "file": "images/level5/Level5_78.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_78.wav",
@@ -1489,7 +1489,7 @@
       "text": "경쟁력",
       "resources": {
         "image": {
-          "file": "images/Level5_79.webp"
+          "file": "images/level5/Level5_79.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_79.wav",
@@ -1508,7 +1508,7 @@
       "text": "경제력",
       "resources": {
         "image": {
-          "file": "images/Level5_80.webp"
+          "file": "images/level5/Level5_80.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_80.wav",
@@ -1527,7 +1527,7 @@
       "text": "경향",
       "resources": {
         "image": {
-          "file": "images/Level5_81.webp"
+          "file": "images/level5/Level5_81.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_81.wav",
@@ -1546,7 +1546,7 @@
       "text": "계층",
       "resources": {
         "image": {
-          "file": "images/Level5_82.webp"
+          "file": "images/level5/Level5_82.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_82.wav",
@@ -1565,7 +1565,7 @@
       "text": "고유",
       "resources": {
         "image": {
-          "file": "images/Level5_83.webp"
+          "file": "images/level5/Level5_83.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_83.wav",
@@ -1584,7 +1584,7 @@
       "text": "공동체",
       "resources": {
         "image": {
-          "file": "images/Level5_84.webp"
+          "file": "images/level5/Level5_84.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_84.wav",
@@ -1603,7 +1603,7 @@
       "text": "공적",
       "resources": {
         "image": {
-          "file": "images/Level5_85.webp"
+          "file": "images/level5/Level5_85.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_85.wav",
@@ -1622,7 +1622,7 @@
       "text": "-관 (관점)",
       "resources": {
         "image": {
-          "file": "images/Level5_86.webp"
+          "file": "images/level5/Level5_86.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_86.wav",
@@ -1641,7 +1641,7 @@
       "text": "관점",
       "resources": {
         "image": {
-          "file": "images/Level5_87.webp"
+          "file": "images/level5/Level5_87.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_87.wav",
@@ -1660,7 +1660,7 @@
       "text": "관찰",
       "resources": {
         "image": {
-          "file": "images/Level5_88.webp"
+          "file": "images/level5/Level5_88.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_88.wav",
@@ -1679,7 +1679,7 @@
       "text": "구속",
       "resources": {
         "image": {
-          "file": "images/Level5_89.webp"
+          "file": "images/level5/Level5_89.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_89.wav",
@@ -1698,7 +1698,7 @@
       "text": "구조",
       "resources": {
         "image": {
-          "file": "images/Level5_90.webp"
+          "file": "images/level5/Level5_90.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_90.wav",
@@ -1717,7 +1717,7 @@
       "text": "구체적",
       "resources": {
         "image": {
-          "file": "images/Level5_91.webp"
+          "file": "images/level5/Level5_91.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_91.wav",
@@ -1736,7 +1736,7 @@
       "text": "국제화",
       "resources": {
         "image": {
-          "file": "images/Level5_92.webp"
+          "file": "images/level5/Level5_92.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_92.wav",
@@ -1755,7 +1755,7 @@
       "text": "국회",
       "resources": {
         "image": {
-          "file": "images/Level5_93.webp"
+          "file": "images/level5/Level5_93.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_93.wav",
@@ -1774,7 +1774,7 @@
       "text": "군사",
       "resources": {
         "image": {
-          "file": "images/Level5_94.webp"
+          "file": "images/level5/Level5_94.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_94.wav",
@@ -1793,7 +1793,7 @@
       "text": "권리",
       "resources": {
         "image": {
-          "file": "images/Level5_95.webp"
+          "file": "images/level5/Level5_95.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_95.wav",
@@ -1812,7 +1812,7 @@
       "text": "권력",
       "resources": {
         "image": {
-          "file": "images/Level5_96.webp"
+          "file": "images/level5/Level5_96.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_96.wav",
@@ -1831,7 +1831,7 @@
       "text": "권위",
       "resources": {
         "image": {
-          "file": "images/Level5_97.webp"
+          "file": "images/level5/Level5_97.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_97.wav",
@@ -1850,7 +1850,7 @@
       "text": "귀하",
       "resources": {
         "image": {
-          "file": "images/Level5_98.webp"
+          "file": "images/level5/Level5_98.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_98.wav",
@@ -1869,7 +1869,7 @@
       "text": "규정",
       "resources": {
         "image": {
-          "file": "images/Level5_99.webp"
+          "file": "images/level5/Level5_99.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_99.wav",
@@ -1888,7 +1888,7 @@
       "text": "극복",
       "resources": {
         "image": {
-          "file": "images/Level5_100.webp"
+          "file": "images/level5/Level5_100.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_100.wav",
@@ -1907,7 +1907,7 @@
       "text": "근거",
       "resources": {
         "image": {
-          "file": "images/Level5_101.webp"
+          "file": "images/level5/Level5_101.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_101.wav",
@@ -1926,7 +1926,7 @@
       "text": "근본",
       "resources": {
         "image": {
-          "file": "images/Level5_102.webp"
+          "file": "images/level5/Level5_102.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_102.wav",
@@ -1945,7 +1945,7 @@
       "text": "근본적",
       "resources": {
         "image": {
-          "file": "images/Level5_103.webp"
+          "file": "images/level5/Level5_103.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_103.wav",
@@ -1964,7 +1964,7 @@
       "text": "금융",
       "resources": {
         "image": {
-          "file": "images/Level5_104.webp"
+          "file": "images/level5/Level5_104.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_104.wav",
@@ -1983,7 +1983,7 @@
       "text": "급격히",
       "resources": {
         "image": {
-          "file": "images/Level5_105.webp"
+          "file": "images/level5/Level5_105.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_105.wav",
@@ -2002,7 +2002,7 @@
       "text": "급속히",
       "resources": {
         "image": {
-          "file": "images/Level5_106.webp"
+          "file": "images/level5/Level5_106.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_106.wav",
@@ -2021,7 +2021,7 @@
       "text": "급증",
       "resources": {
         "image": {
-          "file": "images/Level5_107.webp"
+          "file": "images/level5/Level5_107.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_107.wav",
@@ -2040,7 +2040,7 @@
       "text": "기반",
       "resources": {
         "image": {
-          "file": "images/Level5_108.webp"
+          "file": "images/level5/Level5_108.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_108.wav",
@@ -2059,7 +2059,7 @@
       "text": "기업가",
       "resources": {
         "image": {
-          "file": "images/Level5_109.webp"
+          "file": "images/level5/Level5_109.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_109.wav",
@@ -2078,7 +2078,7 @@
       "text": "기여",
       "resources": {
         "image": {
-          "file": "images/Level5_110.webp"
+          "file": "images/level5/Level5_110.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_110.wav",
@@ -2097,7 +2097,7 @@
       "text": "기존",
       "resources": {
         "image": {
-          "file": "images/Level5_111.webp"
+          "file": "images/level5/Level5_111.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_111.wav",
@@ -2113,10 +2113,10 @@
     },
     {
       "id": "voca_112",
-      "text": "기준",
+      "text": "타당하다",
       "resources": {
         "image": {
-          "file": "images/Level5_112.webp"
+          "file": "images/level5/Level5_112.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_112.wav",
@@ -2135,7 +2135,7 @@
       "text": "기획",
       "resources": {
         "image": {
-          "file": "images/Level5_113.webp"
+          "file": "images/level5/Level5_113.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_113.wav",
@@ -2154,7 +2154,7 @@
       "text": "끼치다",
       "resources": {
         "image": {
-          "file": "images/Level5_114.webp"
+          "file": "images/level5/Level5_114.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_114.wav",
@@ -2170,10 +2170,10 @@
     },
     {
       "id": "voca_115",
-      "text": "끼치다",
+      "text": "혼란",
       "resources": {
         "image": {
-          "file": "images/Level5_115.webp"
+          "file": "images/level5/Level5_115.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_115.wav",
@@ -2192,7 +2192,7 @@
       "text": "민주주의",
       "resources": {
         "image": {
-          "file": "images/Level5_116.webp"
+          "file": "images/level5/Level5_116.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_116.wav",
@@ -2211,7 +2211,7 @@
       "text": "법률",
       "resources": {
         "image": {
-          "file": "images/Level5_117.webp"
+          "file": "images/level5/Level5_117.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_117.wav",
@@ -2230,7 +2230,7 @@
       "text": "보급",
       "resources": {
         "image": {
-          "file": "images/Level5_118.webp"
+          "file": "images/level5/Level5_118.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_118.wav",
@@ -2249,7 +2249,7 @@
       "text": "보안",
       "resources": {
         "image": {
-          "file": "images/Level5_119.webp"
+          "file": "images/level5/Level5_119.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_119.wav",
@@ -2268,7 +2268,7 @@
       "text": "보전",
       "resources": {
         "image": {
-          "file": "images/Level5_120.webp"
+          "file": "images/level5/Level5_120.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_120.wav",
@@ -2287,7 +2287,7 @@
       "text": "보존",
       "resources": {
         "image": {
-          "file": "images/Level5_121.webp"
+          "file": "images/level5/Level5_121.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_121.wav",
@@ -2306,7 +2306,7 @@
       "text": "본질",
       "resources": {
         "image": {
-          "file": "images/Level5_122.webp"
+          "file": "images/level5/Level5_122.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_122.wav",
@@ -2325,7 +2325,7 @@
       "text": "부정",
       "resources": {
         "image": {
-          "file": "images/Level5_123.webp"
+          "file": "images/level5/Level5_123.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_123.wav",
@@ -2344,7 +2344,7 @@
       "text": "부정확",
       "resources": {
         "image": {
-          "file": "images/Level5_124.webp"
+          "file": "images/level5/Level5_124.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_124.wav",
@@ -2363,7 +2363,7 @@
       "text": "분단",
       "resources": {
         "image": {
-          "file": "images/Level5_125.webp"
+          "file": "images/level5/Level5_125.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_125.wav",
@@ -2382,7 +2382,7 @@
       "text": "분포",
       "resources": {
         "image": {
-          "file": "images/Level5_126.webp"
+          "file": "images/level5/Level5_126.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_126.wav",
@@ -2401,7 +2401,7 @@
       "text": "불가피하다",
       "resources": {
         "image": {
-          "file": "images/Level5_127.webp"
+          "file": "images/level5/Level5_127.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_127.wav",
@@ -2420,7 +2420,7 @@
       "text": "불구하다",
       "resources": {
         "image": {
-          "file": "images/Level5_128.webp"
+          "file": "images/level5/Level5_128.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_128.wav",
@@ -2439,7 +2439,7 @@
       "text": "불균형",
       "resources": {
         "image": {
-          "file": "images/Level5_129.webp"
+          "file": "images/level5/Level5_129.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_129.wav",
@@ -2458,7 +2458,7 @@
       "text": "불완전",
       "resources": {
         "image": {
-          "file": "images/Level5_130.webp"
+          "file": "images/level5/Level5_130.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_130.wav",
@@ -2477,7 +2477,7 @@
       "text": "불충분",
       "resources": {
         "image": {
-          "file": "images/Level5_131.webp"
+          "file": "images/level5/Level5_131.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_131.wav",
@@ -2496,7 +2496,7 @@
       "text": "불평등",
       "resources": {
         "image": {
-          "file": "images/Level5_132.webp"
+          "file": "images/level5/Level5_132.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_132.wav",
@@ -2515,7 +2515,7 @@
       "text": "불확실",
       "resources": {
         "image": {
-          "file": "images/Level5_133.webp"
+          "file": "images/level5/Level5_133.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_133.wav",
@@ -2534,7 +2534,7 @@
       "text": "비롯되다",
       "resources": {
         "image": {
-          "file": "images/Level5_134.webp"
+          "file": "images/level5/Level5_134.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_134.wav",
@@ -2553,7 +2553,7 @@
       "text": "비유",
       "resources": {
         "image": {
-          "file": "images/Level5_135.webp"
+          "file": "images/level5/Level5_135.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_135.wav",
@@ -2572,7 +2572,7 @@
       "text": "비중",
       "resources": {
         "image": {
-          "file": "images/Level5_136.webp"
+          "file": "images/level5/Level5_136.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_136.wav",
@@ -2591,7 +2591,7 @@
       "text": "사고방식",
       "resources": {
         "image": {
-          "file": "images/Level5_137.webp"
+          "file": "images/level5/Level5_137.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_137.wav",
@@ -2610,7 +2610,7 @@
       "text": "사상",
       "resources": {
         "image": {
-          "file": "images/Level5_138.webp"
+          "file": "images/level5/Level5_138.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_138.wav",
@@ -2629,7 +2629,7 @@
       "text": "사설",
       "resources": {
         "image": {
-          "file": "images/Level5_139.webp"
+          "file": "images/level5/Level5_139.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_139.wav",
@@ -2648,7 +2648,7 @@
       "text": "새(사이, 기간)",
       "resources": {
         "image": {
-          "file": "images/Level5_140.webp"
+          "file": "images/level5/Level5_140.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_140.wav",
@@ -2667,7 +2667,7 @@
       "text": "-생",
       "resources": {
         "image": {
-          "file": "images/Level5_141.webp"
+          "file": "images/level5/Level5_141.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_141.wav",
@@ -2686,7 +2686,7 @@
       "text": "-성",
       "resources": {
         "image": {
-          "file": "images/Level5_142.webp"
+          "file": "images/level5/Level5_142.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_142.wav",
@@ -2705,7 +2705,7 @@
       "text": "성립",
       "resources": {
         "image": {
-          "file": "images/Level5_143.webp"
+          "file": "images/level5/Level5_143.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_143.wav",
@@ -2724,7 +2724,7 @@
       "text": "세계화",
       "resources": {
         "image": {
-          "file": "images/Level5_144.webp"
+          "file": "images/level5/Level5_144.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_144.wav",
@@ -2743,7 +2743,7 @@
       "text": "소-",
       "resources": {
         "image": {
-          "file": "images/Level5_145.webp"
+          "file": "images/level5/Level5_145.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_145.wav",
@@ -2762,7 +2762,7 @@
       "text": "-소",
       "resources": {
         "image": {
-          "file": "images/Level5_146.webp"
+          "file": "images/level5/Level5_146.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_146.wav",
@@ -2781,7 +2781,7 @@
       "text": "소재",
       "resources": {
         "image": {
-          "file": "images/Level5_147.webp"
+          "file": "images/level5/Level5_147.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_147.wav",
@@ -2800,7 +2800,7 @@
       "text": "수사",
       "resources": {
         "image": {
-          "file": "images/Level5_148.webp"
+          "file": "images/level5/Level5_148.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_148.wav",
@@ -2819,7 +2819,7 @@
       "text": "수상",
       "resources": {
         "image": {
-          "file": "images/Level5_149.webp"
+          "file": "images/level5/Level5_149.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_149.wav",
@@ -2838,7 +2838,7 @@
       "text": "실체",
       "resources": {
         "image": {
-          "file": "images/Level5_150.webp"
+          "file": "images/level5/Level5_150.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_150.wav",
@@ -2857,7 +2857,7 @@
       "text": "십상",
       "resources": {
         "image": {
-          "file": "images/Level5_151.webp"
+          "file": "images/level5/Level5_151.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_151.wav",
@@ -2876,7 +2876,7 @@
       "text": "약혼녀",
       "resources": {
         "image": {
-          "file": "images/Level5_152.webp"
+          "file": "images/level5/Level5_152.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_152.wav",
@@ -2895,7 +2895,7 @@
       "text": "이념",
       "resources": {
         "image": {
-          "file": "images/Level5_153.webp"
+          "file": "images/level5/Level5_153.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_153.wav",
@@ -2914,7 +2914,7 @@
       "text": "이윽고",
       "resources": {
         "image": {
-          "file": "images/Level5_154.webp"
+          "file": "images/level5/Level5_154.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_154.wav",
@@ -2933,7 +2933,7 @@
       "text": "이하",
       "resources": {
         "image": {
-          "file": "images/Level5_155.webp"
+          "file": "images/level5/Level5_155.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_155.wav",
@@ -2952,7 +2952,7 @@
       "text": "이해력",
       "resources": {
         "image": {
-          "file": "images/Level5_156.webp"
+          "file": "images/level5/Level5_156.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_156.wav",
@@ -2971,7 +2971,7 @@
       "text": "인간성",
       "resources": {
         "image": {
-          "file": "images/Level5_157.webp"
+          "file": "images/level5/Level5_157.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_157.wav",
@@ -2990,7 +2990,7 @@
       "text": "인격",
       "resources": {
         "image": {
-          "file": "images/Level5_158.webp"
+          "file": "images/level5/Level5_158.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_158.wav",
@@ -3009,7 +3009,7 @@
       "text": "인류",
       "resources": {
         "image": {
-          "file": "images/Level5_159.webp"
+          "file": "images/level5/Level5_159.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_159.wav",
@@ -3028,7 +3028,7 @@
       "text": "인식",
       "resources": {
         "image": {
-          "file": "images/Level5_160.webp"
+          "file": "images/level5/Level5_160.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_160.wav",
@@ -3047,7 +3047,7 @@
       "text": "인심",
       "resources": {
         "image": {
-          "file": "images/Level5_161.webp"
+          "file": "images/level5/Level5_161.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_161.wav",
@@ -3066,7 +3066,7 @@
       "text": "인용",
       "resources": {
         "image": {
-          "file": "images/Level5_162.webp"
+          "file": "images/level5/Level5_162.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_162.wav",
@@ -3085,7 +3085,7 @@
       "text": "인재",
       "resources": {
         "image": {
-          "file": "images/Level5_163.webp"
+          "file": "images/level5/Level5_163.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_163.wav",
@@ -3104,7 +3104,7 @@
       "text": "인정",
       "resources": {
         "image": {
-          "file": "images/Level5_164.webp"
+          "file": "images/level5/Level5_164.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_164.wav",
@@ -3123,7 +3123,7 @@
       "text": "인체",
       "resources": {
         "image": {
-          "file": "images/Level5_165.webp"
+          "file": "images/level5/Level5_165.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_165.wav",
@@ -3142,7 +3142,7 @@
       "text": "인하다",
       "resources": {
         "image": {
-          "file": "images/Level5_166.webp"
+          "file": "images/level5/Level5_166.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_166.wav",
@@ -3161,7 +3161,7 @@
       "text": "일석이조",
       "resources": {
         "image": {
-          "file": "images/Level5_167.webp"
+          "file": "images/level5/Level5_167.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_167.wav",
@@ -3180,7 +3180,7 @@
       "text": "일체",
       "resources": {
         "image": {
-          "file": "images/Level5_168.webp"
+          "file": "images/level5/Level5_168.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_168.wav",
@@ -3199,7 +3199,7 @@
       "text": "자살",
       "resources": {
         "image": {
-          "file": "images/Level5_169.webp"
+          "file": "images/level5/Level5_169.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_169.wav",
@@ -3218,7 +3218,7 @@
       "text": "전제",
       "resources": {
         "image": {
-          "file": "images/Level5_170.webp"
+          "file": "images/level5/Level5_170.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_170.wav",
@@ -3237,7 +3237,7 @@
       "text": "조작",
       "resources": {
         "image": {
-          "file": "images/Level5_171.webp"
+          "file": "images/level5/Level5_171.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_171.wav",
@@ -3256,7 +3256,7 @@
       "text": "여파",
       "resources": {
         "image": {
-          "file": "images/Level5_172.webp"
+          "file": "images/level5/Level5_172.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_172.wav",
@@ -3275,7 +3275,7 @@
       "text": "예외",
       "resources": {
         "image": {
-          "file": "images/Level5_173.webp"
+          "file": "images/level5/Level5_173.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_173.wav",
@@ -3294,7 +3294,7 @@
       "text": "요건",
       "resources": {
         "image": {
-          "file": "images/Level5_174.webp"
+          "file": "images/level5/Level5_174.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_174.wav",
@@ -3313,7 +3313,7 @@
       "text": "우려",
       "resources": {
         "image": {
-          "file": "images/Level5_175.webp"
+          "file": "images/level5/Level5_175.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_175.wav",
@@ -3332,7 +3332,7 @@
       "text": "위반",
       "resources": {
         "image": {
-          "file": "images/Level5_176.webp"
+          "file": "images/level5/Level5_176.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_176.wav",
@@ -3351,7 +3351,7 @@
       "text": "유발",
       "resources": {
         "image": {
-          "file": "images/Level5_177.webp"
+          "file": "images/level5/Level5_177.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_177.wav",
@@ -3370,7 +3370,7 @@
       "text": "유례",
       "resources": {
         "image": {
-          "file": "images/Level5_178.webp"
+          "file": "images/level5/Level5_178.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_178.wav",
@@ -3389,7 +3389,7 @@
       "text": "유지",
       "resources": {
         "image": {
-          "file": "images/Level5_179.webp"
+          "file": "images/level5/Level5_179.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_179.wav",
@@ -3408,7 +3408,7 @@
       "text": "의미론",
       "resources": {
         "image": {
-          "file": "images/Level5_180.webp"
+          "file": "images/level5/Level5_180.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_180.wav",
@@ -3427,7 +3427,7 @@
       "text": "이상적",
       "resources": {
         "image": {
-          "file": "images/Level5_181.webp"
+          "file": "images/level5/Level5_181.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_181.wav",
@@ -3446,7 +3446,7 @@
       "text": "임의",
       "resources": {
         "image": {
-          "file": "images/Level5_182.webp"
+          "file": "images/level5/Level5_182.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_182.wav",
@@ -3465,7 +3465,7 @@
       "text": "자극",
       "resources": {
         "image": {
-          "file": "images/Level5_183.webp"
+          "file": "images/level5/Level5_183.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_183.wav",
@@ -3484,7 +3484,7 @@
       "text": "자체",
       "resources": {
         "image": {
-          "file": "images/Level5_184.webp"
+          "file": "images/level5/Level5_184.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_184.wav",
@@ -3503,7 +3503,7 @@
       "text": "잠재적",
       "resources": {
         "image": {
-          "file": "images/Level5_185.webp"
+          "file": "images/level5/Level5_185.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_185.wav",
@@ -3522,7 +3522,7 @@
       "text": "정당성",
       "resources": {
         "image": {
-          "file": "images/Level5_186.webp"
+          "file": "images/level5/Level5_186.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_186.wav",
@@ -3541,7 +3541,7 @@
       "text": "정착",
       "resources": {
         "image": {
-          "file": "images/Level5_187.webp"
+          "file": "images/level5/Level5_187.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_187.wav",
@@ -3560,7 +3560,7 @@
       "text": "조정",
       "resources": {
         "image": {
-          "file": "images/Level5_188.webp"
+          "file": "images/level5/Level5_188.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_188.wav",
@@ -3579,7 +3579,7 @@
       "text": "존재감",
       "resources": {
         "image": {
-          "file": "images/Level5_189.webp"
+          "file": "images/level5/Level5_189.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_189.wav",
@@ -3598,7 +3598,7 @@
       "text": "주도",
       "resources": {
         "image": {
-          "file": "images/Level5_190.webp"
+          "file": "images/level5/Level5_190.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_190.wav",
@@ -3617,7 +3617,7 @@
       "text": "주목",
       "resources": {
         "image": {
-          "file": "images/Level5_191.webp"
+          "file": "images/level5/Level5_191.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_191.wav",
@@ -3636,7 +3636,7 @@
       "text": "준거",
       "resources": {
         "image": {
-          "file": "images/Level5_192.webp"
+          "file": "images/level5/Level5_192.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_192.wav",
@@ -3655,7 +3655,7 @@
       "text": "지속적",
       "resources": {
         "image": {
-          "file": "images/Level5_193.webp"
+          "file": "images/level5/Level5_193.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_193.wav",
@@ -3674,7 +3674,7 @@
       "text": "지연",
       "resources": {
         "image": {
-          "file": "images/Level5_194.webp"
+          "file": "images/level5/Level5_194.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_194.wav",
@@ -3693,7 +3693,7 @@
       "text": "직관",
       "resources": {
         "image": {
-          "file": "images/Level5_195.webp"
+          "file": "images/level5/Level5_195.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_195.wav",
@@ -3712,7 +3712,7 @@
       "text": "진보",
       "resources": {
         "image": {
-          "file": "images/Level5_196.webp"
+          "file": "images/level5/Level5_196.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_196.wav",
@@ -3731,7 +3731,7 @@
       "text": "진술",
       "resources": {
         "image": {
-          "file": "images/Level5_197.webp"
+          "file": "images/level5/Level5_197.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_197.wav",
@@ -3750,7 +3750,7 @@
       "text": "진전",
       "resources": {
         "image": {
-          "file": "images/Level5_198.webp"
+          "file": "images/level5/Level5_198.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_198.wav",
@@ -3769,7 +3769,7 @@
       "text": "집약",
       "resources": {
         "image": {
-          "file": "images/Level5_199.webp"
+          "file": "images/level5/Level5_199.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_199.wav",
@@ -3788,7 +3788,7 @@
       "text": "차별",
       "resources": {
         "image": {
-          "file": "images/Level5_200.webp"
+          "file": "images/level5/Level5_200.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_200.wav",
@@ -3807,7 +3807,7 @@
       "text": "창의",
       "resources": {
         "image": {
-          "file": "images/Level5_201.webp"
+          "file": "images/level5/Level5_201.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_201.wav",
@@ -3826,7 +3826,7 @@
       "text": "처리",
       "resources": {
         "image": {
-          "file": "images/Level5_202.webp"
+          "file": "images/level5/Level5_202.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_202.wav",
@@ -3845,7 +3845,7 @@
       "text": "체계적",
       "resources": {
         "image": {
-          "file": "images/Level5_203.webp"
+          "file": "images/level5/Level5_203.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_203.wav",
@@ -3864,7 +3864,7 @@
       "text": "최적",
       "resources": {
         "image": {
-          "file": "images/Level5_204.webp"
+          "file": "images/level5/Level5_204.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_204.wav",
@@ -3883,7 +3883,7 @@
       "text": "추론",
       "resources": {
         "image": {
-          "file": "images/Level5_205.webp"
+          "file": "images/level5/Level5_205.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_205.wav",
@@ -3902,7 +3902,7 @@
       "text": "축적",
       "resources": {
         "image": {
-          "file": "images/Level5_206.webp"
+          "file": "images/level5/Level5_206.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_206.wav",
@@ -3921,7 +3921,7 @@
       "text": "충돌",
       "resources": {
         "image": {
-          "file": "images/Level5_207.webp"
+          "file": "images/level5/Level5_207.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_207.wav",
@@ -3940,7 +3940,7 @@
       "text": "측면",
       "resources": {
         "image": {
-          "file": "images/Level5_208.webp"
+          "file": "images/level5/Level5_208.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_208.wav",
@@ -3959,7 +3959,7 @@
       "text": "탐구",
       "resources": {
         "image": {
-          "file": "images/Level5_209.webp"
+          "file": "images/level5/Level5_209.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_209.wav",
@@ -3978,7 +3978,7 @@
       "text": "탄력",
       "resources": {
         "image": {
-          "file": "images/Level5_210.webp"
+          "file": "images/level5/Level5_210.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_210.wav",
@@ -3997,7 +3997,7 @@
       "text": "투영",
       "resources": {
         "image": {
-          "file": "images/Level5_211.webp"
+          "file": "images/level5/Level5_211.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_211.wav",
@@ -4016,7 +4016,7 @@
       "text": "특성",
       "resources": {
         "image": {
-          "file": "images/Level5_212.webp"
+          "file": "images/level5/Level5_212.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_212.wav",
@@ -4035,7 +4035,7 @@
       "text": "평가",
       "resources": {
         "image": {
-          "file": "images/Level5_213.webp"
+          "file": "images/level5/Level5_213.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_213.wav",
@@ -4054,7 +4054,7 @@
       "text": "평형",
       "resources": {
         "image": {
-          "file": "images/Level5_214.webp"
+          "file": "images/level5/Level5_214.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_214.wav",
@@ -4073,7 +4073,7 @@
       "text": "포괄적",
       "resources": {
         "image": {
-          "file": "images/Level5_215.webp"
+          "file": "images/level5/Level5_215.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_215.wav",
@@ -4092,7 +4092,7 @@
       "text": "표준화",
       "resources": {
         "image": {
-          "file": "images/Level5_216.webp"
+          "file": "images/level5/Level5_216.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_216.wav",
@@ -4111,7 +4111,7 @@
       "text": "현황",
       "resources": {
         "image": {
-          "file": "images/Level5_217.webp"
+          "file": "images/level5/Level5_217.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_217.wav",
@@ -4130,7 +4130,7 @@
       "text": "협상",
       "resources": {
         "image": {
-          "file": "images/Level5_218.webp"
+          "file": "images/level5/Level5_218.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_218.wav",
@@ -4149,7 +4149,7 @@
       "text": "혜택",
       "resources": {
         "image": {
-          "file": "images/Level5_219.webp"
+          "file": "images/level5/Level5_219.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_219.wav",
@@ -4168,7 +4168,7 @@
       "text": "화합",
       "resources": {
         "image": {
-          "file": "images/Level5_220.webp"
+          "file": "images/level5/Level5_220.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_220.wav",
@@ -4187,7 +4187,7 @@
       "text": "환경적",
       "resources": {
         "image": {
-          "file": "images/Level5_221.webp"
+          "file": "images/level5/Level5_221.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_221.wav",
@@ -4206,7 +4206,7 @@
       "text": "회피",
       "resources": {
         "image": {
-          "file": "images/Level5_222.webp"
+          "file": "images/level5/Level5_222.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_222.wav",
@@ -4225,7 +4225,7 @@
       "text": "확립",
       "resources": {
         "image": {
-          "file": "images/Level5_223.webp"
+          "file": "images/level5/Level5_223.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_223.wav",
@@ -4244,7 +4244,7 @@
       "text": "확산",
       "resources": {
         "image": {
-          "file": "images/Level5_224.webp"
+          "file": "images/level5/Level5_224.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_224.wav",
@@ -4263,7 +4263,7 @@
       "text": "확인",
       "resources": {
         "image": {
-          "file": "images/Level5_225.webp"
+          "file": "images/level5/Level5_225.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_225.wav",
@@ -4282,7 +4282,7 @@
       "text": "환원",
       "resources": {
         "image": {
-          "file": "images/Level5_226.webp"
+          "file": "images/level5/Level5_226.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_226.wav",
@@ -4301,7 +4301,7 @@
       "text": "활동성",
       "resources": {
         "image": {
-          "file": "images/Level5_227.webp"
+          "file": "images/level5/Level5_227.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_227.wav",
@@ -4320,7 +4320,7 @@
       "text": "활용",
       "resources": {
         "image": {
-          "file": "images/Level5_228.webp"
+          "file": "images/level5/Level5_228.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_228.wav",
@@ -4339,7 +4339,7 @@
       "text": "활발",
       "resources": {
         "image": {
-          "file": "images/Level5_229.webp"
+          "file": "images/level5/Level5_229.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_229.wav",
@@ -4358,7 +4358,7 @@
       "text": "회귀",
       "resources": {
         "image": {
-          "file": "images/Level5_230.webp"
+          "file": "images/level5/Level5_230.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_230.wav",
@@ -4377,7 +4377,7 @@
       "text": "획득",
       "resources": {
         "image": {
-          "file": "images/Level5_231.webp"
+          "file": "images/level5/Level5_231.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_231.wav",
@@ -4396,7 +4396,7 @@
       "text": "효율",
       "resources": {
         "image": {
-          "file": "images/Level5_232.webp"
+          "file": "images/level5/Level5_232.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_232.wav",
@@ -4415,7 +4415,7 @@
       "text": "효율적",
       "resources": {
         "image": {
-          "file": "images/Level5_233.webp"
+          "file": "images/level5/Level5_233.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_233.wav",
@@ -4434,7 +4434,7 @@
       "text": "휴면",
       "resources": {
         "image": {
-          "file": "images/Level5_234.webp"
+          "file": "images/level5/Level5_234.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_234.wav",
@@ -4453,7 +4453,7 @@
       "text": "흔들림",
       "resources": {
         "image": {
-          "file": "images/Level5_235.webp"
+          "file": "images/level5/Level5_235.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_235.wav",
@@ -4472,7 +4472,7 @@
       "text": "희생",
       "resources": {
         "image": {
-          "file": "images/Level5_236.webp"
+          "file": "images/level5/Level5_236.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_236.wav",
@@ -4491,7 +4491,7 @@
       "text": "흥미",
       "resources": {
         "image": {
-          "file": "images/Level5_237.webp"
+          "file": "images/level5/Level5_237.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_237.wav",
@@ -4510,7 +4510,7 @@
       "text": "경향",
       "resources": {
         "image": {
-          "file": "images/Level5_238.webp"
+          "file": "images/level5/Level5_238.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_238.wav",
@@ -4529,7 +4529,7 @@
       "text": "근거",
       "resources": {
         "image": {
-          "file": "images/Level5_239.webp"
+          "file": "images/level5/Level5_239.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_239.wav",
@@ -4548,7 +4548,7 @@
       "text": "기반",
       "resources": {
         "image": {
-          "file": "images/Level5_240.webp"
+          "file": "images/level5/Level5_240.webp"
         },
         "audio_voca": {
           "file": "audio/voca/level5/Level5_240.wav",
@@ -4557,44 +4557,6 @@
         },
         "audio_ex": {
           "file": "audio/example/level5/Level5_240.wav",
-          "language": "ko",
-          "speed": "normal"
-        }
-      }
-    },
-    {
-      "id": "voca_241",
-      "text": "논쟁",
-      "resources": {
-        "image": {
-          "file": "images/Level5_241.webp"
-        },
-        "audio_voca": {
-          "file": "audio/voca/level5/Level5_241.wav",
-          "language": "ko",
-          "speed": "normal"
-        },
-        "audio_ex": {
-          "file": "audio/example/level5/Level5_241.wav",
-          "language": "ko",
-          "speed": "normal"
-        }
-      }
-    },
-    {
-      "id": "voca_242",
-      "text": "대응",
-      "resources": {
-        "image": {
-          "file": "images/Level5_242.webp"
-        },
-        "audio_voca": {
-          "file": "audio/voca/level5/Level5_242.wav",
-          "language": "ko",
-          "speed": "normal"
-        },
-        "audio_ex": {
-          "file": "audio/example/level5/Level5_242.wav",
           "language": "ko",
           "speed": "normal"
         }

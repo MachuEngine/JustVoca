@@ -13,9 +13,8 @@ import {
   ChevronRight,
   Flame
 } from 'lucide-react';
-// [추가] AuthGuard 및 API 임포트
 import AuthGuard from '../components/AuthGuard';
-import { getUserProfile, updateStudySettings } from '../api';
+import { getUserProfile } from '../api';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -34,13 +33,7 @@ export default function SettingsPage() {
     }
   }, []);
 
-  const handleGoalChange = async (newGoal: number) => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) return;
-    setDailyGoal(newGoal);
-    await updateStudySettings(userId, { dailyGoal: newGoal });
-  };
-
+  // 로그아웃 함수만 유지
   const handleLogout = () => {
     if (confirm("로그아웃 하시겠습니까?")) {
       localStorage.removeItem('userId');
@@ -49,8 +42,14 @@ export default function SettingsPage() {
     }
   };
 
+  // 준비중 알림을 위한 헬퍼 컴포넌트
+  const ComingSoonBadge = () => (
+    <span className="bg-gray-100 text-gray-400 text-[10px] px-2 py-1 rounded-md font-bold ml-2">
+      준비중
+    </span>
+  );
+
   return (
-    // [보안 적용] 로그인한 모든 유저 접근 가능
     <AuthGuard>
       <div className="h-full flex flex-col bg-gray-50 pb-24">
         {/* 헤더 */}
@@ -65,45 +64,43 @@ export default function SettingsPage() {
           {/* 학습 설정 섹션 */}
           <section>
             <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">Study Settings</h2>
-            <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
-              <div className="p-5 border-b border-gray-50 flex items-center justify-between">
+            <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm opacity-60">
+              {/* 일일 목표 - 비활성화 */}
+              <div className="p-5 border-b border-gray-50 flex items-center justify-between cursor-not-allowed">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-orange-50 text-orange-400 rounded-xl flex items-center justify-center">
                     <Target size={20} />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 text-sm">일일 학습 목표</p>
+                    <div className="flex items-center">
+                      <p className="font-bold text-gray-900 text-sm">일일 학습 목표</p>
+                      <ComingSoonBadge />
+                    </div>
                     <p className="text-[10px] text-gray-400 font-medium">하루에 학습할 단어 개수</p>
                   </div>
                 </div>
-                <select 
-                  value={dailyGoal}
-                  onChange={(e) => handleGoalChange(Number(e.target.value))}
-                  className="bg-gray-50 text-sm font-black text-gray-900 px-3 py-2 rounded-xl outline-none"
-                >
-                  <option value={5}>5개</option>
-                  <option value={10}>10개</option>
-                  <option value={20}>20개</option>
-                  <option value={30}>30개</option>
-                </select>
+                <div className="bg-gray-50 text-sm font-black text-gray-400 px-3 py-2 rounded-xl">
+                  {dailyGoal}개
+                </div>
               </div>
 
-              <div className="p-5 flex items-center justify-between">
+              {/* 오답 복습 - 비활성화 */}
+              <div className="p-5 flex items-center justify-between cursor-not-allowed">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-red-50 text-red-400 rounded-xl flex items-center justify-center">
                     <Flame size={20} />
                   </div>
                   <div>
-                    <p className="font-bold text-gray-900 text-sm">오답 자동 복습</p>
+                    <div className="flex items-center">
+                      <p className="font-bold text-gray-900 text-sm">오답 자동 복습</p>
+                      <ComingSoonBadge />
+                    </div>
                     <p className="text-[10px] text-gray-400 font-medium">틀린 단어는 마지막에 다시 학습</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setReviewWrong(!reviewWrong)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${reviewWrong ? 'bg-green-500' : 'bg-gray-200'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${reviewWrong ? 'right-1' : 'left-1'}`}></div>
-                </button>
+                <div className="w-12 h-6 rounded-full bg-gray-200 relative">
+                  <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all"></div>
+                </div>
               </div>
             </div>
           </section>
@@ -111,30 +108,33 @@ export default function SettingsPage() {
           {/* 앱 설정 섹션 */}
           <section>
             <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 ml-1">App Settings</h2>
-            <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
+            <div className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm opacity-60">
               {[
-                { icon: Bell, label: "알림 설정", color: "text-blue-500", bg: "bg-blue-50" },
-                { icon: Moon, label: "다크 모드", color: "text-purple-500", bg: "bg-purple-50" },
-                { icon: ShieldCheck, label: "개인정보 보호", color: "text-green-500", bg: "bg-green-50" },
-                { icon: HelpCircle, label: "고객 지원", color: "text-gray-500", bg: "bg-gray-50" }
+                { icon: Bell, label: "알림 설정", color: "text-blue-400", bg: "bg-blue-50" },
+                { icon: Moon, label: "다크 모드", color: "text-purple-400", bg: "bg-purple-50" },
+                { icon: ShieldCheck, label: "개인정보 보호", color: "text-green-400", bg: "bg-green-50" },
+                { icon: HelpCircle, label: "고객 지원", color: "text-gray-400", bg: "bg-gray-50" }
               ].map((item, idx) => (
-                <button 
+                <div 
                   key={idx}
-                  className="w-full p-5 flex items-center justify-between hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+                  className="w-full p-5 flex items-center justify-between border-b border-gray-50 last:border-0 cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 ${item.bg} ${item.color} rounded-xl flex items-center justify-center`}>
                       <item.icon size={20} />
                     </div>
-                    <span className="font-bold text-gray-900 text-sm">{item.label}</span>
+                    <div className="flex items-center">
+                      <span className="font-bold text-gray-900 text-sm">{item.label}</span>
+                      <ComingSoonBadge />
+                    </div>
                   </div>
-                  <ChevronRight size={18} className="text-gray-300" />
-                </button>
+                  <ChevronRight size={18} className="text-gray-200" />
+                </div>
               ))}
             </div>
           </section>
 
-          {/* 로그아웃 버튼 */}
+          {/* 로그아웃 버튼 - 활성 상태 유지 */}
           <button 
             onClick={handleLogout}
             className="w-full h-16 bg-white text-red-500 font-black rounded-3xl border border-red-100 shadow-sm flex items-center justify-center gap-2 hover:bg-red-50 active:scale-[0.98] transition-all"

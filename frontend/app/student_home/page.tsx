@@ -207,7 +207,12 @@ export default function StudentHomePage() {
 
         {/* 5. 플로팅 챗봇 */}
         <div className="fixed bottom-24 right-6 z-[60]">
-          <button className="w-14 h-14 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform">
+          <button 
+            onClick={() => alert("챗봇 기능은 준비 중입니다! 조금만 기다려주세요.")}
+            // opacity-70: 70% 불투명도 적용 (취향에 따라 50, 60 등으로 조절 가능)
+            // hover:opacity-100: 마우스 올렸을 때 다시 선명해지는 효과 (선택 사항)
+            className="w-14 h-14 bg-gray-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all opacity-70 hover:opacity-100"
+          >
             <MessageCircle size={24} fill="currentColor" />
           </button>
         </div>

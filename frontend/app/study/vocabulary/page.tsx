@@ -389,11 +389,29 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
       const response = await uploadRecord(formData);
       console.log("[UPLOAD] 6 response =", response);
 
+      // 🟢 [수정 및 추가 부분 시작] ---------------------------------------------
       if (response?.success === false) {
-        alert(response?.error || "분석이 어려워요. 문장을 다시 천천히 읽어보세요.");
+        const errorMsg = String(response?.error || "");
+        
+        // 엔진 통신 장애(아무 말 안 함 등) 케이스 확인
+        const isConnectionError = errorMsg.includes("Connection refused") || 
+                                  errorMsg.includes("HTTPConnectionPool");
+
+        if (isConnectionError) {
+          // 시스템 에러가 아닌 친근한 안내로 대체
+          alert("문장이 잘 들리지 않아요. 녹음 버튼을 눌러 다시 한번 읽어보세요!");
+        } else {
+          // 그 외 실제 분석 실패 메시지
+          alert(response?.error || "분석이 어려워요. 문장을 다시 천천히 읽어보세요.");
+        }
+
+        // 상태 리셋 (버튼 활성화)
+        setRecordingStatus("idle"); 
+        setRecordBlob(null);
+        setIsProcessing(false); 
         return;
       }
-
+      // 🟢 [수정 및 추가 부분 끝] -----------------------------------------------
 
       console.log("[UPLOAD] response JSON =", JSON.stringify(response));
 
@@ -447,9 +465,15 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
       } else {
         console.error("서버 응답 데이터 구조 이상:", resultData);
         alert("평가 결과를 표시할 수 있는 데이터가 없습니다.");
+        // 🟢 결과가 없을 때도 버튼 리셋 추가
+        setRecordingStatus("idle");
+        setRecordBlob(null);
       }
     } catch (error: any) {
-      alert("서버와 통신할 수 없습니다.");
+      // 🟢 [수정] 네트워크 에러 등 발생 시 안내 문구 변경
+      alert("소리가 인식되지 않았습니다. 녹음 버튼을 눌러 다시 읽어보세요.");
+      setRecordingStatus("idle");
+      setRecordBlob(null);
     } finally {
       setIsProcessing(false);
     }

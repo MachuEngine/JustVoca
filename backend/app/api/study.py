@@ -266,41 +266,74 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
     db.commit()
     return {"status": "success", "next_page": progress.current_page if progress else 2}
 
-# backend/app/api/study.py
-
-@router.get("/review-words", response_model=List[WordSchema])
+@router.get("/review-words")
 async def get_review_words(user_id: str, db: Session = Depends(get_session)):
-    # 1. 전체 학습 기록 중 점수가 낮은 순으로 10개 추출
-    statement = select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.score.asc()).limit(10)
-    logs = db.exec(statement).all()
-    if not logs: return []
+    if not os.path.exists(EXCEL_PATH): return []
 
-    # 2. 엑셀 데이터 전체 로드 (상세 정보를 채우기 위함)
+    # 1. 넉넉하게 최근/취약 기록 50개를 먼저 가져옵니다.
+    statement = select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.score.asc()).limit(50)
+    all_logs = db.exec(statement).all()
+    if not all_logs: return []
+
+    # 2. 파이썬에서 단어 중복 제거 (이미 나온 단어는 건너뜀)
+    unique_logs = []
+    seen_words = set()
+    for log in all_logs:
+        if log.word not in seen_words:
+            unique_logs.append(log)
+            seen_words.add(log.word)
+        if len(unique_logs) >= 10: # 최종적으로 10개만 선택
+            break
+
+    # 3. 엑셀 데이터 로드 및 매칭 (이후 로직은 동일)
     xls = pd.ExcelFile(EXCEL_PATH, engine="openpyxl")
     all_df = pd.concat([pd.read_excel(xls, sheet_name=s) for s in xls.sheet_names], ignore_index=True)
     all_df = all_df.rename(columns=COLUMN_MAPPING)
     
-    # 오디오 컬럼(ID) 확인
     actual_cols = all_df.columns.tolist()
     audio_col = next((c for c in actual_cols if "Audio_Voca" in str(c) or "파일 명" in str(c)), "audio_path")
     all_df = all_df.rename(columns={audio_col: "audio_path"})
 
     review_list = []
-    for log in logs:
-        # 3. 엑셀에서 해당 단어의 상세 정보 매칭
+    json_cache = {}
+
+    for log in unique_logs: # 중복 제거된 리스트 사용
         row = all_df[all_df['word'] == log.word].iloc[0] if any(all_df['word'] == log.word) else None
         
         if row is not None:
             file_id = str(row.get('audio_path', '')).strip()
-            level_name = file_id.split('_')[0].replace("Level", "초급") # 예: Level1 -> 초급1
             
-            # ID 기반 리소스 맵 로드 (이미지/오디오 경로 확보)
-            res_map = load_resource_map_by_id(level_name) 
-            res = res_map.get(file_id, {})
+            import re
+            m = re.search(r'Level(\d+)', file_id, re.I)
+            level_num = m.group(1) if m else "1"
+            json_filename = f"level{level_num}.json"
+
+            if json_filename not in json_cache:
+                json_path = os.path.join(JSON_DATA_DIR, json_filename)
+                json_cache[json_filename] = {}
+                if os.path.exists(json_path):
+                    try:
+                        with open(json_path, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                            for item in data.get("items", []):
+                                res = item.get("resources", {})
+                                aud_raw = res.get("audio_voca", {}).get("file", "")
+                                if not aud_raw: continue
+                                fid = os.path.splitext(os.path.basename(aud_raw))[0]
+                                img = res.get("image", {}).get("file", "")
+                                aud_ex = res.get("audio_ex", {}).get("file", "")
+                                json_cache[json_filename][fid] = {
+                                    "image_path": f"/assets/{img}" if img and not img.startswith("/") else img,
+                                    "audio_path": f"/assets/{aud_raw}" if aud_raw and not aud_raw.startswith("/") else aud_raw,
+                                    "audio_example_path": f"/assets/{aud_ex}" if aud_ex and not aud_ex.startswith("/") else aud_ex
+                                }
+                    except: pass
+
+            res = json_cache[json_filename].get(file_id, {})
 
             review_list.append({
                 "id": log.id,
-                "level": level_name,
+                "level": str(row.get('level', f"Level{level_num}")),
                 "topic": "전체 복습",
                 "word": log.word,
                 "pronunciation": str(row.get('pronunciation', '')),
@@ -311,6 +344,7 @@ async def get_review_words(user_id: str, db: Session = Depends(get_session)):
                 "audio_example_path": res.get("audio_example_path", ""),
                 "image_path": res.get("image_path", "")
             })
+            
     return review_list
 
 @router.get("/quiz")

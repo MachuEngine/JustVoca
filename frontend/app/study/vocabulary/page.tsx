@@ -32,6 +32,7 @@ export default function VocabularyStudyPage() {
   const searchParams = useSearchParams();
 
   const level = searchParams.get("level") || "초급1";
+  const mode = searchParams.get("mode"); // 추가
   const userId =
     typeof window !== "undefined"
       ? localStorage.getItem("userId") || "student"
@@ -99,21 +100,21 @@ const getImageUrl = (path: string) => {
       try {
         setLoading(true);
 
-        const words = await getWords(level, userId);
-        const mappedWords = mapWordData(words);
-        setWordData(mappedWords);
-
-        try {
+        if (mode === "review") {
+          // [전체 복습 모드] 통계 화면에서 온 경우
           const reviews = await getReviewWords(userId);
-          if (reviews && reviews.length > 0) {
-            setReviewData(mapWordData(reviews));
-          } else {
-            setReviewData(mappedWords.slice(0, 5));
-          }
-        } catch (e) {
-          setReviewData(mappedWords.slice(0, 5));
+          const mapped = mapWordData(reviews);
+          setReviewData(mapped);
+          setPhase("review"); // 바로 복습 단계로 시작
+          setCurrentIndex(0);
+        } else {
+          // [일반 학습 모드]
+          const words = await getWords(level, userId);
+          const mappedWords = mapWordData(words);
+          setWordData(mappedWords);
         }
 
+        // 퀴즈는 공통으로 로드
         try {
           const quizzes = await getQuiz(level);
           if (quizzes && quizzes.length > 0) setQuizData(quizzes);
@@ -128,7 +129,7 @@ const getImageUrl = (path: string) => {
     }
 
     fetchInitialData();
-  }, [level, userId]);
+  }, [level, userId, mode]); // mode를 의존성 배열에 추가
 
   useEffect(() => {
     if (phase === "review_intro") {
@@ -208,22 +209,25 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
   e.stopPropagation();
   if (!currentWord) return;
 
-  // type에 따라 백엔드에서 받은 적절한 경로를 선택합니다.
+  // 1. 백엔드에서 준 경로 선택 (voca 또는 example)
+  // [주의] 백엔드에서 audio_example_path를 추가했다면 해당 필드를 사용하세요.
   const audioPath = type === "voca" 
     ? currentWord.audioKey 
-    : currentWord.audioExamplePath;
+    : (currentWord.audioExamplePath || currentWord.audioKey);
 
   if (!audioPath) {
-    console.error(`${type} 오디오 경로가 없습니다.`);
+    console.warn(`${type} 오디오 경로가 없습니다.`);
     return;
   }
 
+  // 2. 이미 완성된 경로(/assets/...)를 바로 사용
   const audio = new Audio(audioPath);
-  audio.play().catch((err) => console.error("오디오 재생 실패:", err));
+  audio.play().catch((err) => console.error("재생 실패:", audioPath, err));
 };
 
   const handleNext = async () => {
     if (phase === "learning") {
+      // 중간 응원 메시지 로직 (생략 가능)
       if (currentIndex === 4 && !showEncouragement) {
         setShowEncouragement(true);
         setTimeout(() => {
@@ -237,7 +241,21 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
       if (currentIndex < wordData.length - 1) {
         setCurrentIndex((prev) => prev + 1);
       } else {
-        setPhase("review_intro");
+        // 🟢 [수정 위치] 10개 학습이 끝났을 때
+        // 현재 학습한 10개 단어를 복습 데이터로 복제합니다.
+
+        // 🟢 [수정] 10개 학습 완료 시 점수가 70점 미만인 단어만 필터링
+        const failedWords = wordData.filter(w => w.score !== undefined && w.score < 70);
+
+
+        if (failedWords.length > 0) {
+          setReviewData(failedWords);
+          setPhase("review_intro");
+          setCurrentIndex(0);
+        } else {
+          // 모든 단어가 70점 이상이면 복습을 건너뛰고 바로 퀴즈로 이동
+          setPhase(quizData.length > 0 ? "quiz_intro" : "complete");
+        }
       }
       resetCardState();
     } else if (phase === "review") {
@@ -418,8 +436,13 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
         }
 
         console.log("[DEBUG] 최종 결정된 점수:", finalScore);
-
+        const roundedScore = Math.round(finalScore);
         setOverallScore(Math.round(finalScore));
+
+        // 🟢 [추가] 현재 단어의 점수를 wordData 리스트에 기록합니다.
+        setWordData(prev => prev.map((item, idx) => 
+          idx === currentIndex ? { ...item, score: roundedScore } : item
+        ));
         setShowResultOverlay(true);
       } else {
         console.error("서버 응답 데이터 구조 이상:", resultData);

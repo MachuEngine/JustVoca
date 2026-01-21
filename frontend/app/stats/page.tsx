@@ -158,17 +158,11 @@ export default function StatsPage() {
               <div className="grid grid-cols-2 gap-3">
                 {/* 복습하기 버튼 */}
                 <Link href="/study/vocabulary?mode=review" className="block h-full">
-                  <div className="bg-orange-50 p-5 rounded-3xl border border-orange-100 hover:bg-orange-100 transition-colors active:scale-[0.98] h-full flex flex-col justify-between cursor-pointer">
-                    <div className="bg-white w-10 h-10 rounded-full flex items-center justify-center mb-3 shadow-sm text-orange-500">
-                      <RefreshCcw size={20} />
-                    </div>
-                    <div>
-                      <p className="font-black text-gray-900 mb-1">오늘 복습하기</p>
-                      <p className="text-xs font-bold text-orange-600/80">틀린 단어 다시 보기</p>
-                    </div>
+                  <div className="bg-orange-50 p-5 rounded-3xl ...">
+                    <p className="font-black text-gray-900 mb-1">오늘 복습하기</p>
+                    <p className="text-xs font-bold text-orange-600/80">틀린 단어 다시 보기</p>
                   </div>
                 </Link>
-
                 {/* 새 학습 버튼 */}
                 <Link href="/study/vocabulary" className="block h-full">
                   <div className="bg-blue-50 p-5 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-colors active:scale-[0.98] h-full flex flex-col justify-between cursor-pointer">

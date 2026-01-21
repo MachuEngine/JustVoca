@@ -266,17 +266,51 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
     db.commit()
     return {"status": "success", "next_page": progress.current_page if progress else 2}
 
-@router.get("/review-words")
+# backend/app/api/study.py
+
+@router.get("/review-words", response_model=List[WordSchema])
 async def get_review_words(user_id: str, db: Session = Depends(get_session)):
-    statement = select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.score.asc()).limit(5)
+    # 1. 전체 학습 기록 중 점수가 낮은 순으로 10개 추출
+    statement = select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.score.asc()).limit(10)
     logs = db.exec(statement).all()
     if not logs: return []
+
+    # 2. 엑셀 데이터 전체 로드 (상세 정보를 채우기 위함)
+    xls = pd.ExcelFile(EXCEL_PATH, engine="openpyxl")
+    all_df = pd.concat([pd.read_excel(xls, sheet_name=s) for s in xls.sheet_names], ignore_index=True)
+    all_df = all_df.rename(columns=COLUMN_MAPPING)
+    
+    # 오디오 컬럼(ID) 확인
+    actual_cols = all_df.columns.tolist()
+    audio_col = next((c for c in actual_cols if "Audio_Voca" in str(c) or "파일 명" in str(c)), "audio_path")
+    all_df = all_df.rename(columns={audio_col: "audio_path"})
+
     review_list = []
     for log in logs:
-        review_list.append({
-            "id": log.id, "word": log.word, "pronunciation": "", "meaning": "", "eng_meaning": "", 
-            "example": "", "audio_path": "", "image_path": "", "level": "", "topic": "Review"
-        })
+        # 3. 엑셀에서 해당 단어의 상세 정보 매칭
+        row = all_df[all_df['word'] == log.word].iloc[0] if any(all_df['word'] == log.word) else None
+        
+        if row is not None:
+            file_id = str(row.get('audio_path', '')).strip()
+            level_name = file_id.split('_')[0].replace("Level", "초급") # 예: Level1 -> 초급1
+            
+            # ID 기반 리소스 맵 로드 (이미지/오디오 경로 확보)
+            res_map = load_resource_map_by_id(level_name) 
+            res = res_map.get(file_id, {})
+
+            review_list.append({
+                "id": log.id,
+                "level": level_name,
+                "topic": "전체 복습",
+                "word": log.word,
+                "pronunciation": str(row.get('pronunciation', '')),
+                "meaning": str(row.get('meaning', '')),
+                "eng_meaning": str(row.get('eng_meaning', '')),
+                "example": str(row.get('example', '')),
+                "audio_path": res.get("audio_path", ""),
+                "audio_example_path": res.get("audio_example_path", ""),
+                "image_path": res.get("image_path", "")
+            })
     return review_list
 
 @router.get("/quiz")

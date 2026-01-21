@@ -7,11 +7,33 @@ const getBaseUrl = () => {
 };
 const API_BASE_URL = getBaseUrl();
 
+// [신규] 에러 처리를 위한 헬퍼 함수
+async function handleResponse(res: Response) {
+  if (!res.ok) {
+    let errorData = {};
+    try {
+      // 백엔드가 보낸 JSON 에러 메시지를 파싱 시도
+      errorData = await res.json();
+    } catch (e) {
+      // JSON이 아닐 경우(500 HTML 등) 대비
+      errorData = { detail: `HTTP Error ${res.status}` };
+    }
+    
+    // 에러 객체에 백엔드 응답 데이터(response.data)를 심어서 던짐
+    const error: any = new Error(`Request failed: ${res.status}`);
+    error.response = {
+      status: res.status,
+      data: errorData
+    };
+    throw error;
+  }
+  return await res.json();
+}
+
 export const api = {
   get: async (endpoint: string) => {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, { credentials: "include" });
-    if (!res.ok) throw new Error(`GET 실패: ${res.status}`);
-    return await res.json();
+    return handleResponse(res);
   },
   post: async (endpoint: string, body: any) => {
     const isFormData = body instanceof FormData;
@@ -21,8 +43,7 @@ export const api = {
       headers: isFormData ? {} : { "Content-Type": "application/json" },
       credentials: "include",
     });
-    if (!res.ok) throw new Error(`POST 실패: ${res.status}`);
-    return await res.json();
+    return handleResponse(res);
   },
   put: async (endpoint: string, body: any) => {
     const res = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -31,8 +52,7 @@ export const api = {
       body: JSON.stringify(body),
       credentials: "include"
     });
-    if (!res.ok) throw new Error(`PUT 실패: ${res.status}`);
-    return await res.json();
+    return handleResponse(res);
   }
 };
 
@@ -43,7 +63,7 @@ export const login = (id: string, pw: string) => api.post("/auth/login", { id, p
 export const signup = (data: any) => api.post("/auth/register", data);
 export const checkIdDuplicate = (id: string) => api.post("/auth/check-id", { id });
 
-// 프로필 및 설정 관련 (추가 및 수정)
+// 프로필 및 설정 관련
 export const getUserProfile = (uid: string) => api.get(`/user/${uid}/profile`);
 export const updateUserProfile = (uid: string, profileData: any) => 
   api.put(`/user/${uid}/profile`, profileData);
@@ -63,12 +83,11 @@ export const completeStudy = (lv: string, uid: string) => {
   return api.post("/study/complete", fd);
 };
 
-// 선생님 및 공지사항 관련 (수정 완료)
+// 선생님 및 공지사항 관련
 export const getStudents = () => api.get("/api/teacher/students");
 export const getNotices = () => api.get("/api/teacher/notices");
 export const getStudentNotices = () => api.get("/api/notice/list");
 
-// sendNotice: 객체 형태로 인자를 받으며 scheduled_at을 포함합니다.
 export const sendNotice = (data: { 
   title: string; 
   content: string; 
@@ -76,9 +95,5 @@ export const sendNotice = (data: {
   scheduled_at: string | null 
 }) => api.post("/api/teacher/notice", data);
 
-// [추가] 선생님용: 특정 학생 상세 정보 가져오기
 export const getStudentDetail = (uid: string) => api.get(`/api/teacher/student/${uid}`);
-
-
-// [신규 추가] 학생 통계 데이터 가져오기
 export const getStudentStats = (uid: string) => api.get(`/study/stats?user_id=${uid}`);

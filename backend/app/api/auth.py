@@ -55,14 +55,20 @@ async def login(
 
 @router.post("/register")
 async def register(data: UserRegister, session: Session = Depends(get_session)):
-    # 1. 중복 확인 (방어 로직)
     if session.get(User, data.id):
         raise HTTPException(status_code=400, detail="이미 존재하는 아이디입니다.")
     
-    # 2. 선생님은 승인 대기(False), 학생은 자동 승인(True)
+    # 선생님은 승인 대기, 학생은 자동 승인
     is_approved = False if data.role == "teacher" else True
     
-    # 3. DB에 저장
+    # [추가] 선생님 ID 유효성 검증 및 할당
+    valid_teacher_id = None
+    if data.role == "student" and data.teacher_id:
+        teacher = session.get(User, data.teacher_id)
+        if teacher and teacher.role == "teacher":
+            valid_teacher_id = data.teacher_id
+        else: raise HTTPException(status_code=400, detail="존재하지 않는 선생님 ID입니다.")
+
     new_user = User(
         uid=data.id,
         pw=hash_password(data.password),
@@ -71,6 +77,7 @@ async def register(data: UserRegister, session: Session = Depends(get_session)):
         phone=data.phone,
         country=data.country,
         role=data.role,
+        teacher_id=valid_teacher_id, # [저장]
         is_approved=is_approved,
         progress={"settings": {"goal": 10}, "topics": {}}
     )

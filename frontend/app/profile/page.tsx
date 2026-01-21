@@ -3,16 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  ChevronLeft, 
-  Camera, 
-  User, 
-  Mail, 
-  Phone, 
-  Globe, 
-  Save,
-  CheckCircle2
+  ChevronLeft, Camera, User, Mail, Phone, Globe, 
+  CheckCircle2, GraduationCap
 } from 'lucide-react';
-// [추가] AuthGuard 및 API 임포트
 import AuthGuard from '../components/AuthGuard';
 import { getUserProfile, updateUserProfile } from '../api';
 
@@ -23,7 +16,8 @@ export default function ProfilePage() {
     email: "",
     phone: "",
     country: "",
-    role: ""
+    role: "",
+    teacher_id: "" 
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -32,7 +26,12 @@ export default function ProfilePage() {
     const userId = localStorage.getItem('userId');
     if (userId) {
       getUserProfile(userId).then(data => {
-        if (data) setProfile(data);
+        if (data) {
+          setProfile({
+            ...data,
+            teacher_id: data.teacher_id || "" 
+          });
+        }
       });
     }
   }, []);
@@ -46,22 +45,45 @@ export default function ProfilePage() {
       await updateUserProfile(userId, {
         email: profile.email,
         phone: profile.phone,
-        country: profile.country
+        country: profile.country,
+        teacher_id: profile.teacher_id 
       });
+      
+      // 상단바 업데이트 신호
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event("profileUpdated"));
+      }
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
-    } catch (error) {
-      alert("저장에 실패했습니다.");
+    } catch (error: any) {
+      // [수정 포인트] 에러 로그를 상황에 따라 다르게 출력
+      
+      let errorMessage = "저장에 실패했습니다. 잠시 후 다시 시도해주세요.";
+      const status = error.response?.status;
+
+      // 1. 에러 메시지 추출
+      if (error.response && error.response.data && error.response.data.detail) {
+        errorMessage = error.response.data.detail;
+      }
+
+      // 2. 400번대(입력 실수)는 경고(warn)로, 그 외(서버 오류)는 에러(error)로 로그 출력
+      if (status && status >= 400 && status < 500) {
+        console.warn(`[유효성 검사 실패] ${errorMessage}`); // 노란색 로그
+      } else {
+        console.error("Profile save error:", error); // 빨간색 로그
+      }
+      
+      // 3. 사용자에게 알림 띄우기
+      alert(`⚠️ ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    // [보안 적용] 로그인한 모든 유저 접근 가능
     <AuthGuard>
       <div className="flex flex-col min-h-full bg-white pb-24">
-        {/* 헤더 */}
         <header className="h-14 flex items-center justify-between px-4 sticky top-0 bg-white/80 backdrop-blur-md z-10">
           <button onClick={() => router.back()} className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors">
             <ChevronLeft size={24} className="text-gray-800" />
@@ -77,7 +99,6 @@ export default function ProfilePage() {
         </header>
 
         <main className="flex-1 px-6 pt-6">
-          {/* 프로필 이미지 섹션 */}
           <div className="flex flex-col items-center mb-10">
             <div className="relative group">
               <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center border-4 border-white shadow-xl overflow-hidden">
@@ -93,7 +114,6 @@ export default function ProfilePage() {
             </span>
           </div>
 
-          {/* 입력 폼 */}
           <div className="space-y-6">
             <div className="space-y-1.5">
               <label className="text-xs font-black text-gray-400 ml-1 uppercase">Email Address</label>
@@ -136,14 +156,31 @@ export default function ProfilePage() {
                   <option value="US">United States</option>
                   <option value="VN">Vietnam</option>
                   <option value="CN">China</option>
+                  <option value="JP">Japan</option>
                 </select>
               </div>
             </div>
+
+            {profile.role === 'student' && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-blue-500 ml-1 uppercase">My Teacher</label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300" size={18} />
+                  <input 
+                    type="text" 
+                    value={profile.teacher_id}
+                    onChange={(e) => setProfile({...profile, teacher_id: e.target.value})}
+                    className="w-full h-14 pl-12 pr-4 bg-blue-50 border border-blue-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-800 transition-all placeholder:text-blue-200"
+                    placeholder="선생님 ID를 입력하세요"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 ml-2">* 담당 선생님 ID를 입력하면 선생님과 연결됩니다.</p>
+              </div>
+            )}
           </div>
 
-          {/* 성공 알림 토스트 */}
           {showSuccess && (
-            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce">
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-bounce z-50">
               <CheckCircle2 size={18} className="text-green-400" />
               <span className="font-bold text-sm">성공적으로 저장되었습니다!</span>
             </div>

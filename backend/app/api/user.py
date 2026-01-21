@@ -7,12 +7,11 @@ from app.schemas import UserProfileUpdate, UserSettingsUpdate, UserPasswordUpdat
 
 router = APIRouter()
 
-# 1. 프로필 조회 (보안 강화: 자동 생성 로직 삭제)
+# 1. 프로필 조회
 @router.get("/{user_id}/profile")
 async def get_profile(user_id: str, session: Session = Depends(get_session)):
     user = session.get(User, user_id)
     
-    # [수정] 사용자가 없으면 404 에러 발생 (자동 생성 금지)
     if not user:
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
     
@@ -26,22 +25,49 @@ async def get_profile(user_id: str, session: Session = Depends(get_session)):
         "email": user.email or "",
         "phone": user.phone or "",
         "country": user.country or "",
+        # [핵심 수정] 저장된 선생님 ID를 반환해야 프론트엔드가 알 수 있습니다.
+        "teacher_id": user.teacher_id or "", 
         "dailyGoal": settings.get("goal", 10),
         "reviewWrong": settings.get("review_wrong", True)
     }
 
-# ... (나머지 함수들은 그대로 유지) ...
+# 2. 프로필 수정
 @router.put("/{user_id}/profile")
-async def update_profile(user_id: str, data: UserProfileUpdate, session: Session = Depends(get_session)):
+async def update_profile(
+    user_id: str, 
+    data: UserProfileUpdate, 
+    session: Session = Depends(get_session)
+):
+    # 1. 유저 조회
     user = session.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    # 2. 기존 프로필 정보 업데이트
     if data.email is not None: user.email = data.email
     if data.phone is not None: user.phone = data.phone
     if data.country is not None: user.country = data.country
+    
+    # 3. 선생님 ID 연결 로직
+    if data.teacher_id is not None:
+        if data.teacher_id == "": 
+            # 빈 문자열이면 연결 해제
+            user.teacher_id = None
+        else:
+            # 선생님 ID가 유효한지 검증
+            teacher = session.get(User, data.teacher_id)
+            if teacher and teacher.role == "teacher":
+                user.teacher_id = data.teacher_id
+            else:
+                # 존재하지 않거나 학생 계정인 경우 에러 처리
+                raise HTTPException(status_code=400, detail="존재하지 않는 선생님 ID입니다.")
+
+    # 4. 저장
     session.add(user)
     session.commit()
-    return {"status": "ok", "message": "Updated"}
+    session.refresh(user)
+    
+    return {"status": "ok", "message": "Updated", "user": user}
 
 @router.put("/{user_id}/settings")
 async def update_settings(user_id: str, data: UserSettingsUpdate, session: Session = Depends(get_session)):

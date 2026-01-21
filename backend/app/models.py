@@ -3,7 +3,7 @@ from typing import Optional, Dict
 from datetime import datetime
 from sqlmodel import Field, SQLModel, JSON
 
-# 1. 유저 모델 (필드 추가됨)
+# 1. 유저 모델
 class User(SQLModel, table=True):
     uid: str = Field(primary_key=True)
     name: str = "체험 사용자"
@@ -13,7 +13,9 @@ class User(SQLModel, table=True):
     phone: Optional[str] = None
     country: Optional[str] = None
     
-    # [추가] 관리자 승인 로직을 위해 필요
+    # [신규 추가] 담당 선생님 ID (학생인 경우에만 사용)
+    teacher_id: Optional[str] = Field(default=None, index=True)
+
     is_approved: bool = Field(default=True) 
     created_at: datetime = Field(default_factory=datetime.now)
 

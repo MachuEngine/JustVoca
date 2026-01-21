@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   ChevronLeft, User, Mail, Lock, Globe, CheckSquare, Square, 
-  UserCheck, BadgeCheck, Phone, Loader2 
+  UserCheck, BadgeCheck, Phone, Loader2, GraduationCap 
 } from 'lucide-react';
 // [중요] api.ts에서 함수 불러오기
 import { checkIdDuplicate, signup } from '../../api';
@@ -13,7 +13,7 @@ import { checkIdDuplicate, signup } from '../../api';
 export default function SignupPage() {
   const router = useRouter();
   
-  // 1. 입력값 상태 관리 (전화번호 phone 추가됨)
+  // 1. 입력값 상태 관리 (teacherId 추가됨)
   const [formData, setFormData] = useState({
     name: "",
     id: "",
@@ -22,13 +22,14 @@ export default function SignupPage() {
     confirmPassword: "",
     phone: "",
     country: "",
-    role: "student" // 기본값
+    role: "student", // 기본값
+    teacherId: ""    // [추가] 선생님 ID
   });
 
   // 2. UI 상태 관리
   const [isTeacher, setIsTeacher] = useState(false);
-  const [isIdChecked, setIsIdChecked] = useState(false); // 중복확인 버튼 눌렀는지
-  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null); // 사용 가능 여부
+  const [isIdChecked, setIsIdChecked] = useState(false);
+  const [isIdAvailable, setIsIdAvailable] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // 입력값 변경 핸들러
@@ -47,10 +48,15 @@ export default function SignupPage() {
   const toggleRole = () => {
     const newIsTeacher = !isTeacher;
     setIsTeacher(newIsTeacher);
-    setFormData(prev => ({ ...prev, role: newIsTeacher ? "teacher" : "student" }));
+    // 선생님으로 전환하면 teacherId 초기화 (선생님은 선생님 ID 필요 없음)
+    setFormData(prev => ({ 
+      ...prev, 
+      role: newIsTeacher ? "teacher" : "student",
+      teacherId: "" 
+    }));
   };
 
-  // [수정됨] 실제 백엔드 API로 중복 확인
+  // 실제 백엔드 API로 중복 확인
   const handleIdCheck = async () => {
     if (!formData.id.trim()) {
       alert("아이디를 입력해주세요.");
@@ -58,10 +64,7 @@ export default function SignupPage() {
     }
 
     try {
-      // app/api.ts에 추가한 함수 호출
       const res = await checkIdDuplicate(formData.id);
-      
-      // 백엔드 응답: { "is_available": true/false }
       setIsIdAvailable(res.is_available);
       setIsIdChecked(true);
       
@@ -76,13 +79,13 @@ export default function SignupPage() {
     }
   };
 
-  // [수정됨] 실제 백엔드 API로 회원가입 요청
+  // 실제 백엔드 API로 회원가입 요청
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 필수 입력값 검사
     if (!formData.name || !formData.id || !formData.password || !formData.email || !formData.phone || !formData.country) {
-      alert("모든 정보를 입력해주세요.");
+      alert("필수 정보를 모두 입력해주세요.");
       return;
     }
     
@@ -101,8 +104,18 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // 비밀번호 확인용 필드(confirmPassword)는 백엔드에 보낼 필요 없음
-      const { confirmPassword, ...submitData } = formData;
+      // 전송할 데이터 정리 (confirmPassword 제외, teacherId는 스네이크케이스로 변환 등 백엔드 스펙에 맞춤)
+      const submitData = {
+        id: formData.id,
+        password: formData.password,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        country: formData.country,
+        role: formData.role,
+        // teacherId가 있을 때만 보냄 (키 이름은 백엔드 스키마 teacher_id에 맞춤)
+        teacher_id: formData.teacherId || undefined 
+      };
       
       const res = await signup(submitData);
 
@@ -181,7 +194,6 @@ export default function SignupPage() {
                   중복확인
                 </button>
               </div>
-              {/* 중복확인 결과 메시지 */}
               {isIdChecked && (
                 <p className={`text-xs ml-4 font-bold ${isIdAvailable ? 'text-green-600' : 'text-red-500'}`}>
                   {isIdAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다."}
@@ -199,7 +211,7 @@ export default function SignupPage() {
               />
             </div>
 
-            {/* [신규] 전화번호 */}
+            {/* 전화번호 */}
             <div className="relative">
               <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
@@ -224,6 +236,18 @@ export default function SignupPage() {
                 <option value="CN">중국 (China)</option>
               </select>
             </div>
+
+            {/* [신규 추가] 선생님 ID 입력 (학생일 때만 보임) */}
+            {!isTeacher && (
+              <div className="relative animate-in fade-in slide-in-from-top-2">
+                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <input 
+                  type="text" name="teacherId" placeholder="선생님 ID (선택 사항)" 
+                  value={formData.teacherId} onChange={handleChange}
+                  className="w-full h-16 pl-12 pr-4 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800 placeholder:text-gray-400"
+                />
+              </div>
+            )}
 
             {/* 비밀번호 */}
             <div className="relative">

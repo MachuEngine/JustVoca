@@ -137,7 +137,7 @@ export default function StudentDetailPage() {
               {/* 4. 최근 학습 로그 */}
               <section className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
                 <h3 className="text-md font-black text-gray-900 mb-4 flex items-center gap-2">
-                  <Clock size={18} className="text-green-500" /> 최근 학습 기록
+                  <Clock size={18} className="text-green-500" /> 최근 학습 완료 기록
                 </h3>
                 <div className="space-y-3">
                   {stats.recentLogs && stats.recentLogs.length > 0 ? (

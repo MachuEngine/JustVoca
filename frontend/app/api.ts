@@ -78,3 +78,7 @@ export const sendNotice = (data: {
 
 // [추가] 선생님용: 특정 학생 상세 정보 가져오기
 export const getStudentDetail = (uid: string) => api.get(`/api/teacher/student/${uid}`);
+
+
+// [신규 추가] 학생 통계 데이터 가져오기
+export const getStudentStats = (uid: string) => api.get(`/study/stats?user_id=${uid}`);

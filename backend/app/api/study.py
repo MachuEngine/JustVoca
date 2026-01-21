@@ -7,7 +7,7 @@ import os
 import pandas as pd
 from typing import List, Optional
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.core.database import get_session
 from app.models import StudyProgress, StudyLog, User
@@ -230,3 +230,87 @@ async def get_quiz(level: str = "초급1"):
     except Exception as e:
         print(f"Quiz generation error: {e}")
         return []
+
+
+# [신규 추가] 통계 API 엔드포인트
+@router.get("/stats")
+async def get_student_stats(user_id: str, db: Session = Depends(get_session)):
+    """
+    학생 개인 학습 통계 조회 (사양서 기반)
+    """
+    # 1. 학생의 모든 학습 로그 조회 (최신순)
+    logs = db.exec(select(StudyLog).where(StudyLog.user_id == user_id).order_by(StudyLog.created_at.desc())).all()
+    
+    # 2. 이번 주(최근 7일) 학습한 단어 수 계산
+    now = datetime.now()
+    seven_days_ago = now - timedelta(days=7)
+    
+    # 최근 7일 내의 로그만 필터링
+    weekly_logs = [log for log in logs if log.created_at >= seven_days_ago]
+    # 중복 단어를 제외하고 개수 세기 (set 이용)
+    weekly_learned_count = len({log.word for log in weekly_logs})
+    
+    # 3. 전체 평균 정확도 계산
+    avg_accuracy = 0
+    if logs:
+        total_score = sum(log.score for log in logs)
+        avg_accuracy = int(total_score / len(logs))
+    
+    # 4. 연속 학습일(Streak) 계산
+    streak = 0
+    if logs:
+        # 로그에서 날짜만 추출하여 중복 제거 후 내림차순 정렬
+        dates = sorted(list({log.created_at.date() for log in logs}), reverse=True)
+        today = now.date()
+        
+        # 가장 최근 학습일이 오늘이거나 어제여야 연속 학습으로 인정
+        if dates and (today - dates[0]).days <= 1:
+            streak = 1
+            # 과거 날짜들을 비교하며 연속 여부 확인
+            for i in range(len(dates) - 1):
+                if (dates[i] - dates[i+1]).days == 1:
+                    streak += 1
+                else:
+                    break
+    
+    # 5. 주간 학습 추이 (월~일)
+    # 0:월요일, ... 6:일요일
+    weekly_trend = [0] * 7
+    
+    # 이번 주의 시작일(월요일) 구하기
+    start_of_week = now.date() - timedelta(days=now.weekday())
+    
+    for log in logs:
+        log_date = log.created_at.date()
+        # 로그 날짜가 이번 주(월~일) 범위에 포함되는지 확인
+        if start_of_week <= log_date <= (start_of_week + timedelta(days=6)):
+            day_idx = log_date.weekday() # 0(월) ~ 6(일)
+            weekly_trend[day_idx] += 1
+            
+    # 그래프 표현을 위해 가장 많이 학습한 날을 100%로 잡고 정규화
+    max_val = max(weekly_trend) if max(weekly_trend) > 0 else 1
+    normalized_trend = [int((val / max_val) * 100) for val in weekly_trend]
+
+    # 6. 숙련도 (점수 구간별 분포)
+    total_count = len(logs) if logs else 1
+    high_count = len([l for l in logs if l.score >= 90])      # 90점 이상: 완전 암기
+    mid_count = len([l for l in logs if 70 <= l.score < 90])  # 70~89점: 복습 필요
+    low_count = len([l for l in logs if l.score < 70])        # 70점 미만: 다시 학습
+    
+    proficiency = [
+        {"label": "완전 암기", "value": int((high_count / total_count) * 100), "color": "bg-green-500"},
+        {"label": "복습 필요", "value": int((mid_count / total_count) * 100), "color": "bg-orange-400"},
+        {"label": "다시 학습", "value": int((low_count / total_count) * 100), "color": "bg-red-400"},
+    ]
+
+    # 응원 메시지 설정
+    message = "이번 주 목표 달성 중! 🔥" if weekly_learned_count > 0 else "학습을 시작해보세요! 💪"
+
+    return {
+        "weeklyLearned": weekly_learned_count,
+        "streak": streak,
+        "accuracy": avg_accuracy,
+        "weeklyTrend": normalized_trend,
+        "proficiency": proficiency,
+        "message": message
+    }

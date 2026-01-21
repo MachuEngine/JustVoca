@@ -316,6 +316,10 @@ export default function VocabularyStudyPage() {
       const formData = new FormData();
       formData.append("audio", file);
       formData.append("text", targetText);
+      // [추가] 누가 학습했는지 userId 전송
+      formData.append("user_id", userId); 
+      // [추가] 어떤 단어인지 word 전송 (로그 저장용)
+      formData.append("word", currentWord.word);
 
       console.log("[UPLOAD] fd audio =", formData.get("audio"));
       console.log("[UPLOAD] fd text  =", formData.get("text"));
@@ -346,16 +350,32 @@ export default function VocabularyStudyPage() {
       console.log("[UPLOAD] raw =", raw);
       console.log("[UPLOAD] resultData(normalized) =", resultData);
 
-      if (resultData && (resultData.quality || resultData.score !== undefined)) {
+      if (resultData) {
         setEvaluationResult(resultData);
 
-        const sentenceScore =
-          resultData?.quality?.sentences?.[0]?.score ??
-          resultData?.quality?.score ??
-          resultData?.score ??
-          0;
+        let finalScore = 0;
 
-        setOverallScore(Math.round(sentenceScore));
+        // 1. 최상위 score가 있다면 그것이 정답 (로그의 맨 마지막 "score": 73.186)
+        if (typeof resultData.score === 'number') {
+          finalScore = resultData.score;
+        } 
+        // 2. quality.score 확인
+        else if (resultData.quality?.score) {
+          finalScore = resultData.quality.score;
+        }
+        // 3. sentences 배열에서 !SIL이 아닌 실제 문장 찾기 (안전장치)
+        else if (resultData.quality?.sentences) {
+           const realSentence = resultData.quality.sentences.find(
+             (s: any) => s.text && s.text !== "!SIL"
+           );
+           if (realSentence) {
+             finalScore = realSentence.score;
+           }
+        }
+
+        console.log("[DEBUG] 최종 결정된 점수:", finalScore); // 73.186 예상
+
+        setOverallScore(Math.round(finalScore));
         setShowResultOverlay(true);
       } else {
         console.error("서버 응답 데이터 구조 이상:", resultData);

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Play, MessageCircle, Loader2, ChevronRight, Bell } from 'lucide-react';
 import AuthGuard from '../components/AuthGuard';
-import { getUserProfile, getUserProgress, getStudentNotices } from '../api';
+// [수정] getStudentStats 추가 임포트
+import { getUserProfile, getUserProgress, getStudentNotices, getStudentStats } from '../api';
 
 export default function StudentHomePage() {
   const router = useRouter();
@@ -14,6 +15,9 @@ export default function StudentHomePage() {
   const [userLevel, setUserLevel] = useState("초급 1");
   const [isNavigating, setIsNavigating] = useState(false);
   const [notices, setNotices] = useState<any[]>([]);
+  
+  // [추가] 주간 출석 데이터 상태 (월~일)
+  const [weeklyAttendance, setWeeklyAttendance] = useState<number[]>([0,0,0,0,0,0,0]);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem('userId');
@@ -21,18 +25,30 @@ export default function StudentHomePage() {
 
     const fetchData = async () => {
       try {
+        // 1. 프로필
         const profile = await getUserProfile(storedUserId);
         if (profile?.name) setUserName(profile.name);
 
+        // 2. 진도율 (페이지 단위)
         const progressData = await getUserProgress(storedUserId);
         if (progressData) {
           setUserLevel(progressData.level || "초급 1");
-          const calc = Math.min(100, Math.round(((progressData.current_page || 1) - 1) / 10 * 100));
+          // 1페이지(0%) ~ 11페이지(100%) 기준 계산
+          const current = progressData.current_page || 1;
+          const calc = Math.min(100, Math.round(((current - 1) / 10) * 100));
           setProgress(calc);
         }
 
+        // 3. 공지사항
         const noticeData = await getStudentNotices();
         setNotices(noticeData || []);
+
+        // 4. [추가] 통계 API를 호출하여 "실제 출석(학습) 여부" 가져오기
+        const statsData = await getStudentStats(storedUserId);
+        if (statsData && statsData.weeklyTrend) {
+          setWeeklyAttendance(statsData.weeklyTrend); // [0, 1, 0...] 형태의 학습 빈도 배열
+        }
+
       } catch (error) {
         console.error("데이터 로드 실패:", error);
       }
@@ -45,10 +61,21 @@ export default function StudentHomePage() {
     router.push(`/study/vocabulary?level=${encodeURIComponent(userLevel)}`);
   };
 
+  // 이번 주 날짜 계산 (월요일 시작 ~ 일요일 끝)
   const today = new Date();
+  const currentDay = today.getDay(); // 0(일) ~ 6(토)
+  // 한국식 달력(월~일) 순서로 정렬하기 위한 로직
+  // getDay(): 일(0), 월(1), 화(2), 수(3), 목(4), 금(5), 토(6)
+  // 배열 인덱스: 월(0), 화(1), 수(2), 목(3), 금(4), 토(5), 일(6)
+  
+  // 오늘 날짜 기준으로 이번 주의 월요일 날짜 구하기
+  const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; 
+  const mondayDate = new Date(today);
+  mondayDate.setDate(today.getDate() + mondayOffset);
+
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - d.getDay() + i); 
+    const d = new Date(mondayDate);
+    d.setDate(mondayDate.getDate() + i);
     return d;
   });
 
@@ -94,24 +121,42 @@ export default function StudentHomePage() {
           </section>
         )}
 
-        {/* 2. 주간 출석 체크 */}
+        {/* 2. 주간 출석 체크 (실제 데이터 연동) */}
         <section className="px-6 mb-8">
           <div className="bg-gray-50 rounded-3xl p-5 border border-gray-100">
             <div className="flex justify-between items-center mb-5 px-1">
               <h3 className="font-black text-gray-800 text-sm">
                 {today.getFullYear()}년 {today.getMonth() + 1}월
               </h3>
-              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Attendance</span>
+              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">weekly calendar</span>
             </div>
             <div className="flex justify-between items-center">
               {weekDays.map((date, idx) => {
+                // weeklyAttendance[0] = 월요일 학습량, ... [6] = 일요일
+                // idx 0 = 월요일 ... idx 6 = 일요일
+                const count = weeklyAttendance[idx] || 0;
+                const isAttended = count > 0;
                 const isToday = date.getDate() === today.getDate();
-                const isPast = date < today && !isToday;
+                
+                // 날짜 표시 (일, 월, 화...)
+                const dayName = ['일','월','화','수','목','금','토'][date.getDay()];
+
                 return (
                   <div key={idx} className="flex flex-col items-center gap-2">
-                    <span className="text-[10px] text-gray-400 font-black">{['일','월','화','수','목','금','토'][date.getDay()]}</span>
-                    <div className={`w-9 h-9 flex items-center justify-center rounded-full text-xs font-black transition-all relative ${isToday ? 'text-green-600 bg-white border-2 border-green-600 shadow-sm' : isPast ? 'bg-green-100 text-green-700 opacity-60' : 'bg-transparent text-gray-300'}`}>
-                      {isToday && <div className="absolute inset-0 border-2 border-green-600 rounded-full animate-ping opacity-20"></div>}
+                    <span className={`text-[10px] font-black ${isToday ? 'text-green-600' : 'text-gray-400'}`}>{dayName}</span>
+                    <div className={`
+                      w-9 h-9 flex items-center justify-center rounded-full text-xs font-black transition-all relative
+                      ${isAttended 
+                        ? 'bg-green-500 text-white shadow-md shadow-green-200' // 출석함 (진한 초록)
+                        : isToday 
+                          ? 'bg-white border-2 border-green-500 text-green-600' // 오늘인데 아직 안함 (테두리)
+                          : 'bg-gray-200 text-gray-400 opacity-50' // 결석/미래 (회색)
+                      }
+                    `}>
+                      {/* 오늘 날짜 강조 효과 */}
+                      {isToday && !isAttended && (
+                        <div className="absolute inset-0 border-2 border-green-500 rounded-full animate-ping opacity-20"></div>
+                      )}
                       {date.getDate()}
                     </div>
                   </div>

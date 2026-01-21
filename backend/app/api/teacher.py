@@ -28,10 +28,21 @@ def list_students(request: Request, session: Session = Depends(get_session)):
     for student in students:
         prog = session.exec(select(StudyProgress).where(StudyProgress.user_id == student.uid)).first()
         avg_score = session.exec(select(func.avg(StudyLog.score)).where(StudyLog.user_id == student.uid)).first() or 0.0
+        
+        # [수정] 진도율 계산 로직 통일
+        # 학생 홈과 동일하게: ((현재페이지 - 1) / 전체10페이지) * 100
+        # 페이지가 1이면(시작단계) 0%, 2이면 10% ...
+        current_page = prog.current_page if prog else 1
+        progress_rate = min(1.0, ((current_page - 1) * 10) / 100)
+
         items.append({
-            "uid": student.uid, "name": student.name, "country": student.country or "KR",
-            "current_level": prog.level if prog else "미시작", "current_page": prog.current_page if prog else 1,
-            "avg_score": round(float(avg_score), 1), "progress_rate": min(1.0, (prog.current_page * 10) / 100) if prog else 0.0,
+            "uid": student.uid, 
+            "name": student.name, 
+            "country": student.country or "KR",
+            "current_level": prog.level if prog else "미시작", 
+            "current_page": current_page,
+            "avg_score": round(float(avg_score), 1), 
+            "progress_rate": progress_rate, # 수정된 비율 적용
         })
     return {"ok": True, "items": items}
 

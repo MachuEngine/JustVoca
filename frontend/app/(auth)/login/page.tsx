@@ -3,11 +3,12 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Lock, ChevronLeft, CheckSquare, Square, Loader2 } from 'lucide-react';
+import { User, Lock, ChevronLeft, Loader2 } from 'lucide-react';
+// api.ts에서 login 함수 임포트 (fetch 대신 사용 권장)
+import { login } from '../../api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isTeacher, setIsTeacher] = useState(false);
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,38 +24,27 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. 백엔드 API 호출 (진짜 로그인 검증)
-      // [수정] credentials: "include" 옵션을 추가하여 서버가 주는 쿠키를 저장하도록 설정합니다.
-      const res = await fetch('http://localhost:8000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, password }),
-        credentials: "include" // <--- [핵심 수정] 이 줄이 있어야 쿠키가 저장됩니다!
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.detail || "로그인에 실패했습니다.");
-        setIsLoading(false);
-        return;
-      }
+      // 1. 백엔드 API 호출 (api.ts의 login 함수 사용)
+      const data = await login(id, password);
 
       // 2. 로그인 성공 시 처리
-      // 받은 유저 정보를 로컬 스토리지에 저장 (나중에 프로필 조회 등에 사용)
       localStorage.setItem('userId', data.user.uid);
       localStorage.setItem('userRole', data.user.role);
       
-      // 역할에 따라 페이지 이동
-      if (data.user.role === 'teacher' || data.user.role === 'admin') {
-         router.push('/teacher_dash');
+      // 3. 역할별 페이지 자동 이동
+      if (data.user.role === 'admin') {
+         router.push('/system_dash');   // 관리자
+      } else if (data.user.role === 'teacher') {
+         router.push('/teacher_dash');  // 선생님
       } else {
-         router.push('/student_home');
+         router.push('/student_home');  // 학생
       }
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("로그인 에러:", error);
-      alert("서버와 통신 중 오류가 발생했습니다.");
+      // api.ts에서 파싱해준 에러 메시지 표시
+      const msg = error.response?.data?.detail || "로그인에 실패했습니다.";
+      alert(msg);
     } finally {
       setIsLoading(false);
     }
@@ -74,24 +64,12 @@ export default function LoginPage() {
             환영합니다! 👋
           </h1>
           <p className="text-gray-500 font-medium">
-            {isTeacher ? '선생님, 오늘 수업도 파이팅하세요!' : '한국어 학습을 시작해보세요.'}
+            로그인하여 학습을 시작해보세요.
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* 역할 선택 (단순 UI용 상태 변경) */}
-          <div 
-            onClick={() => setIsTeacher(!isTeacher)}
-            className="flex items-center gap-2 cursor-pointer mb-2 w-fit px-1"
-          >
-            {isTeacher 
-              ? <CheckSquare className="text-green-600" size={22} /> 
-              : <Square className="text-gray-300" size={22} />
-            }
-            <span className={`text-sm font-bold transition-colors ${isTeacher ? 'text-green-600' : 'text-gray-400'}`}>
-              선생님/관리자 로그인
-            </span>
-          </div>
+          {/* 체크박스 영역이 삭제되었습니다 */}
 
           <div className="space-y-4">
             <div className="relative">

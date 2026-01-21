@@ -10,7 +10,6 @@ export default function BottomNavBar() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // 클라이언트 사이드에서만 로컬 스토리지 접근
     const role = localStorage.getItem('userRole');
     setUserRole(role);
   }, []);
@@ -23,16 +22,25 @@ export default function BottomNavBar() {
     { name: "설정", href: "/settings", icon: Settings },
   ];
 
-  // 선생님용 메뉴 (홈 -> 선생님 대시보드 연결)
+  // 선생님용 메뉴
   const teacherMenuItems = [
     { name: "홈", href: "/teacher_dash", icon: Home },
     { name: "설정", href: "/settings", icon: Settings },
   ];
 
+  // [신규] 관리자용 메뉴
+  const adminMenuItems = [
+    { name: "홈", href: "/system_dash", icon: Home },
+    { name: "설정", href: "/settings", icon: Settings },
+  ];
+
   // 역할에 따라 메뉴 결정
-  const menuItems = (userRole === 'teacher' || userRole === 'admin') 
-    ? teacherMenuItems 
-    : studentMenuItems;
+  let menuItems = studentMenuItems;
+  if (userRole === 'admin') {
+    menuItems = adminMenuItems;
+  } else if (userRole === 'teacher') {
+    menuItems = teacherMenuItems;
+  }
 
   return (
     <nav className="sticky bottom-0 w-full h-16 bg-white border-t border-gray-100 flex items-center justify-around px-2 z-50 flex-shrink-0">

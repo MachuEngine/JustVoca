@@ -97,3 +97,7 @@ export const sendNotice = (data: {
 
 export const getStudentDetail = (uid: string) => api.get(`/api/teacher/student/${uid}`);
 export const getStudentStats = (uid: string) => api.get(`/study/stats?user_id=${uid}`);
+
+// [신규] 관리자(Admin) 관련 함수
+export const getPendingTeachers = () => api.get("/admin/pending_teachers");
+export const approveTeacher = (uid: string) => api.post(`/admin/approve/${uid}`, {});

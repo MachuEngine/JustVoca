@@ -55,5 +55,7 @@ class Notice(SQLModel, table=True):
     title: str
     content: str
     author: str
+    # [신규 추가] 선생님 ID (타겟팅용)
+    teacher_id: str = Field(index=True)
     scheduled_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)

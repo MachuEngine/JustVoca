@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User, Lock, ChevronLeft, Loader2 } from 'lucide-react';
-// api.ts에서 login 함수 임포트 (fetch 대신 사용 권장)
 import { login } from '../../api';
 
 export default function LoginPage() {
@@ -24,27 +23,39 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. 백엔드 API 호출 (api.ts의 login 함수 사용)
+      // 1. 백엔드 API 호출
       const data = await login(id, password);
 
-      // 2. 로그인 성공 시 처리
+      // 2. 로그인 성공 처리
       localStorage.setItem('userId', data.user.uid);
       localStorage.setItem('userRole', data.user.role);
       
-      // 3. 역할별 페이지 자동 이동
+      // 3. 페이지 이동
       if (data.user.role === 'admin') {
-         router.push('/system_dash');   // 관리자
+         router.push('/system_dash'); 
       } else if (data.user.role === 'teacher') {
-         router.push('/teacher_dash');  // 선생님
+         router.push('/teacher_dash'); 
       } else {
-         router.push('/student_home');  // 학생
+         router.push('/student_home'); 
       }
 
     } catch (error: any) {
-      console.error("로그인 에러:", error);
-      // api.ts에서 파싱해준 에러 메시지 표시
+      // [수정 포인트] 에러 로그를 상황에 따라 다르게 출력
+      
+      const status = error.response?.status;
       const msg = error.response?.data?.detail || "로그인에 실패했습니다.";
+
+      // 400(입력 오류), 401(비번 틀림), 403(승인 대기)은 시스템 에러가 아니므로 경고(warn)로 처리
+      if (status === 400 || status === 401 || status === 403) {
+        console.warn(`[로그인 거절] ${msg}`);
+      } else {
+        // 그 외 500번대 등 진짜 시스템 에러만 빨간색(error)으로 출력
+        console.error("로그인 시스템 에러:", error);
+      }
+      
+      // 사용자에게는 항상 알림창 표시
       alert(msg);
+
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +80,6 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* 체크박스 영역이 삭제되었습니다 */}
-
           <div className="space-y-4">
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />

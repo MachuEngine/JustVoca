@@ -56,9 +56,13 @@ def list_students(request: Request, session: Session = Depends(get_session)):
 
 @router.get("/notices", response_model=List[Notice])
 def list_teacher_notices(request: Request, session: Session = Depends(get_session)):
-    _require_teacher(request, session)
-    # 공지사항도 추후엔 '내 반 공지'만 보이게 할 수 있으나, 일단 전체 공지로 둡니다.
-    return session.exec(select(Notice).order_by(Notice.created_at.desc())).all()
+    teacher = _require_teacher(request, session)
+    # teacher_id가 일치하는 공지만 조회
+    return session.exec(
+        select(Notice)
+        .where(Notice.teacher_id == teacher.uid)
+        .order_by(Notice.created_at.desc())
+    ).all()
 
 @router.post("/notice")
 async def send_notice(
@@ -81,6 +85,7 @@ async def send_notice(
         title=title, 
         content=content, 
         author=teacher.name,
+        teacher_id=teacher.uid, # [추가] 실제 선생님 ID
         scheduled_at=dt_scheduled
     )
     session.add(new_notice)

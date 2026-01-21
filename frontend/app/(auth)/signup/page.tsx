@@ -124,8 +124,27 @@ export default function SignupPage() {
         router.push("/login");
       }
     } catch (error: any) {
-      console.error("회원가입 실패:", error);
-      alert("회원가입에 실패했습니다. 다시 시도해주세요.");
+      // [수정] 에러 처리 로직 개선
+      
+      const status = error.response?.status;
+      let errorMsg = "회원가입에 실패했습니다. 다시 시도해주세요.";
+      
+      // 백엔드에서 보낸 구체적인 에러 메시지 추출 (예: 존재하지 않는 선생님 ID입니다.)
+      if (error.response?.data?.detail) {
+        errorMsg = error.response.data.detail;
+      }
+
+      // 400번대 에러(유효성 검사 실패)는 경고(warn) 로그로 출력하여 콘솔 에러 방지
+      if (status && status >= 400 && status < 500) {
+        console.warn(`[회원가입 입력 오류] ${errorMsg}`);
+      } else {
+        // 500번대 등 실제 시스템 에러만 빨간색(error)으로 출력
+        console.error("회원가입 시스템 에러:", error);
+      }
+      
+      // 사용자에게 구체적인 실패 사유 알림
+      alert(errorMsg);
+
     } finally {
       setIsLoading(false);
     }

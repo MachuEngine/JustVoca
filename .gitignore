@@ -211,3 +211,9 @@ node_modules/
 .next/
 frontend/node_modules/
 frontend/.next/
+
+# local db
+backend/database.db
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3

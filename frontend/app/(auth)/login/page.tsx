@@ -79,12 +79,14 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
+        <form suppressHydrationWarning onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-4">
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
-                type="text" 
+                type="text"
+                name="username"
+                autoComplete="username"
                 placeholder="아이디" 
                 value={id}
                 onChange={(e) => setId(e.target.value)}
@@ -94,7 +96,9 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <input 
-                type="password" 
+                type="password"
+                name="password"
+                autoComplete="current-password"
                 placeholder="비밀번호" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

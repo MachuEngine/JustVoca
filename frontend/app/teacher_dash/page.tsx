@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, Send, ChevronLeft, Clock, Users, 
-  BarChart, CheckCircle, GraduationCap, Search, RotateCcw, List
+  BarChart, CheckCircle, GraduationCap, Search, RotateCcw, List, Lock
 } from 'lucide-react'; 
 import Link from 'next/link';
 import AuthGuard from '../components/AuthGuard';
@@ -18,7 +18,6 @@ export default function TeacherDash() {
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledDate, setScheduledDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-
 
   // --- 데이터 로드 ---
   useEffect(() => {
@@ -70,6 +69,20 @@ export default function TeacherDash() {
     }
   };
 
+  // [추가] 진도 평균 계산 로직
+  const averageProgress = students.length > 0
+    ? Math.round(
+        students.reduce((acc, curr) => acc + (curr.progress_rate || 0), 0) / students.length * 100
+      )
+    : 0;
+
+  // [추가] 준비중 배지 컴포넌트
+  const ComingSoonBadge = () => (
+    <span className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm text-gray-400 text-[10px] font-bold px-2 py-1 rounded-full border border-gray-100 flex items-center gap-1">
+      <Lock size={8} /> 준비중
+    </span>
+  );
+
   return (
     <AuthGuard allowedRoles={['teacher', 'admin']}>
       <div className="min-h-screen bg-gray-50 pb-20">
@@ -79,27 +92,38 @@ export default function TeacherDash() {
              <BarChart className="text-blue-600" /> 학습 통계
           </h1>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            
+            {/* [1] 전체 학생 (실제 데이터) */}
             <div className="bg-blue-50 p-5 rounded-3xl border border-blue-100">
               <Users className="text-blue-500 mb-2" size={20} />
-              {/* students가 배열이므로 .length 사용 가능 */}
               <p className="text-2xl font-black text-blue-900">{students.length}</p>
               <p className="text-[10px] font-bold text-blue-400 uppercase">전체 학생</p>
             </div>
+
+            {/* [2] 진도 평균 (실제 데이터 적용됨) */}
             <div className="bg-green-50 p-5 rounded-3xl border border-green-100">
               <CheckCircle className="text-green-500 mb-2" size={20} />
-              <p className="text-2xl font-black text-green-900">68%</p>
+              {/* 계산된 평균값 사용 */}
+              <p className="text-2xl font-black text-green-900">{averageProgress}%</p>
               <p className="text-[10px] font-bold text-green-400 uppercase">진도 평균</p>
             </div>
-            <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100">
-              <GraduationCap className="text-purple-500 mb-2" size={20} />
-              <p className="text-2xl font-black text-purple-900">82</p>
-              <p className="text-[10px] font-bold text-purple-400 uppercase">시험 평균</p>
+
+            {/* [3] 시험 평균 (준비중 표시) */}
+            <div className="bg-purple-50/40 p-5 rounded-3xl border border-purple-50 relative">
+              <ComingSoonBadge />
+              <GraduationCap className="text-purple-300 mb-2" size={20} />
+              <p className="text-2xl font-black text-purple-900/30 blur-[2px] select-none">82</p>
+              <p className="text-[10px] font-bold text-purple-400/70 uppercase">시험 평균</p>
             </div>
-            <div className="bg-orange-50 p-5 rounded-3xl border border-orange-100">
-              <RotateCcw className="text-orange-500 mb-2" size={20} />
-              <p className="text-2xl font-black text-orange-900">12</p>
-              <p className="text-[10px] font-bold text-orange-400 uppercase">과제 제출</p>
+
+            {/* [4] 과제 제출 (준비중 표시) */}
+            <div className="bg-orange-50/40 p-5 rounded-3xl border border-orange-50 relative">
+              <ComingSoonBadge />
+              <RotateCcw className="text-orange-300 mb-2" size={20} />
+              <p className="text-2xl font-black text-orange-900/30 blur-[2px] select-none">12</p>
+              <p className="text-[10px] font-bold text-orange-400/70 uppercase">과제 제출</p>
             </div>
+
           </div>
         </div>
 

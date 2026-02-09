@@ -53,11 +53,8 @@ export default function SettingsPage() {
     <AuthGuard>
       <div className="h-full flex flex-col bg-gray-50 pb-24">
         {/* 헤더 */}
-        <header className="h-16 flex items-center px-6 bg-white border-b border-gray-100 sticky top-0 z-10">
-          <button onClick={() => router.back()} className="p-2 -ml-3 hover:bg-gray-100 rounded-full transition-colors">
-            <ChevronLeft size={24} className="text-gray-800" />
-          </button>
-          <h1 className="text-xl font-black text-gray-900 ml-2">설정</h1>
+        <header className="h-16 flex items-center px-6 border-b border-gray-100 bg-white sticky top-0 z-10">
+          <h1 className="text-lg font-bold ml-2 text-gray-900">설정</h1>
         </header>
 
         <main className="flex-1 p-6 space-y-8 overflow-y-auto">

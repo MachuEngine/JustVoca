@@ -17,10 +17,7 @@ export const LEVELS = [
 export default function LevelSelectPage() {
   return (
     <div className="h-full flex flex-col bg-white">
-      <header className="h-16 flex items-center px-4 border-b border-gray-100 bg-white sticky top-0 z-10">
-        <Link href="/student_home" className="p-2 -ml-2 rounded-full hover:bg-gray-50">
-          <ChevronLeft className="text-gray-800" size={24} />
-        </Link>
+      <header className="h-16 flex items-center px-6 border-b border-gray-100 bg-white sticky top-0 z-10">
         <h1 className="text-lg font-bold ml-2 text-gray-900">과정 선택</h1>
       </header>
 

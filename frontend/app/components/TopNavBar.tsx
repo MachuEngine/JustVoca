@@ -112,17 +112,16 @@ export default function TopNavBar() {
 
     // 2) fallback
     if (from === "level") {
-      router.push("/level_select"); // 🔁 너희 레벨 선택 페이지 경로로 바꿔줘
+      router.push("/level_select");
       return;
     }
-    router.push("/student_home"); // 기본: 홈
+    router.push("/student_home");
   };
 
-  // ✅ 학습/단어 관련 화면에서만 뒤로가기 노출하고 싶으면 조건
   const showBack =
-    pathname?.includes("vocabulary") ||
-    pathname?.includes("study") ||
-    pathname?.includes("student");
+    pathname?.includes("vocabulary");
+    //pathname?.includes("study") ||
+    //pathname?.includes("student");
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white">

@@ -92,6 +92,9 @@ export const completeStudy = (lv: string, uid: string) => {
 export const getStudents = () => api.get("/api/teacher/students");
 export const getNotices = () => api.get("/api/teacher/notices");
 export const getStudentNotices = () => api.get("/api/notice/list");
+export const markNoticeAsRead = async (noticeId: number) => {
+  return await api.post(`/api/notice/${noticeId}/read`, {});
+};
 
 export const sendNotice = (data: {
   title: string;

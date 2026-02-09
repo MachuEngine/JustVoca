@@ -54,7 +54,15 @@ export default function StudentHomePage() {
       }
     };
     fetchData();
+
+    // ✅ [추가] 공지사항 페이지에서 읽고 돌아왔을 때, 상태를 갱신하기 위해 포커스 이벤트 감지
+    const handleFocus = () => fetchData();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  
   }, []);
+
+  const hasUnread = Array.isArray(notices) && notices.some((n: any) => !n.read);
 
   const handleStartLearning = () => {
     setIsNavigating(true);
@@ -87,17 +95,15 @@ export default function StudentHomePage() {
         <div className="px-6 pt-8 mb-4 flex justify-between items-start">
           <div>
             <p className="text-sm text-gray-400 font-bold mb-1 uppercase">Welcome</p>
-            <h2 className="text-2xl font-black text-gray-900 leading-tight">
-              안녕하세요, <br />
-              <span className="text-green-600">{userName}</span> 님! 👋
-            </h2>
+              <span className="text-green-600">{userName}</span>
           </div>
           <button 
             onClick={() => router.push('/notices')}
             className="relative p-3 bg-gray-50 rounded-2xl border border-gray-100 active:scale-90 transition-transform"
           >
             <Bell size={24} className="text-gray-700" />
-            {notices.length > 0 && (
+            {/* ✅ [수정] hasUnread가 true일 때만 빨간 점 표시 */}
+            {hasUnread && (
               <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
             )}
           </button>

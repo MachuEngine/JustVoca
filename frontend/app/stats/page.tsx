@@ -47,9 +47,9 @@ export default function StatsPage() {
     <AuthGuard allowedRoles={['student']}>
       <div className="flex flex-col min-h-full bg-gray-50 pb-24">
         {/* 헤더 */}
-        <div className="bg-white px-6 py-5 border-b border-gray-100 sticky top-0 z-10">
-          <h1 className="text-xl font-black text-gray-900">통계</h1>
-        </div>
+        <header className="h-16 flex items-center px-6 border-b border-gray-100 bg-white sticky top-0 z-10">
+          <h1 className="text-lg font-bold ml-2 text-gray-900">통계</h1>
+        </header>
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center">

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request, HTTPException
-from sqlmodel import Session, select, or_
-from typing import List
+from sqlmodel import Session, select, or_, SQLModel, Field
+from typing import List, Optional
 from datetime import datetime
 from app.core.database import get_session
 from app.models import Notice, User
@@ -8,6 +8,24 @@ from app.core.config import settings
 from app.core.session import verify_session
 
 router = APIRouter()
+
+# [신규] 읽음 상태를 저장할 모델 (DB 테이블)
+class NoticeRead(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    notice_id: int
+    user_id: str
+    read_at: datetime = Field(default_factory=datetime.now)
+
+# [신규] API 응답용 모델 (기존 Notice + read 필드)
+class NoticeResponse(SQLModel):
+    id: int
+    title: str
+    content: str
+    created_at: datetime
+    author: str
+    scheduled_at: Optional[datetime] = None
+    teacher_id: str
+    read: bool = False  # 읽음 여부 추가
 
 # [내부 함수] 현재 로그인한 학생 정보 가져오기
 def _get_current_student(request: Request, session: Session) -> User:
@@ -25,33 +43,60 @@ def _get_current_student(request: Request, session: Session) -> User:
         
     return user
 
-@router.get("/list", response_model=List[Notice])
+@router.get("/list", response_model=List[NoticeResponse])
 def get_notice_list(request: Request, db: Session = Depends(get_session)):
     """
     [학생용] 공지사항 조회
     1. 학생의 담당 선생님(teacher_id)이 작성한 글만 조회
     2. 예약 발송(scheduled_at)인 경우, 현재 시간보다 과거인 것만 조회
     """
-    # 1. 로그인한 학생 정보 조회
     student = _get_current_student(request, db)
     
-    # 담당 선생님이 없으면 공지사항 없음
     if not student.teacher_id:
         return []
 
     now = datetime.now()
 
-    # 2. 쿼리 작성 (선생님 필터링 + 예약 시간 체크)
+    # 1. 공지사항 목록 조회
     statement = (
         select(Notice)
-        .where(Notice.teacher_id == student.teacher_id)  # 내 선생님의 글만
-        .where(
-            or_(
-                Notice.scheduled_at == None,       # 예약 설정이 없거나 (즉시 발송)
-                Notice.scheduled_at <= now         # 예약 시간이 현재보다 과거인 경우
-            )
-        )
-        .order_by(Notice.created_at.desc())        # 최신순 정렬
+        .where(Notice.teacher_id == student.teacher_id)
+        .where(or_(Notice.scheduled_at == None, Notice.scheduled_at <= now))
+        .order_by(Notice.created_at.desc())
     )
+    notices = db.exec(statement).all()
+
+    # 2. 내가 읽은 공지사항 ID 조회
+    read_statement = select(NoticeRead.notice_id).where(NoticeRead.user_id == student.uid)
+    read_ids = db.exec(read_statement).all()
+    read_ids_set = set(read_ids)
+
+    # 3. 결과 합치기 (읽음 여부 표시)
+    result = []
+    for n in notices:
+        result.append(NoticeResponse(
+            **n.dict(),
+            read=(n.id in read_ids_set) # 읽은 목록에 있으면 True
+        ))
     
-    return db.exec(statement).all()
+    return result
+
+
+# [신규] 공지사항 읽음 처리 API
+@router.post("/{notice_id}/read")
+def mark_notice_read(notice_id: int, request: Request, db: Session = Depends(get_session)):
+    student = _get_current_student(request, db)
+    
+    # 이미 읽었는지 확인
+    statement = select(NoticeRead).where(
+        NoticeRead.notice_id == notice_id,
+        NoticeRead.user_id == student.uid
+    )
+    existing = db.exec(statement).first()
+    
+    if not existing:
+        new_read = NoticeRead(notice_id=notice_id, user_id=student.uid)
+        db.add(new_read)
+        db.commit()
+        
+    return {"status": "success"}

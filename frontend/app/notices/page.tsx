@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Bell, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import AuthGuard from "../components/AuthGuard";
-import { getStudentNotices } from "../api";
+import { getStudentNotices, markNoticeAsRead } from "../api";
 
 interface Notice {
   id: number;
@@ -12,6 +12,7 @@ interface Notice {
   content: string;
   created_at: string;
   author?: string;
+  read?: boolean;
 }
 
 export default function NoticesPage() {
@@ -40,8 +41,23 @@ export default function NoticesPage() {
     fetchNotices();
   }, []);
 
-  const toggleExpand = (id: number) => {
-    setExpandedId(expandedId === id ? null : id);
+  const toggleExpand = async (id: number) => {
+    const isExpanding = expandedId !== id;
+    setExpandedId(isExpanding ? id : null);
+
+    if (isExpanding) {
+      const target = notices.find(n => n.id === id);
+      // 아직 안 읽은 글이라면(read가 false) -> 서버에 읽음 요청 전송
+      if (target && !target.read) {
+        try {
+          await markNoticeAsRead(id);
+          // 화면에도 즉시 반영 (read: true)
+          setNotices(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+        } catch (e) {
+          console.error("읽음 처리 실패", e);
+        }
+      }
+    }
   };
 
   const formatDate = (dateString: string) => {

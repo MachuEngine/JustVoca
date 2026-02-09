@@ -142,16 +142,6 @@ const getImageUrl = (path: string) => {
     fetchInitialData();
   }, [level, userId, mode]); // mode를 의존성 배열에 추가
 
-  useEffect(() => {
-    if (phase === "review_intro") {
-      const timer = setTimeout(() => {
-        setPhase("review");
-        setCurrentIndex(0);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [phase]);
-
 const mapWordData = (list: any[]) => {
   if (!list || list.length === 0) return [];
   return list.map((w: any) => ({
@@ -236,15 +226,23 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
   audio.play().catch((err) => console.error("재생 실패:", audioPath, err));
 };
 
+const goToReview = () => {
+  setPhase("review");
+  setCurrentIndex(0);
+};
+
+const goToQuiz = () => {
+  setPhase("quiz");
+  setCurrentIndex(0);
+  setSelectedOption(null);
+  setIsQuizCorrect(null);
+};
+
   const handleNext = async () => {
     if (phase === "learning") {
       // 중간 응원 메시지 로직 (생략 가능)
       if (currentIndex === 4 && !showEncouragement) {
         setShowEncouragement(true);
-        setTimeout(() => {
-          setShowEncouragement(false);
-          setCurrentIndex((prev) => prev + 1);
-        }, 1500);
         resetCardState();
         return;
       }
@@ -441,7 +439,7 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
 
         if (isConnectionError) {
           // 시스템 에러가 아닌 친근한 안내로 대체
-          alert("문장이 잘 들리지 않아요. 녹음 버튼을 눌러 다시 한번 읽어보세요!");
+          alert("문장이 잘 들리지 않아요. 녹음 버튼을 눌러 다시 한번 읽어보세요.");
         } else {
           // 그 외 실제 분석 실패 메시지
           alert(response?.error || "분석이 어려워요. 문장을 다시 천천히 읽어보세요.");
@@ -542,7 +540,7 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <Loader2 className="animate-spin text-green-500 mb-4" size={40} />
+        <Loader2 className="animate-spin text-[#FF8C1A] mb-4" size={40} />
         <p className="text-gray-500 font-bold">학습 데이터를 불러오는 중입니다...</p>
       </div>
     );
@@ -554,30 +552,30 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
         <div className="flex flex-col min-h-screen bg-white p-6 items-center justify-center text-center relative overflow-hidden">
           {/* 졸업 여부에 따라 다른 UI 표시 */}
           {isGraduated ? (
-            // 🎉 [졸업 축하 화면]
+            // [졸업 축하 화면]
             <div className="animate-in zoom-in duration-700 flex flex-col items-center z-10">
               <div className="text-8xl mb-6 animate-bounce">🎓</div>
               <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-                축하합니다!
+                축하합니다.
               </h1>
               <p className="text-xl text-gray-700 font-bold mb-8">
                 <span className="text-blue-600">{level}</span> 레벨을<br />
-                완벽하게 마스터하셨습니다!
+                완벽하게 마스터하셨습니다.
               </p>
               <div className="bg-yellow-50 border-2 border-yellow-200 rounded-3xl p-6 mb-10 shadow-lg rotate-1 transform">
                 <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest mb-1">CERTIFICATE</p>
                 <p className="text-gray-800 font-medium">
-                   꾸준한 노력의 결실입니다.<br/>다음 레벨도 도전해보세요! 🚀
+                   꾸준한 노력의 결실입니다.<br/>다음 레벨도 도전해보세요.
                 </p>
               </div>
             </div>
           ) : (
             // ✅ [기존 일반 완료 화면]
             <div className="animate-in zoom-in duration-500 flex flex-col items-center z-10">
-              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle className="w-12 h-12 text-green-600" />
+              <div className="w-24 h-24 bg-[#FF8C1A] rounded-full flex items-center justify-center mb-6">
+                <CheckCircle className="w-12 h-12 text-white" />
               </div>
-              <h2 className="text-3xl font-black text-gray-900 mb-2">학습 완료!</h2>
+              <h2 className="text-3xl font-black text-gray-900 mb-2">학습 완료</h2>
               <p className="text-gray-500 mb-10">
                 오늘도 목표를 달성하셨네요.
                 <br />
@@ -589,7 +587,7 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
           <button
             onClick={() => router.push("/student_home")}
             className={`w-full py-5 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all z-20 ${
-              isGraduated ? "bg-gradient-to-r from-blue-500 to-purple-600 shadow-purple-200" : "bg-blue-500"
+              isGraduated ? "bg-gradient-to-r from-[#20385F] to-purple-600 shadow-purple-200" : "bg-[#20385F]"
             }`}
           >
             홈으로 돌아가기
@@ -606,40 +604,51 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
 
   if (phase === "review_intro") {
     return (
-      <div className="flex flex-col min-h-screen bg-orange-500 items-center justify-center text-white animate-in fade-in">
-        <div className="text-6xl font-black mb-4 animate-bounce">↺</div>
-        <h2 className="text-3xl font-bold mb-2">복습을 시작합니다</h2>
-        <p className="opacity-90">취약한 단어들을 다시 확인해보세요!</p>
-        <div className="mt-8 flex gap-2">
-          <span className="w-3 h-3 bg-white rounded-full animate-ping"></span>
-          <span className="w-3 h-3 bg-white rounded-full animate-ping delay-100"></span>
-          <span className="w-3 h-3 bg-white rounded-full animate-ping delay-200"></span>
+      <div
+        className="flex flex-col min-h-screen items-center justify-center text-white animate-in fade-in"
+        style={{ backgroundColor: THEME_COLORS.primary }}
+        role="button"
+        tabIndex={0}
+        onClick={goToReview}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") goToReview();
+        }}
+      >
+        <div className="text-6xl font-black mb-4 animate-bounce" style={{ color: THEME_COLORS.accent }}>
+          ↺
         </div>
+        <h2 className="text-3xl font-bold mb-2">복습을 시작합니다</h2>
+        <p className="opacity-90">취약한 단어들을 다시 확인해보세요.</p>
+        <p className="mt-8 text-sm font-black" style={{ color: THEME_COLORS.accent }}>
+          화면을 터치하면 시작돼요
+        </p>
       </div>
     );
   }
 
   if (phase === "quiz_intro") {
     return (
-      <div className="flex flex-col min-h-screen bg-blue-600 items-center justify-center text-white p-6 animate-in fade-in">
-        <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mb-6">
-          <Star size={48} className="text-yellow-300 fill-yellow-300" />
+      <div
+        className="flex flex-col min-h-screen items-center justify-center text-white p-6 animate-in fade-in"
+        style={{ backgroundColor: THEME_COLORS.primary }}
+        role="button"
+        tabIndex={0}
+        onClick={goToQuiz}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") goToQuiz();
+        }}
+      >
+        <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+            style={{ backgroundColor: `${THEME_COLORS.secondary}33` }}>
+          <Star size={48} style={{ color: THEME_COLORS.accent }} />
         </div>
         <h2 className="text-3xl font-bold mb-4">연습 문제</h2>
         <p className="text-center opacity-90 mb-10 max-w-xs leading-relaxed">
           지금까지 배운 단어들을 문제를 풀며 확실하게 익혀보세요.
         </p>
-        <button
-          onClick={() => {
-            setPhase("quiz");
-            setCurrentIndex(0);
-            setSelectedOption(null);
-            setIsQuizCorrect(null);
-          }}
-          className="w-full max-w-xs py-5 bg-white text-blue-600 rounded-2xl font-black text-xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
-        >
-          <Play size={24} fill="currentColor" /> 문제 풀기 시작
-        </button>
+        <p className="text-sm font-black" style={{ color: THEME_COLORS.accent }}>
+          화면을 터치하면 시작돼요
+        </p>
       </div>
     );
   }
@@ -682,16 +691,31 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
         style={{ backgroundColor: THEME_COLORS.bg }}
       >
         {showEncouragement && (
-          <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-blue-500/95 backdrop-blur-sm text-white animate-in fade-in duration-300">
-            <div className="text-7xl mb-4 animate-bounce">🚀</div>
-            <h2 className="text-3xl font-black mb-2">절반이나 왔어요!</h2>
-            <p className="text-lg opacity-90">지금처럼만 하면 충분해요 👍</p>
+          <div
+            className="absolute inset-0 z-[60] flex flex-col items-center justify-center backdrop-blur-sm text-white animate-in fade-in duration-300"
+            style={{ backgroundColor: `${THEME_COLORS.primary}F2` }} // 약 95% 느낌
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              setShowEncouragement(false);
+              setCurrentIndex((prev) => prev + 1);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setShowEncouragement(false);
+                setCurrentIndex((prev) => prev + 1);
+              }
+            }}
+          >
+            <div className="text-3xl font-black mb-2">절반이나 왔어요.</div>
+            <p className="text-lg opacity-90">지금처럼만 하면 충분해요!</p>
+            <p className="mt-6 text-sm font-black" style={{ color: THEME_COLORS.accent }}>
+              화면을 터치하면 계속 진행돼요
+            </p>
           </div>
         )}
 
-        {/* 상단바 */}
-
-        {/* ✅ 시안 진행바 */}
+        {/* 시안 진행바 */}
         <div className="px-4 mt-3 mb-3 flex items-center gap-3">
           <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
             <div
@@ -724,7 +748,7 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
                   <div className="space-y-3 w-full">
                     {currentQuiz?.options?.map((option: string, idx: number) => {
                       let btnClass =
-                        "w-full py-4 rounded-xl text-base font-bold border-2 transition-all shadow-sm ";
+                        "w-full h-10 rounded-xl text-base font-bold border-2 transition-all shadow-sm ";
 
                       if (selectedOption === option) {
                         if (isQuizCorrect) {
@@ -749,15 +773,25 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
                     })}
                   </div>
                   {selectedOption && isQuizCorrect === false && (
-                    <p className="text-center text-red-500 font-bold mt-4 animate-pulse text-sm">
-                      오답입니다. 다시 선택해보세요!
+                    <p className="text-center text-red-500 font-bold mt-3 animate-pulse text-sm">
+                      오답입니다. 다시 선택해보세요.
                     </p>
                   )}
                   {isQuizCorrect === true && (
-                    <p className="text-center text-green-600 font-bold mt-4 animate-in zoom-in text-sm">
-                      정답입니다! 🎉
+                    <p className="text-center text-green-600 font-bold mt-3 animate-in zoom-in text-sm">
+                      정답입니다.
                     </p>
                   )}
+
+                {isQuizCorrect === true && (
+                <button
+                  onClick={handleNext}
+                  className="mt-3 w-full h-12 rounded-xl font-black text-white shadow-lg active:scale-95 transition-all"
+                  style={{ backgroundColor: THEME_COLORS.primary }}
+                >
+                  다음 문제
+                </button>
+              )}
                 </div>
               </div>
             ) : (
@@ -968,9 +1002,6 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
                       <div className="text-sm font-black text-gray-900">발음 점수</div>
                     </div>
                   </div>
-
-                  {/* 필요하면 우측 아이콘 */}
-                  <Star className="text-yellow-400 fill-yellow-400" size={18} />
                 </div>
 
                 {/* ✅ 어절 리스트: 한 화면에 다 보이게 컴팩트(overflow 시에만 스크롤) */}

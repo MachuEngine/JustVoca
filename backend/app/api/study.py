@@ -500,13 +500,13 @@ async def get_student_stats(user_id: str, db: Session = Depends(get_session)):
     low_count = len([l for l in logs if l.score < 70])        # 70점 미만: 다시 학습
     
     proficiency = [
-        {"label": "완전 암기", "value": int((high_count / total_count) * 100), "color": "bg-green-500"},
+        {"label": "학습 완료", "value": int((high_count / total_count) * 100), "color": "bg-green-500"},
         {"label": "복습 필요", "value": int((mid_count / total_count) * 100), "color": "bg-orange-400"},
         {"label": "다시 학습", "value": int((low_count / total_count) * 100), "color": "bg-red-400"},
     ]
 
     # 응원 메시지 설정
-    message = "이번 주 목표 달성 중! 🔥" if weekly_learned_count > 0 else "학습을 시작해보세요! 💪"
+    message = "이번 주 목표 달성 중" if weekly_learned_count > 0 else "학습을 시작해보세요"
 
     return {
         "weeklyLearned": weekly_learned_count,

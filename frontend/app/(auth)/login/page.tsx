@@ -72,7 +72,7 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col justify-center pb-20">
         <div className="mb-10">
           <h1 className="text-3xl font-black text-gray-900 mb-3 leading-tight">
-            환영합니다! 👋
+            환영합니다.
           </h1>
           <p className="text-gray-500 font-medium">
             로그인하여 학습을 시작해보세요.

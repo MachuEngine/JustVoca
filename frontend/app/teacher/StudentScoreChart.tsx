@@ -23,7 +23,7 @@ export default function StudentScoreChart({ studentId }: { studentId: string }) 
     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
-          📈 발음 성장 곡선
+          발음 성장 곡선
         </h3>
         <span className="text-xs font-bold text-green-500 bg-green-50 px-3 py-1 rounded-full">
           최근 7일

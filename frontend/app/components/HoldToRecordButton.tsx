@@ -76,7 +76,7 @@ export function HoldToRecordButton({
         fontSize: 16,
       }}
     >
-      {recording ? "🎙️ 말하는 중…" : "🎤 누르고 말하세요"}
+      {recording ? "말하는 중…" : "녹음 버튼을 누르고 말하세요"}
     </button>
   );
 }

@@ -60,7 +60,7 @@ export default function TeacherDash() {
         scheduled_at: isScheduled ? scheduledDate : null
       });
       if (response?.status === "ok") {
-        alert("📢 공지사항 발송 완료!");
+        alert("공지사항 발송 완료");
         setTitle(''); setContent(''); 
         fetchData(); // 로그 새로고침
       }

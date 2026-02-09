@@ -18,7 +18,7 @@ export default function StudentScoreChart({ studentId }: { studentId: string }) 
   return (
     <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mt-6">
       <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
-        📈 발음 점수 변화 추이
+        발음 점수 변화 추이
       </h3>
       
       <div className="h-64 w-full">

@@ -53,7 +53,7 @@ export default function BottomNavBar() {
             key={item.href}
             href={item.href}
             className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${
-              isActive ? "text-green-600" : "text-gray-400 hover:text-gray-600"
+              isActive ? "text-[#20385F]" : "text-gray-400 hover:text-gray-600"
             }`}
           >
             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />

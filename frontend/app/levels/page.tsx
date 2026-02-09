@@ -2,52 +2,98 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronLeft, BookOpen, Award } from 'lucide-react'; // Award 아이콘 추가
+import { ChevronLeft, BookOpen, Award } from 'lucide-react';
 
-// [수정] 레벨과 토픽 매칭 데이터 정의
+// [수정] 레벨과 토픽 매칭 데이터 정의 (색상만 변경)
 export const LEVELS = [
-  { id: "초급1", title: "초급 1", topik: "1급", desc: "기초 자음/모음과 인사말 배우기", color: "bg-green-100 text-green-700 border-green-200" },
-  { id: "초급2", title: "초급 2", topik: "2급", desc: "일상 생활 표현과 기본 문법", color: "bg-green-50 text-green-600 border-green-100" },
-  { id: "중급1", title: "중급 1", topik: "3급", desc: "복잡한 문장 만들기와 감정 표현", color: "bg-blue-100 text-blue-700 border-blue-200" },
-  { id: "중급2", title: "중급 2", topik: "4급", desc: "비즈니스 한국어와 사회 이슈", color: "bg-blue-50 text-blue-600 border-blue-100" },
-  { id: "고급1", title: "고급 1", topik: "5급", desc: "전문적인 토론과 뉴스 청취", color: "bg-purple-100 text-purple-700 border-purple-200" },
-  { id: "고급2", title: "고급 2", topik: "6급", desc: "학문적 연구와 관용구 심화", color: "bg-purple-50 text-purple-600 border-purple-100" },
+  {
+    id: "초급1",
+    title: "초급 1",
+    topik: "1급",
+    desc: "기초 자음/모음과 인사말 배우기",
+    color: "#20385F",
+  },
+  {
+    id: "초급2",
+    title: "초급 2",
+    topik: "2급",
+    desc: "일상 생활 표현과 기본 문법",
+    color: "#20385F",
+  },
+  {
+    id: "중급1",
+    title: "중급 1",
+    topik: "3급",
+    desc: "복잡한 문장 만들기와 감정 표현",
+    color: "#20385F",
+  },
+  {
+    id: "중급2",
+    title: "중급 2",
+    topik: "4급",
+    desc: "비즈니스 한국어와 사회 이슈",
+    color: "#20385F",
+  },
+  {
+    id: "고급1",
+    title: "고급 1",
+    topik: "5급",
+    desc: "전문적인 토론과 뉴스 청취",
+    color: "#20385F",
+  },
+  {
+    id: "고급2",
+    title: "고급 2",
+    topik: "6급",
+    desc: "학문적 연구와 관용구 심화",
+    color: "#20385F",
+  },
 ];
 
 export default function LevelSelectPage() {
   return (
     <div className="h-full flex flex-col bg-white">
       <header className="h-16 flex items-center px-6 border-b border-gray-100 bg-white sticky top-0 z-10">
-        <h1 className="text-lg font-bold ml-2 text-gray-900">과정 선택</h1>
+        <h1 className="text-lg font-bold ml-2 text-[#20385F]">과정 선택</h1>
       </header>
 
       <main className="flex-1 p-6 overflow-y-auto pb-10">
         <div className="mb-6">
-          <h2 className="text-2xl font-black text-gray-900 mb-2 leading-tight">오늘 학습할<br/>단계를 선택해주세요</h2>
-          <p className="text-gray-500 font-medium text-sm">하루 10개씩, 꾸준함이 실력이 됩니다! 🔥</p>
+          <p className="text-sm font-medium text-[#20385F]/70">
+            학습할 단계를 선택하세요.
+          </p>
         </div>
 
-        <div className="space-y-4">
+        {/* [수정] 항상 2열 + 모바일에서 깨짐 방지 */}
+        <div className="grid grid-cols-2 gap-4">
           {LEVELS.map((lvl) => (
-            <Link 
-              key={lvl.id} 
+            <Link
+              key={lvl.id}
               href={`/study/vocabulary?level=${encodeURIComponent(lvl.id)}`}
               className="block group"
             >
-              <div className={`p-6 rounded-3xl border-2 transition-all duration-200 ${lvl.color} bg-opacity-60 hover:bg-opacity-100 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`}>
+              <div
+                className="rounded-3xl border-2 transition-all duration-200 bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] p-4 sm:p-6"
+                style={{ borderColor: lvl.color }}
+              >
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-xl tracking-tight">{lvl.title}</span>
-                    {/* [추가] TOPIK 뱃지 표시 */}
-                    <span className="bg-white/80 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {/* [수정] 제목 한 줄 유지 + 모바일 폰트 약간 축소 */}
+                    <span className="font-black tracking-tight text-[#20385F] text-base sm:text-xl whitespace-nowrap">
+                      {lvl.title}
+                    </span>
+
+                    {/* [수정] 뱃지 축소 + 한 줄 유지 */}
+                    <span className="bg-white/80 font-bold rounded-full flex items-center gap-1 shadow-sm text-[#20385F] whitespace-nowrap text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5">
                       <Award size={10} /> TOPIK {lvl.topik}
                     </span>
                   </div>
-                  <div className="bg-white/50 p-1.5 rounded-full">
-                    <BookOpen size={18} fill="currentColor" className="opacity-70" />
-                  </div>
                 </div>
-                <p className="text-sm font-bold opacity-80">{lvl.desc}</p>
+
+                {/* [수정] 설명은 2줄까지만 + 한글 깨짐 방지 */}
+                <p className="text-sm font-bold opacity-80 text-[#20385F] break-keep line-clamp-2">
+                  {lvl.desc}
+                </p>
               </div>
             </Link>
           ))}

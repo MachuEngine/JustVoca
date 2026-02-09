@@ -26,6 +26,7 @@ import {
 } from "../../api";
 import AuthGuard from "../../components/AuthGuard";
 import StudyCard from "../../components/StudyCard";
+import confetti from "canvas-confetti";
 
 export default function VocabularyStudyPage() {
   const router = useRouter();
@@ -80,6 +81,8 @@ const getImageUrl = (path: string) => {
   const [recordBlob, setRecordBlob] = useState<Blob | null>(null);
 
   const [imageError, setImageError] = useState(false); // 이미지 에러 상태
+
+  const [isGraduated, setIsGraduated] = useState(false); // [추가] 졸업 여부 상태
 
   // --- 레벨 폴더 매핑 (로컬 오디오 경로 안정화) ---
   const levelDirMap: Record<string, string> = {
@@ -283,10 +286,41 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
   const handleComplete = async () => {
     setPhase("complete");
     try {
-      await completeStudy(level, userId);
+      // API 호출
+      const response: any = await completeStudy(level, userId);
+      
+      // [신규] 백엔드에서 졸업(마지막 페이지 완료) 신호를 줬는지 확인
+      if (response && response.level_completed) {
+        setIsGraduated(true);
+        triggerConfetti(); // 폭죽 발사!
+      } else {
+        setIsGraduated(false);
+      }
     } catch (e) {
       console.error(e);
     }
+  };
+
+  // [신규] 폭죽 효과 함수
+  const triggerConfetti = () => {
+    const duration = 3 * 1000;
+    const animationEnd = Date.now() + duration;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 999 };
+
+    const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+    const interval: any = setInterval(function () {
+      const timeLeft = animationEnd - Date.now();
+
+      if (timeLeft <= 0) {
+        return clearInterval(interval);
+      }
+
+      const particleCount = 50 * (timeLeft / duration);
+      // 화면 양쪽에서 팡팡 터짐
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
   };
 
   // --- 녹음 ---
@@ -509,22 +543,54 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
   if (phase === "complete") {
     return (
       <AuthGuard allowedRoles={["student"]}>
-        <div className="flex flex-col min-h-screen bg-white p-6 items-center justify-center text-center">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-in zoom-in duration-500">
-            <CheckCircle className="w-12 h-12 text-green-600" />
-          </div>
-          <h2 className="text-3xl font-black text-gray-900 mb-2">학습 완료!</h2>
-          <p className="text-gray-500 mb-10">
-            오늘도 목표를 달성하셨네요.
-            <br />
-            정말 고생 많으셨습니다.
-          </p>
+        <div className="flex flex-col min-h-screen bg-white p-6 items-center justify-center text-center relative overflow-hidden">
+          {/* 졸업 여부에 따라 다른 UI 표시 */}
+          {isGraduated ? (
+            // 🎉 [졸업 축하 화면]
+            <div className="animate-in zoom-in duration-700 flex flex-col items-center z-10">
+              <div className="text-8xl mb-6 animate-bounce">🎓</div>
+              <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
+                축하합니다!
+              </h1>
+              <p className="text-xl text-gray-700 font-bold mb-8">
+                <span className="text-blue-600">{level}</span> 레벨을<br />
+                완벽하게 마스터하셨습니다!
+              </p>
+              <div className="bg-yellow-50 border-2 border-yellow-200 rounded-3xl p-6 mb-10 shadow-lg rotate-1 transform">
+                <p className="text-sm font-bold text-yellow-700 uppercase tracking-widest mb-1">CERTIFICATE</p>
+                <p className="text-gray-800 font-medium">
+                   꾸준한 노력의 결실입니다.<br/>다음 레벨도 도전해보세요! 🚀
+                </p>
+              </div>
+            </div>
+          ) : (
+            // ✅ [기존 일반 완료 화면]
+            <div className="animate-in zoom-in duration-500 flex flex-col items-center z-10">
+              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6">
+                <CheckCircle className="w-12 h-12 text-green-600" />
+              </div>
+              <h2 className="text-3xl font-black text-gray-900 mb-2">학습 완료!</h2>
+              <p className="text-gray-500 mb-10">
+                오늘도 목표를 달성하셨네요.
+                <br />
+                정말 고생 많으셨습니다.
+              </p>
+            </div>
+          )}
+
           <button
             onClick={() => router.push("/student_home")}
-            className="w-full py-5 bg-blue-500 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all"
+            className={`w-full py-5 text-white rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all z-20 ${
+              isGraduated ? "bg-gradient-to-r from-blue-500 to-purple-600 shadow-purple-200" : "bg-blue-500"
+            }`}
           >
             홈으로 돌아가기
           </button>
+          
+          {/* 배경 장식 (졸업 시에만) */}
+          {isGraduated && (
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-50/50 to-white pointer-events-none -z-0"></div>
+          )}
         </div>
       </AuthGuard>
     );

@@ -10,6 +10,7 @@ from typing import List, Optional, Dict
 import random
 from datetime import datetime, timedelta
 import unicodedata  # [추가] 한글 자소 분리 방지용
+import math
 
 from app.core.database import get_session
 from app.models import StudyProgress, StudyLog, User
@@ -254,17 +255,56 @@ async def evaluate_pronunciation(
 
 @router.post("/complete")
 async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Session = Depends(get_session)):
+    # 1. 해당 레벨의 총 페이지 수 계산
+    total_pages = 1
+    if os.path.exists(EXCEL_PATH):
+        try:
+            xls = pd.ExcelFile(EXCEL_PATH, engine="openpyxl")
+            # 시트 찾기 (get_words와 동일한 로직)
+            target_sheet = next((s for s in xls.sheet_names if s.replace(" ", "") == level.replace(" ", "")), None)
+            if not target_sheet: 
+                target_sheet = random.choice(xls.sheet_names)
+            
+            df = pd.read_excel(xls, sheet_name=target_sheet)
+            # 10개씩 페이징 처리되므로 전체 페이지 수 계산 (올림 처리)
+            total_pages = math.ceil(len(df) / 10)
+        except Exception as e:
+            print(f"Page calc error: {e}")
+            pass
+
+    # 2. 진도 업데이트 및 졸업 여부 판단
     statement = select(StudyProgress).where(StudyProgress.user_id == user_id, StudyProgress.level == level)
     progress = db.exec(statement).first()
+    
+    level_completed = False # 졸업 여부 플래그
+
     if progress:
+        # 현재 보고 있는 페이지가 마지막 페이지(혹은 그 이상)라면 졸업!
+        if progress.current_page >= total_pages:
+            level_completed = True
+        
         progress.current_page += 1
         progress.updated_at = datetime.now()
         db.add(progress)
     else:
         new_progress = StudyProgress(user_id=user_id, level=level, current_page=2)
         db.add(new_progress)
+        # 만약 단어가 10개 이하라면 1페이지가 곧 마지막이므로 바로 졸업 처리 가능 (선택 사항)
+        if total_pages <= 1:
+            level_completed = True
+
+    # 레벨 완료 테스트 플래그 설정 (디버그용)
+    # 설정 시 10개 단어 학습하면 바로 졸업 축하 화면 표시
+    # level_completed = True
+
     db.commit()
-    return {"status": "success", "next_page": progress.current_page if progress else 2}
+    
+    # [핵심] level_completed 필드를 프론트로 전달
+    return {
+        "status": "success", 
+        "next_page": progress.current_page if progress else 2,
+        "level_completed": level_completed 
+    }
 
 @router.get("/review-words")
 async def get_review_words(user_id: str, db: Session = Depends(get_session)):

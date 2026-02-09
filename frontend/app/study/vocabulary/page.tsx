@@ -28,6 +28,17 @@ import AuthGuard from "../../components/AuthGuard";
 import StudyCard from "../../components/StudyCard";
 import confetti from "canvas-confetti";
 
+const THEME_COLORS = {
+  bg: "#F0F2F5",           // 전체 배경
+  cardBg: "#FFFFFF",       // 카드 배경
+  primary: "#20385F",      // ★ 메인 컬러 (네이비)
+  secondary: "#E8EBF5",    // 보조 컬러 (연한 네이비)
+  textMain: "#1A1A1A",     // 기본 검정 텍스트
+  textSub: "#8F9BB3",      // 회색 텍스트
+  accent: "#FFB02E",       // 강조(노랑)
+  success: "#00C48C",      // 성공(초록)
+};
+
 export default function VocabularyStudyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,9 +52,6 @@ export default function VocabularyStudyPage() {
 
 const getImageUrl = (path: string) => {
   if (!path) return "";
-  
-  // 이미 전체 주소(http)가 있으면 그대로 쓰고, 
-  // 아니면 백엔드 주소 없이 경로(/assets/...)만 그대로 반환합니다.
   return path; 
 };
 
@@ -669,7 +677,10 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
 
   return (
     <AuthGuard allowedRoles={["student"]}>
-      <div className="relative flex flex-col min-h-screen bg-gray-50 p-6 select-none overflow-hidden">
+      <div
+        className="relative flex flex-col h-[100dvh] px-0 pt-0 select-none overflow-hidden"
+        style={{ backgroundColor: THEME_COLORS.bg }}
+      >
         {showEncouragement && (
           <div className="absolute inset-0 z-[60] flex flex-col items-center justify-center bg-blue-500/95 backdrop-blur-sm text-white animate-in fade-in duration-300">
             <div className="text-7xl mb-4 animate-bounce">🚀</div>
@@ -679,59 +690,28 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
         )}
 
         {/* 상단바 */}
-        <div className="flex justify-between items-end mb-6 px-1">
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
-              <span className="text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100 uppercase">
-                {level}
-              </span>
-              <span
-                className={`text-[10px] font-black px-2 py-1 rounded-md border uppercase ${
-                  phase.includes("review")
-                    ? "text-orange-600 bg-orange-50 border-orange-100"
-                    : "text-blue-600 bg-blue-50 border-blue-100"
-                }`}
-              >
-                {phase.includes("learning")
-                  ? "Learning"
-                  : phase.includes("review")
-                  ? "Review"
-                  : "Quiz"}
-              </span>
-            </div>
-            {phase !== "quiz" && (
-              <div className="flex items-center gap-1.5">
-                <div
-                  className={`w-1.5 h-1.5 rounded-full ${
-                    isFlipped ? "bg-blue-500" : "bg-green-500"
-                  }`}
-                ></div>
-                <span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">
-                  {isFlipped ? "Practice Mode" : "Word Mode"}
-                </span>
-              </div>
-            )}
+
+        {/* ✅ 시안 진행바 */}
+        <div className="px-4 mt-3 mb-3 flex items-center gap-3">
+          <div className="flex-1 h-2 rounded-full bg-gray-200 overflow-hidden">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.round(((currentIndex + 1) / totalSteps) * 100)}%`,
+                backgroundColor: THEME_COLORS.primary,
+              }}
+            />
           </div>
-          <div className="text-right">
-            <div className="text-[10px] font-black text-gray-300 font-mono mb-1">
-              {String(currentIndex + 1).padStart(2, "0")} / {totalSteps}
-            </div>
-            {phase !== "quiz" && (
-              <button
-                onClick={() => setIsFlipped(!isFlipped)}
-                className="flex items-center gap-1 text-[10px] font-black text-gray-400 border border-gray-200 px-2 py-1 rounded-lg bg-white shadow-sm active:bg-gray-100"
-              >
-                <RotateCcw size={10} /> <span>회전</span>
-              </button>
-            )}
+          <div className="text-xs font-bold text-gray-500">
+            {currentIndex + 1}/{totalSteps}
           </div>
         </div>
 
         {/* --- [메인 콘텐츠 영역: 카드 + 버튼] --- */}
         {/* ✅ 카드 “더 크게”: max-w-md -> max-w-lg */}
-        <div className="flex-1 flex flex-col items-center justify-start w-full max-w-2xl mx-auto">
-          {/* 1. 카드 영역 */}
-          <div className="w-full mb-6">
+        <div className="flex-1 min-h-0 w-full flex items-start justify-center px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+84px)]">
+          <div className="w-full max-w-[340px]">
+            <div className="w-full">
             {phase === "quiz" ? (
               <div className="w-full aspect-[3/4] bg-white rounded-[3.25rem] shadow-2xl border border-gray-100 p-7 flex flex-col items-center justify-center relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex-1 w-full flex flex-col justify-center">
@@ -782,188 +762,175 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
               </div>
             ) : (
               <div
+                className="
+                  relative w-full aspect-[4/6]
+                  bg-white rounded-[28px]
+                  shadow-[0_12px_28px_rgba(0,0,0,0.10)]
+                  overflow-hidden
+                "
+                style={{ borderColor: THEME_COLORS.accent }}
                 onClick={() => setIsFlipped((prev) => !prev)}
-                // ✅ 더 커 보이게: aspect[3/4] + padding 축소(p-10->p-8)
-                className="w-full aspect-[3/4] bg-white rounded-[3.25rem] shadow-2xl border border-gray-100 p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 relative overflow-hidden active:scale-[0.99]"
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") setIsFlipped((prev) => !prev);
+                }}
               >
-                {!isFlipped ? (
-                  <div className="flex flex-col items-center w-full animate-in fade-in duration-300">
-                    {/* 이미지 영역 */}
-                    <div className="flex-1 w-full flex items-center justify-center mb-2">
-                      <div className="w-40 h-40 relative rounded-3xl overflow-hidden bg-gray-50 flex items-center justify-center shadow-inner border border-gray-100">
-                        {currentWord?.imageKey && !imageError ? (
-                          <img
-                            key={currentWord.imageKey} // [중요] key 추가: URL이 바뀌면 이미지를 새로 그리기 위함
-                            src={getImageUrl(currentWord.imageKey)}
-                            alt={currentWord.word}
-                            className="w-full h-full object-cover"
-                            onError={() => setImageError(true)}
-                          />
-                        ) : (
-                          <span className="text-6xl select-none opacity-20">📖</span>
-                        )}
-                      </div>
-                    </div>
+                {/* 회전 아이콘 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsFlipped((prev) => !prev);
+                  }}
+                  className="absolute top-6 left-1/2 -translate-x-1/2 p-2 rounded-full hover:bg-gray-50 transition z-10"
+                  style={{ color: THEME_COLORS.textSub }}
+                  aria-label="flip"
+                >
+                  <RotateCcw size={18} />
+                </button>
 
-                    {/* ✅ 단어/발음 폰트 축소 */}
-                    <div className="mb-5 w-full px-1">
-                      <h2 className="text-2xl font-black text-gray-900 flex items-baseline justify-center gap-2 flex-wrap break-keep leading-tight">
-                        {currentWord?.word}
+                {/* ✅ 고정 레이아웃 (사양서처럼) */}
+                <div className="h-full px-6 pt-8 pb-6 flex flex-col">
+                  {!isFlipped ? (
+                    // =========================
+                    // FRONT (단어/이미지)
+                    // =========================
+                    <>
+                      <div className="flex items-center justify-center pt-2">
+                        <div className="mt-10 w-[180px] h-[180px] flex items-center justify-center">
+                          {currentWord?.imageKey && !imageError ? (
+                            <img
+                              src={getImageUrl(currentWord.imageKey)}
+                              alt={currentWord.word}
+                              className="w-full h-full object-contain"
+                              onError={() => setImageError(true)}
+                            />
+                          ) : (
+                            <div className="text-4xl opacity-10">🖼️</div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-center">
+                        <div className="text-[34px] font-black text-gray-900 leading-tight">
+                          {currentWord?.word}
+                        </div>
+
                         {currentWord?.pronunciation && (
-                          <span className="text-base font-medium text-gray-400 font-mono tracking-tight transform translate-y-[-2px]">
+                          <div className="mt-1 text-[16px] font-bold text-orange-500">
                             [{currentWord.pronunciation}]
-                          </span>
+                          </div>
                         )}
-                      </h2>
-                    </div>
 
-                    {/* 뜻 영역 (폰트 축소) */}
-                    <div className="w-full px-6 mb-7">
-                      <div className="w-full bg-yellow-50 rounded-2xl p-1 border border-yellow-100 flex flex-col items-center shadow-sm">
-                        <p className="text-gray-800 font-bold text-base leading-snug break-keep text-center">
+                        <div className="mt-4 text-[13px] font-medium text-gray-700 leading-relaxed px-2">
                           {currentWord?.meaning}
-                        </p>
+                        </div>
 
                         {currentWord?.meaningEng && (
-                          <div className="w-full h-px bg-yellow-200 my-3"></div>
-                        )}
-
-                        {currentWord?.meaningEng && (
-                          <p className="text-gray-500 text-xs font-medium italic break-keep text-center">
+                          <div className="mt-2 text-[11px] text-gray-400 leading-relaxed px-2">
                             {currentWord.meaningEng}
-                          </p>
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    <button
-                      onClick={(e) => playLocalAudio("voca", e)}
-                      className={`flex items-center gap-3 px-10 py-5 text-white font-black rounded-2xl shadow-lg transition-all ${
-                        !currentWord?.audioKey
-                          ? "bg-gray-400 opacity-50"
-                          : "bg-gray-900 active:scale-95"
-                      }`}
-                    >
-                      <Volume2 size={22} /> <span className="text-sm">발음 듣기</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center w-full animate-in fade-in duration-300">
-                    <div className="w-full text-left mb-7 border-l-4 border-blue-500 pl-4">
-                      <h4 className="text-xl font-black text-gray-900">
-                        {currentWord?.word}
-                      </h4>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 opacity-60">
-                        Speak Now
-                      </p>
-                    </div>
+                      {/* ✅ 하단 고정 */}
+                      <button
+                        onClick={(e) => playLocalAudio("voca", e)}
+                        className="mt-auto w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2"
+                        style={{ backgroundColor: THEME_COLORS.primary }}
+                      >
+                        <Volume2 size={20} />
+                        발음 듣기
+                      </button>
+                    </>
+                  ) : (
+                    // =========================
+                    // BACK (예문/녹음)
+                    // =========================
+                    <>
+                      <div className="mt-10 text-center pt-3">
+                        <div className="text-[34px] font-black text-gray-900">
+                          {currentWord?.word}
+                        </div>
+                      </div>
 
-                    {/* ✅ 예문 폰트 축소 (text-2xl -> text-xl) */}
-                    <h3 className="text-xl font-black text-gray-900 leading-snug mb-10 text-left w-full break-keep px-2">
-                      {currentWord?.example}
-                    </h3>
-
-                    <div className="grid grid-cols-1 w-full gap-4 px-2">
                       <button
                         onClick={(e) => playLocalAudio("example", e)}
-                        className={`w-full h-16 font-black rounded-2xl flex items-center justify-center gap-3 shadow-sm ${
-                          !currentWord?.audioKey
-                            ? "bg-gray-100 text-gray-400"
-                            : "bg-blue-50 text-blue-600 active:bg-blue-100"
-                        }`}
+                        className="mt-14 flex items-center gap-2 text-orange-500 font-bold text-[13px] self-start"
                       >
-                        <Volume2 size={22} />
-                        <span className="text-sm">문장 듣기</span>
+                        <Volume2 size={16} />
+                        예시 문장 듣기
                       </button>
 
-                      <div onClick={(e) => e.stopPropagation()}>
+                      {/* ✅ 예문 영역만 스크롤 */}
+                      <div className="mt-2 text-[13px] text-gray-700 leading-relaxed overflow-auto flex-1 min-h-0 pr-1">
+                        {currentWord?.example}
+                      </div>
+
+                      {/* ✅ 하단 액션 영역 고정 */}
+                      <div className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
                         {recordingStatus === "idle" && (
                           <button
                             onClick={startRecording}
-                            className="w-full h-16 bg-gray-900 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-lg active:scale-95 transition-all"
+                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2"
+                            style={{ backgroundColor: THEME_COLORS.primary }}
                           >
-                            <Mic size={22} />
-                            <span className="text-sm">문장 녹음</span>
+                            <Mic size={18} />
+                            문장 녹음
                           </button>
                         )}
+
                         {recordingStatus === "recording" && (
                           <button
                             onClick={stopRecording}
-                            className="w-full h-16 bg-red-500 text-white font-black rounded-2xl flex items-center justify-center gap-3 animate-pulse shadow-lg"
+                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 bg-red-500"
                           >
-                            <Square size={22} fill="white" />
-                            <span className="text-sm">중지</span>
+                            <Square size={18} fill="white" />
+                            그만 말하기
                           </button>
                         )}
+
                         {recordingStatus === "done" && (
                           <button
                             onClick={handleShowResult}
                             disabled={isProcessing}
-                            className={`w-full h-16 text-white font-black rounded-2xl flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all ${
-                              evaluationResult ? "bg-blue-500" : "bg-green-600"
-                            }`}
+                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                            style={{ backgroundColor: THEME_COLORS.primary }}
                           >
-                            {isProcessing ? (
-                              <Loader2 className="animate-spin" />
-                            ) : (
-                              <BarChart size={22} />
-                            )}
-                            <span className="text-sm">
-                              {isProcessing
-                                ? "분석 중..."
-                                : evaluationResult
-                                ? "결과 다시 보기"
-                                : "결과 보기"}
-                            </span>
+                            {isProcessing ? <Loader2 className="animate-spin" size={18} /> : null}
+                            {isProcessing ? "분석 중..." : "결과 보기"}
                           </button>
                         )}
+
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <button
+                            disabled={currentIndex === 0}
+                            onClick={() => {
+                              setCurrentIndex((prev) => Math.max(0, prev - 1));
+                              resetCardState();
+                            }}
+                            className="h-11 rounded-lg border border-gray-200 text-gray-600 font-bold disabled:opacity-40"
+                          >
+                            〈 이전
+                          </button>
+
+                          <button
+                            onClick={handleNext}
+                            disabled={!isNextEnabled()}
+                            className="h-11 rounded-lg border border-gray-200 text-gray-600 font-bold disabled:opacity-40"
+                          >
+                            다음 〉
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </div>
             )}
-          </div>
-
-          {/* 2. 네비게이션 버튼 */}
-          <div className="flex gap-4 w-full">
-            <button
-              disabled={currentIndex === 0}
-              onClick={() => {
-                setCurrentIndex((prev) => Math.max(0, prev - 1));
-                resetCardState();
-                if (phase === "quiz") {
-                  setSelectedOption(null);
-                  setIsQuizCorrect(null);
-                }
-              }}
-              className="flex-1 h-16 bg-white border border-gray-100 rounded-3xl flex items-center justify-center gap-2 font-black text-gray-400 active:bg-gray-50 disabled:opacity-30 shadow-sm transition-all"
-            >
-              <ChevronLeft size={20} />
-              <span>이전</span>
-            </button>
-
-            <button
-              onClick={handleNext}
-              disabled={!isNextEnabled()}
-              className={`flex-1 h-16 border rounded-3xl flex items-center justify-center gap-2 font-black transition-all shadow-sm ${
-                !isNextEnabled()
-                  ? "bg-gray-100 text-gray-400 border-gray-100 cursor-not-allowed"
-                  : phase === "quiz"
-                  ? "bg-blue-500 text-white shadow-blue-200"
-                  : "bg-white border-green-200 text-green-600 active:bg-green-50"
-              }`}
-            >
-              <span>
-                {phase === "quiz" && currentIndex >= quizData.length - 1
-                  ? "결과 보기"
-                  : "다음"}
-              </span>
-              <ChevronRight size={20} />
-            </button>
+            </div>
           </div>
         </div>
-
         {/* 결과 상세 오버레이 */}
         {showResultOverlay && evaluationResult && (
           <div className="absolute inset-0 z-50 animate-in fade-in duration-300 overflow-hidden">
@@ -974,7 +941,6 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
 
             <div className="absolute inset-x-0 bottom-0 top-20 bg-white rounded-t-[3rem] shadow-2xl animate-in slide-in-from-bottom duration-500 ease-out flex flex-col">
               <div className="px-8 pt-6 pb-4 flex justify-between items-center border-b border-gray-50">
-                <h2 className="text-xl font-black text-gray-900">발음 진단 리포트</h2>
                 <button
                   onClick={() => setShowResultOverlay(false)}
                   className="p-2 bg-gray-50 rounded-full text-gray-400 active:scale-90 transition-all"

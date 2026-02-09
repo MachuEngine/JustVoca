@@ -934,136 +934,131 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
         {/* 결과 상세 오버레이 */}
         {showResultOverlay && evaluationResult && (
           <div className="absolute inset-0 z-50 animate-in fade-in duration-300 overflow-hidden">
+            {/* dim */}
             <div
               className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
               onClick={() => setShowResultOverlay(false)}
-            ></div>
+            />
 
-            <div className="absolute inset-x-0 bottom-0 top-20 bg-white rounded-t-[3rem] shadow-2xl animate-in slide-in-from-bottom duration-500 ease-out flex flex-col">
-              <div className="px-8 pt-6 pb-4 flex justify-between items-center border-b border-gray-50">
-                <button
-                  onClick={() => setShowResultOverlay(false)}
-                  className="p-2 bg-gray-50 rounded-full text-gray-400 active:scale-90 transition-all"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+            {/* ✅ 사양서 스타일: 한 화면에 모두 보이게(컴팩트) */}
+            <div className="absolute inset-x-0 top-16 bottom-6 px-4 flex items-start justify-center">
+              <div className="w-full max-w-[360px] bg-white rounded-[28px] shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
+                {/* Header */}
+                <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+                  <div className="text-sm font-black text-gray-900">발음 녹음 결과</div>
+                  <button
+                    onClick={() => setShowResultOverlay(false)}
+                    className="p-2 bg-gray-50 rounded-full text-gray-400 active:scale-90 transition-all"
+                    aria-label="close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
 
-              <div className="flex-1 overflow-y-auto p-6 pb-12">
-                <div className="bg-gray-900 text-white rounded-[2.5rem] p-8 mb-8 relative overflow-hidden shadow-xl">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gray-800 rounded-full -mr-10 -mt-10 opacity-50"></div>
-                  <div className="relative z-10 flex items-center justify-between">
-                    <div>
-                      <p className="text-gray-400 font-bold mb-1">Total Score</p>
-                      <div className="text-5xl font-black tracking-tight">
+                {/* ✅ Total Score (컴팩트) */}
+                <div className="px-5 pb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full border-2 border-emerald-500 flex items-center justify-center">
+                      <span className="text-base font-black text-emerald-600">
                         {overallScore}
-                        <span className="text-2xl text-gray-500 ml-1">점</span>
-                      </div>
+                      </span>
                     </div>
-                    <div className="w-16 h-16 bg-gradient-to-tr from-green-400 to-blue-500 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
-                      <Star className="text-white fill-white" size={32} />
+                    <div className="leading-tight">
+                      <div className="text-[11px] text-gray-400 font-bold">TOTAL SCORE</div>
+                      <div className="text-sm font-black text-gray-900">발음 점수</div>
                     </div>
+                  </div>
+
+                  {/* 필요하면 우측 아이콘 */}
+                  <Star className="text-yellow-400 fill-yellow-400" size={18} />
+                </div>
+
+                {/* ✅ 어절 리스트: 한 화면에 다 보이게 컴팩트(overflow 시에만 스크롤) */}
+                <div className="px-5 pb-4 flex-1 min-h-0">
+                  <div className="space-y-2 overflow-y-auto pr-1 max-h-full">
+                    {resultWords.map((wordObj: any, idx: number) => {
+                      const isExpanded = expandedWordIndex === idx;
+                      const score = Math.round(wordObj.score);
+
+                      let colorClass = "text-red-600 bg-red-50 border-red-100";
+                      if (score >= 80) colorClass = "text-emerald-600 bg-emerald-50 border-emerald-100";
+                      else if (score >= 60) colorClass = "text-orange-600 bg-orange-50 border-orange-100";
+
+                      return (
+                        <div
+                          key={idx}
+                          className="border border-gray-100 rounded-2xl overflow-hidden"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setExpandedWordIndex(isExpanded ? null : idx)}
+                            className={`w-full px-4 py-3 flex items-center justify-between active:bg-gray-50 ${
+                              isExpanded ? "bg-gray-50/60" : "bg-white"
+                            }`}
+                          >
+                            <span className="text-sm font-black text-gray-900">
+                              {wordObj.text}
+                            </span>
+                            <span className={`text-xs font-black px-2 py-1 rounded-full border ${colorClass}`}>
+                              {score}점
+                            </span>
+                          </button>
+
+                          {/* ✅ 음소별 점수: 클릭 시 유지 */}
+                          {isExpanded && (
+                            <div className="px-4 pb-3 pt-1 bg-gray-50/30">
+                              <div className="flex flex-wrap gap-2 mt-2">
+                                {extractPhonesFromWord(wordObj).map((ph, pIdx) => {
+                                  const s = ph.score;
+                                  const badge =
+                                    s >= 80
+                                      ? "text-emerald-600 bg-emerald-50 border-emerald-100"
+                                      : s >= 60
+                                      ? "text-orange-600 bg-orange-50 border-orange-100"
+                                      : "text-red-600 bg-red-50 border-red-100";
+
+                                  return (
+                                    <div
+                                      key={pIdx}
+                                      className="flex items-center justify-between gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2"
+                                    >
+                                      <span className="text-sm font-black text-gray-800">
+                                        {ph.symbol}
+                                      </span>
+                                      <span className={`text-[11px] font-black px-2 py-1 rounded-full border ${badge}`}>
+                                        {ph.score}점
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+
+                                {extractPhonesFromWord(wordObj).length === 0 && (
+                                  <div className="text-xs text-gray-400 py-2">
+                                    상세 음소 정보 없음
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {resultWords.map((wordObj: any, idx: number) => {
-                    const isExpanded = expandedWordIndex === idx;
-                    const score = Math.round(wordObj.score);
-                    let colorClass = "text-red-500 bg-red-50 border-red-100";
-                    if (score >= 80)
-                      colorClass = "text-blue-600 bg-blue-50 border-blue-100";
-                    else if (score >= 60)
-                      colorClass = "text-green-600 bg-green-50 border-green-100";
-
-                    return (
-                      <div
-                        key={idx}
-                        className="bg-white border border-gray-100 rounded-3xl shadow-sm overflow-hidden transition-all duration-300"
-                      >
-                        <div
-                          onClick={() =>
-                            setExpandedWordIndex(isExpanded ? null : idx)
-                          }
-                          className={`p-5 flex items-center justify-between cursor-pointer active:bg-gray-50 ${
-                            isExpanded ? "bg-gray-50/50" : ""
-                          }`}
-                        >
-                          <span className="text-lg font-black text-gray-800">
-                            {wordObj.text}
-                          </span>
-                          <span
-                            className={`text-sm font-black px-3 py-1 rounded-full border ${colorClass}`}
-                          >
-                            {score}점
-                          </span>
-                        </div>
-
-                        {isExpanded && (
-                          <div className="px-5 pb-5 pt-1 bg-gray-50/30 animate-in slide-in-from-top-2">
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {extractPhonesFromWord(wordObj).map((ph, pIdx) => {
-                                const s = ph.score;
-                                const badge =
-                                  s >= 80
-                                    ? "text-green-600 bg-green-50 border-green-100"
-                                    : s >= 60
-                                    ? "text-orange-600 bg-orange-50 border-orange-100"
-                                    : "text-red-600 bg-red-50 border-red-100";
-
-                                return (
-                                  <div
-                                    key={pIdx}
-                                    className="flex items-center justify-between gap-2 min-w-[86px] bg-white border border-gray-100 rounded-2xl px-3 py-2"
-                                  >
-                                    <span className="text-base font-black text-gray-800">
-                                      {ph.symbol}
-                                    </span>
-                                    <span
-                                      className={`text-xs font-black px-2 py-1 rounded-full border ${badge}`}
-                                    >
-                                      {ph.score}점
-                                    </span>
-                                  </div>
-                                );
-                              })}
-
-                              {extractPhonesFromWord(wordObj).length === 0 && (
-                                <div className="text-xs text-gray-400 p-2">
-                                  상세 음소 정보 없음
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                {/* ✅ 하단 버튼: 다시 녹음 삭제 + 계속 학습하기 */}
+                <div className="px-5 pb-5">
+                  <button
+                    onClick={() => {
+                      setShowResultOverlay(false);
+                      handleNext();
+                    }}
+                    className="w-full h-12 rounded-xl font-black text-white shadow-lg active:scale-95 transition-all"
+                    style={{ backgroundColor: THEME_COLORS.primary }}
+                  >
+                    계속 학습하기
+                  </button>
                 </div>
-              </div>
-
-              <div className="p-6 pt-0 bg-white grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => {
-                    setShowResultOverlay(false);
-                    setRecordingStatus("idle");
-                    setRecordBlob(null);
-                    setEvaluationResult(null);
-                    setOverallScore(0);
-                  }}
-                  className="h-16 bg-gray-100 text-gray-600 font-black rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all"
-                >
-                  <RotateCcw size={18} /> 다시 녹음
-                </button>
-                <button
-                  onClick={() => {
-                    setShowResultOverlay(false);
-                    handleNext();
-                  }}
-                  className="h-16 bg-gray-900 text-white font-black rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                >
-                  다음 단어 <ArrowRight size={18} />
-                </button>
               </div>
             </div>
           </div>

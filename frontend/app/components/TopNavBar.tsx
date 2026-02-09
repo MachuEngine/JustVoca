@@ -22,6 +22,27 @@ export default function TopNavBar() {
 
   const isTeacher = userRole === "teacher" || userRole === "admin";
 
+  const normalizeLevel = (level: string) => {
+    const s = String(level || "").replace(/\s+/g, ""); // 공백 제거
+    // 혹시 "고급"만 오는 케이스 방어 (원하면 규칙 바꿀 수 있음)
+    if (s === "고급") return "고급1";
+    return s;
+  };
+
+  const topikLabelByLevel: Record<string, string> = {
+    "초급1": "Topik1",
+    "초급2": "Topik2",
+    "중급1": "Topik3",
+    "중급2": "Topik4",
+    "고급1": "Topik5",
+    "고급2": "Topik6",
+  };
+
+  const getTopikLabel = (level: string) => {
+    const key = normalizeLevel(level);
+    return topikLabelByLevel[key] ?? "Topik1"; // 기본값
+  };
+
   const getFlagEmojiOnly = (countryCode: string) => {
     if (!countryCode) return "🇰🇷";
     const codePoints = countryCode
@@ -51,11 +72,13 @@ export default function TopNavBar() {
 
       const countryCode = profile?.country || "KR";
 
+      const normalizedLevel = normalizeLevel(currentLevel);
+
       setUserInfo({
         nationalityEmoji: getFlagEmojiOnly(countryCode),
         nationalityCode: countryCode,
         learningLevel: currentLevel, // ✅ 기존 로직 유지
-        topikLabel: "Topik I",
+        topikLabel: getTopikLabel(normalizedLevel),
         teacherId: profile?.teacher_id || null,
       });
     } catch (error) {

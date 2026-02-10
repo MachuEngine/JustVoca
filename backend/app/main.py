@@ -10,7 +10,7 @@ from app.core.database import create_db_and_tables, engine
 from app.models import User
 
 # [수정] 모든 라우터 임포트 확인 (notice 포함)
-from app.api import auth, study, user, teacher, admin, speech, notice 
+from app.api import auth, study, user, teacher, admin, speech, notice, chat
 from app.core.config import settings
 
 def create_default_users():
@@ -55,6 +55,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex="https://klephtic-crew-clearheaded.ngrok-free.dev",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,6 +75,8 @@ app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(speech.router, prefix="/speech", tags=["Speech"]) 
 # [추가] 공지사항 라우터 등록
 app.include_router(notice.router, prefix="/api/notice", tags=["Notice"])
+# [추가] 챗봇 라우터 등록
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 os.makedirs(settings.TEMP_UPLOAD_DIR, exist_ok=True)
 app.mount("/files", StaticFiles(directory=settings.TEMP_UPLOAD_DIR), name="files")

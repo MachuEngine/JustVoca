@@ -90,7 +90,7 @@ export default function LoginPage() {
                 placeholder="아이디" 
                 value={id}
                 onChange={(e) => setId(e.target.value)}
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all font-bold text-gray-800 border border-transparent"
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] transition-all font-bold text-gray-800 border border-transparent"
               />
             </div>
             <div className="relative">
@@ -102,22 +102,26 @@ export default function LoginPage() {
                 placeholder="비밀번호" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 transition-all font-bold text-gray-800 border border-transparent"
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] transition-all font-bold text-gray-800 border border-transparent"
               />
             </div>
           </div>
 
           <button 
             disabled={isLoading}
-            className="w-full h-16 bg-gray-900 text-white font-bold rounded-2xl text-lg hover:bg-black active:scale-[0.98] transition-all shadow-lg mt-8 flex items-center justify-center"
+            className="w-full h-16 bg-[#20385F] text-white font-bold rounded-2xl text-lg hover:bg-[#2a508c] active:scale-[0.98] transition-all shadow-lg mt-8 flex items-center justify-center"
           >
             {isLoading ? <Loader2 className="animate-spin" /> : "로그인"}
           </button>
         </form>
 
-        <div className="mt-12 text-center">
-          <Link href="/signup" className="text-green-600 font-bold hover:underline text-sm tracking-tight">
-            아직 회원이 아니신가요? 회원가입 하러가기
+        <div className="mt-12 flex items-center justify-center gap-2">
+          <span className="text-gray-400 text-sm">아직 회원이 아니신가요?</span>
+          <Link 
+            href="/signup" 
+            className="text-[#20385F] font-black text-base hover:border-[#20385F] transition-all flex items-center gap-1 pb-0.5"
+          >
+            회원가입
           </Link>
         </div>
       </div>

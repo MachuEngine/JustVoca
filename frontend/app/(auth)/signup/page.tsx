@@ -168,10 +168,10 @@ export default function SignupPage() {
           {/* 역할 선택 */}
           <div onClick={toggleRole} className="flex items-center gap-2 cursor-pointer mb-2 w-fit px-1">
             {isTeacher 
-              ? <CheckSquare className="text-green-600" size={22} /> 
+              ? <CheckSquare className="text-[#3665B2]" size={22} /> 
               : <Square className="text-gray-300" size={22} />
             }
-            <span className={`text-sm font-bold transition-colors ${isTeacher ? 'text-green-600' : 'text-gray-400'}`}>
+            <span className={`text-sm font-bold transition-colors ${isTeacher ? 'text-[#3665B2]' : 'text-gray-400'}`}>
               선생님으로 가입하기
             </span>
           </div>
@@ -183,7 +183,7 @@ export default function SignupPage() {
               <input 
                 type="text" name="name" placeholder="이름" 
                 value={formData.name} onChange={handleChange}
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] font-bold text-gray-800"
               />
             </div>
 
@@ -197,8 +197,8 @@ export default function SignupPage() {
                     value={formData.id} onChange={handleChange}
                     className={`w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-800 transition-all ${
                       isIdChecked 
-                        ? (isIdAvailable ? 'ring-2 ring-green-500 bg-green-50' : 'ring-2 ring-red-500 bg-red-50') 
-                        : 'focus:ring-2 focus:ring-green-500'
+                        ? (isIdAvailable ? 'ring-2 ring-[#3665B2] bg-blue-50' : 'ring-2 ring-red-500 bg-red-50') 
+                        : 'focus:ring-2 focus:ring-[#3665B2]'
                     }`}
                   />
                 </div>
@@ -206,7 +206,7 @@ export default function SignupPage() {
                   type="button" onClick={handleIdCheck}
                   className={`px-4 font-bold rounded-2xl text-sm transition-colors whitespace-nowrap ${
                     isIdChecked && isIdAvailable 
-                    ? "bg-green-600 text-white" 
+                    ? "bg-[#3665B2] text-white" 
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
@@ -214,7 +214,7 @@ export default function SignupPage() {
                 </button>
               </div>
               {isIdChecked && (
-                <p className={`text-xs ml-4 font-bold ${isIdAvailable ? 'text-green-600' : 'text-red-500'}`}>
+                <p className={`text-xs ml-4 font-bold ${isIdAvailable ? 'text-[#3665B2]' : 'text-red-500'}`}>
                   {isIdAvailable ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다."}
                 </p>
               )}
@@ -226,7 +226,7 @@ export default function SignupPage() {
               <input 
                 type="email" name="email" placeholder="이메일" 
                 value={formData.email} onChange={handleChange}
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] font-bold text-gray-800"
               />
             </div>
 
@@ -236,7 +236,7 @@ export default function SignupPage() {
               <input 
                 type="tel" name="phone" placeholder="전화번호" 
                 value={formData.phone} onChange={handleChange}
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] font-bold text-gray-800"
               />
             </div>
 
@@ -245,7 +245,7 @@ export default function SignupPage() {
               <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
               <select 
                 name="country" value={formData.country} onChange={handleChange}
-                className="w-full h-16 pl-12 pr-10 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800 appearance-none"
+                className="w-full h-16 pl-12 pr-10 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] font-bold text-gray-800 appearance-none"
               >
                 <option value="">국적을 선택해주세요</option>
                 <option value="KR">한국 (Korea)</option>
@@ -263,7 +263,7 @@ export default function SignupPage() {
                 <input 
                   type="text" name="teacherId" placeholder="선생님 ID (선택 사항)" 
                   value={formData.teacherId} onChange={handleChange}
-                  className="w-full h-16 pl-12 pr-4 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-800 placeholder:text-gray-400"
+                  className="w-full h-16 pl-12 pr-4 bg-blue-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] font-bold text-gray-800 placeholder:text-gray-400"
                 />
               </div>
             )}
@@ -274,7 +274,7 @@ export default function SignupPage() {
               <input 
                 type="password" name="password" placeholder="비밀번호" 
                 value={formData.password} onChange={handleChange}
-                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-green-500 font-bold text-gray-800"
+                className="w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#3665B2] font-bold text-gray-800"
               />
             </div>
 
@@ -287,7 +287,7 @@ export default function SignupPage() {
                 className={`w-full h-16 pl-12 pr-4 bg-gray-50 rounded-2xl outline-none font-bold text-gray-800 transition-all ${
                   formData.confirmPassword && formData.password !== formData.confirmPassword
                     ? "ring-2 ring-red-500 bg-red-50"
-                    : "focus:ring-2 focus:ring-green-500"
+                    : "focus:ring-2 focus:ring-[#3665B2]"
                 }`}
               />
             </div>
@@ -307,7 +307,7 @@ export default function SignupPage() {
         <div className="mt-8 text-center pb-8">
           <p className="text-gray-400 text-sm font-medium">
             이미 계정이 있으신가요?{" "}
-            <Link href="/login" className="text-green-600 font-black hover:underline ml-1">
+            <Link href="/login" className="text-[#3665B2] font-black hover:underline ml-1">
               로그인
             </Link>
           </p>

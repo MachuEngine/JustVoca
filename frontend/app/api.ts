@@ -1,14 +1,5 @@
 // frontend/app/api.ts
 
-// ✅ [수정] base url 개념 제거 (ngrok 데모에서는 상대경로로만 호출해야 안전)
-// const getBaseUrl = () => {
-//   if (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_API_BASE) {
-//     return process.env.NEXT_PUBLIC_API_BASE;
-//   }
-//   return "http://localhost:8000";
-// };
-// const API_BASE_URL = getBaseUrl();
-
 // [신규] 에러 처리를 위한 헬퍼 함수
 async function handleResponse(res: Response) {
   if (!res.ok) {
@@ -109,3 +100,20 @@ export const getStudentStats = (uid: string) => api.get(`/study/stats?user_id=${
 // [신규] 관리자(Admin) 관련 함수
 export const getPendingTeachers = () => api.get("/admin/pending_teachers");
 export const approveTeacher = (uid: string) => api.post(`/admin/approve/${uid}`, {});
+
+// [신규] 챗봇 관련 함수 (히스토리 기능 추가)
+export const sendChatMessage = async (
+  message: string, 
+  userId: string, 
+  history: { role: string; content: string }[] = [], // 추가됨: 대화 내역
+  mode: string = "free_talk",
+  userLevel: string = "Beginner"
+) => {
+  return await api.post("/api/chat/message", { 
+    message, 
+    user_id: userId,
+    history, // 백엔드로 전달
+    mode,
+    user_level: userLevel 
+  });
+};

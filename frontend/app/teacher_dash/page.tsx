@@ -205,7 +205,7 @@ export default function TeacherDash() {
           {/* 4. 공지 발송 로그 */}
           <section>
             <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
-              <List size={20} className="text-gray-400" /> 공지 발송 로그
+              <List size={20} className="text-gray-400" /> 공지 이력
             </h2>
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
               {noticeLogs.length > 0 ? noticeLogs.map((log: any, idx: number) => (

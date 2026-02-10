@@ -7,11 +7,13 @@ import AuthGuard from '../components/AuthGuard';
 import { getStudentStats } from '../api';
 
 export default function StatsPage() {
+  const [viewMode, setViewMode] = useState<'weekly' | 'monthly'>('weekly');
   const [stats, setStats] = useState({
     weeklyLearned: 0,
     streak: 0,
     accuracy: 0,
     weeklyTrend: [0, 0, 0, 0, 0, 0, 0],
+    monthlyTrend: [], // 백엔드에서 주는 배열 길이에 따라 동적 할당
     proficiency: [
         { label: "학습 완료", value: 0, color: "bg-[#20385F]" },
         { label: "복습 필요", value: 0, color: "bg-[#FF8C1A]" },
@@ -21,11 +23,20 @@ export default function StatsPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  // 실제 데이터가 모두 0인지 확인
-  const hasNoData = stats.weeklyTrend.every(val => val === 0);
+  // 1. 현재 모드에 따른 데이터 선택
+  const isWeekly = viewMode === 'weekly';
+  const displayTrend = isWeekly ? stats.weeklyTrend : stats.monthlyTrend;
   
-  // 그래프 막대 높이 계산을 위한 기준값 (최소 1로 설정하여 0 나누기 방지)
-  const maxTrendValue = Math.max(...stats.weeklyTrend, 1);
+  // 2. 레이블 생성 로직 (달력 기준 1일~말일 대응)
+  const labels = isWeekly 
+    ? ['월', '화', '수', '목', '금', '토', '일'] 
+    : Array.from({ length: displayTrend.length }, (_, i) => `${i + 1}`);
+
+  // 3. 실제 데이터가 모두 0인지 확인
+  const hasNoData = displayTrend.length === 0 || displayTrend.every(val => val === 0);
+  
+  // 4. 그래프 막대 높이 계산용 최댓값
+  const maxTrendValue = Math.max(...(displayTrend.length > 0 ? displayTrend : [0]), 1);
 
   useEffect(() => {
     async function fetchData() {
@@ -84,50 +95,113 @@ export default function StatsPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#20385F]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-60"></div>
             </section>
 
-            {/* 2. 학습 추이 (실제 데이터 연동 완료) */}
+            {/* 2. 학습 추이 (달력 기준 연동) */}
             <section className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-black text-[#20385F]">학습 추이</h2>
                 <div className="bg-gray-100 p-1 rounded-full flex text-[10px] font-bold">
-                  <button className="bg-white text-[#20385F] px-3 py-1 rounded-full shadow-sm">주간</button>
-                  <button className="text-gray-400 px-3 py-1 cursor-default opacity-50">월간</button>
+                  <button 
+                    onClick={() => setViewMode('weekly')}
+                    className={`${isWeekly ? 'bg-white text-[#20385F] shadow-sm' : 'text-gray-400'} px-3 py-1 rounded-full transition-all`}
+                  >
+                    주간
+                  </button>
+                  <button 
+                    onClick={() => setViewMode('monthly')}
+                    className={`${!isWeekly ? 'bg-white text-[#20385F] shadow-sm' : 'text-gray-400'} px-3 py-1 rounded-full transition-all`}
+                  >
+                    월간
+                  </button>
                 </div>
               </div>
               
-              <div className="relative h-40">
-                {/* 데이터가 아예 없을 때만 안내 표시 */}
+              <div className="relative h-44">
                 {hasNoData && (
-                  <div className="absolute inset-0 z-20 flex items-center justify-center">
+                  <div className="absolute inset-0 z-30 flex items-center justify-center">
                     <p className="text-xs text-gray-400 font-bold bg-white/90 px-4 py-2 rounded-full border border-gray-100 shadow-sm">
-                      이번 주 학습 기록이 없습니다.
+                      이번 {isWeekly ? "주" : "달"} 기록이 없습니다.
                     </p>
                   </div>
                 )}
 
-                <div className={`flex items-end justify-between h-32 gap-3 px-2 transition-all duration-500 ${hasNoData ? 'opacity-20' : 'opacity-100'}`}>
-                  {['월','화','수','목','금','토','일'].map((day, i) => {
-                    // 백엔드 데이터(stats.weeklyTrend) 기반 높이 계산
-                    const count = stats.weeklyTrend[i] || 0;
-                    const heightPercentage = (count / maxTrendValue) * 100;
-
-                    return (
-                      <div key={day} className="flex-1 flex flex-col items-center gap-2 h-full">
-                        <div className="w-full bg-gray-100 rounded-t-lg h-full flex items-end relative overflow-hidden">
-                          <div 
-                            style={{ height: `${heightPercentage}%` }} 
-                            className="w-full rounded-t-lg bg-[#20385F] transition-all duration-1000 ease-out"
+                {/* ✅ 2열 레이아웃: (왼쪽) Y축 라벨 / (오른쪽) 차트 */}
+                <div className={`relative z-10 h-full grid grid-cols-[28px,1fr] gap-1 ${hasNoData ? "opacity-20" : "opacity-100"}`}>
+                  {/* (A) Y축 라벨 전용 */}
+                  <div className="flex flex-col justify-between pb-6">
+                    {[maxTrendValue, Math.round(maxTrendValue * 0.75), Math.round(maxTrendValue * 0.5), Math.round(maxTrendValue * 0.25), 0].map(
+                      (v, idx) => (
+                        <div key={idx} className="h-px flex items-center">
+                          <span
+                            className="
+                              w-full text-right text-[10px] font-bold text-gray-300 leading-none
+                              -translate-x-2
+                            "
                           >
-                            {count > 0 && (
-                              <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-white">
-                                {count}
-                              </span>
-                            )}
-                          </div>
+                            {v}
+                          </span>
                         </div>
-                        <span className="text-[10px] font-bold text-gray-500">{day}</span>
+                      )
+                    )}
+                  </div>
+
+                  {/* (B) 차트 전용 (그리드라인 + 막대) */}
+                  <div className="relative">
+                    {/* ✅ 그리드라인: 차트 영역에만 깔기 */}
+                    <div className="pointer-events-none absolute inset-0 flex flex-col justify-between pb-6">
+                      {[0, 1, 2, 3, 4].map((k) => (
+                        <div key={k} className="h-px w-full bg-gray-100" />
+                      ))}
+                    </div>
+
+                    {/* ✅ 막대 영역 */}
+                    {isWeekly ? (
+                      <div className="relative z-10 h-full flex items-end justify-between gap-3 pb-6 px-0">
+                        {displayTrend.map((count, i) => {
+                          const heightPercentage = (count / maxTrendValue) * 100;
+                          return (
+                            <div key={i} className="flex-1 h-full flex flex-col items-center">
+                              <div className="w-full flex-1 bg-gray-100 rounded-t-lg flex items-end relative overflow-hidden">
+                                <div
+                                  style={{ height: `${heightPercentage}%` }}
+                                  className="w-full rounded-t-lg transition-all duration-700 ease-out bg-[#20385F]"
+                                />
+                              </div>
+                              <div className="h-6 flex items-center justify-center">
+                                <span className="text-[9px] font-bold text-gray-400">{labels[i]}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    ) : (
+                      <div
+                        className="relative z-10 h-full grid items-end gap-1 pb-6 px-0"
+                        style={{ gridTemplateColumns: `repeat(${displayTrend.length}, minmax(0, 1fr))` }}
+                      >
+                        {displayTrend.map((count, i) => {
+                          const heightPercentage = (count / maxTrendValue) * 100;
+                          const dayNumber = i + 1;
+                          const isFiveStep = dayNumber % 5 === 0 || dayNumber === 1;
+
+                          return (
+                            <div key={i} className="h-full flex flex-col items-center">
+                              <div className="w-full flex-1 bg-gray-100 rounded-t-md flex items-end relative overflow-hidden">
+                                <div
+                                  style={{ height: `${heightPercentage}%` }}
+                                  className="w-full rounded-t-md transition-all duration-700 ease-out bg-[#20385F]"
+                                />
+                              </div>
+                              <div className="h-6 flex items-center justify-center">
+                                <span className={`text-[9px] font-bold ${isFiveStep ? "text-[#20385F]" : "text-gray-300"}`}>
+                                  {isFiveStep ? labels[i] : ""}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>

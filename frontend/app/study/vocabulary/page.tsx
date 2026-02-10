@@ -142,6 +142,24 @@ const getImageUrl = (path: string) => {
     fetchInitialData();
   }, [level, userId, mode]); // mode를 의존성 배열에 추가
 
+  // --- [추가] 화면 이탈 시 마이크 자동 종료 로직 ---
+  useEffect(() => {
+    return () => {
+      // 1. 녹음 중이면 중단
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      
+      // 2. 마이크 스트림 트랙들을 모두 종료 (브라우저 마이크 아이콘 제거)
+      if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
+        mediaRecorderRef.current.stream.getTracks().forEach((track) => {
+          track.stop();
+          console.log("마이크 트랙이 종료되었습니다.");
+        });
+      }
+    };
+  }, []);
+
 const mapWordData = (list: any[]) => {
   if (!list || list.length === 0) return [];
   return list.map((w: any) => ({
@@ -870,7 +888,7 @@ const goToQuiz = () => {
                       {/* ✅ 하단 고정 */}
                       <button
                         onClick={(e) => playLocalAudio("voca", e)}
-                        className="mt-auto w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2"
+                        className="mt-auto w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 transition-transform duration-100 active:scale-95 hover:brightness-110"
                         style={{ backgroundColor: THEME_COLORS.primary }}
                       >
                         <Volume2 size={20} />
@@ -890,7 +908,7 @@ const goToQuiz = () => {
 
                       <button
                         onClick={(e) => playLocalAudio("example", e)}
-                        className="mt-14 flex items-center gap-2 text-orange-500 font-bold text-[13px] self-start"
+                        className="mt-14 flex items-center gap-2 text-orange-500 font-bold text-[13px] self-start transition-all duration-100 active:scale-95 hover:opacity-80 active:opacity-100"
                       >
                         <Volume2 size={16} />
                         예시 문장 듣기
@@ -906,18 +924,18 @@ const goToQuiz = () => {
                         {recordingStatus === "idle" && (
                           <button
                             onClick={startRecording}
-                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2"
+                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 transition-transform duration-100 active:scale-95 hover:brightness-110"
                             style={{ backgroundColor: THEME_COLORS.primary }}
                           >
                             <Mic size={18} />
-                            문장 녹음
+                            문장 말하기
                           </button>
                         )}
 
                         {recordingStatus === "recording" && (
                           <button
                             onClick={stopRecording}
-                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 bg-red-500"
+                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 bg-red-500 transition-transform duration-100 active:scale-95 hover:bg-red-600 shadow-md active:shadow-inner"
                           >
                             <Square size={18} fill="white" />
                             그만 말하기
@@ -928,7 +946,7 @@ const goToQuiz = () => {
                           <button
                             onClick={handleShowResult}
                             disabled={isProcessing}
-                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 disabled:opacity-60"
+                            className="w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 transition-all duration-100 disabled:opacity-60 disabled:cursor-not-allowed enabled:active:scale-95 enabled:hover:brightness-110"
                             style={{ backgroundColor: THEME_COLORS.primary }}
                           >
                             {isProcessing ? <Loader2 className="animate-spin" size={18} /> : null}
@@ -937,21 +955,23 @@ const goToQuiz = () => {
                         )}
 
                         <div className="mt-4 grid grid-cols-2 gap-3">
+                          {/* 이전 버튼 */}
                           <button
                             disabled={currentIndex === 0}
                             onClick={() => {
                               setCurrentIndex((prev) => Math.max(0, prev - 1));
                               resetCardState();
                             }}
-                            className="h-11 rounded-lg border border-gray-200 text-gray-600 font-bold disabled:opacity-40"
+                            className="h-11 rounded-lg border border-gray-200 text-gray-600 font-bold transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:active:scale-95 enabled:active:bg-gray-100"
                           >
                             〈 이전
                           </button>
 
+                          {/* 다음 버튼 */}
                           <button
                             onClick={handleNext}
                             disabled={!isNextEnabled()}
-                            className="h-11 rounded-lg border border-gray-200 text-gray-600 font-bold disabled:opacity-40"
+                            className="h-11 rounded-lg border border-gray-200 text-gray-600 font-bold transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:active:scale-95 enabled:active:bg-gray-100"
                           >
                             다음 〉
                           </button>

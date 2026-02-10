@@ -15,6 +15,7 @@ export default function Chatbot() {
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [showButton, setShowButton] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null); // role 상태 추가
 
   // --- [드래그 관련 상태] ---
   const [position, setPosition] = useState({ x: 0, y: 0 }); // 버튼 위치
@@ -35,9 +36,15 @@ export default function Chatbot() {
     // 로그인한 학생일 때만 챗봇 표시
     const storedId = localStorage.getItem("userId");
     const role = localStorage.getItem("userRole");
+
+    // role이 'student'인 경우에만 버튼을 보여주도록 설정
     if (storedId && role === "student") {
       setUserId(storedId);
+      setUserRole(role);
       setShowButton(true);
+    } else {
+      // 관리자(admin)이거나 로그인 정보가 없으면 버튼을 숨김
+      setShowButton(false);
     }
   }, []);
 
@@ -125,7 +132,9 @@ export default function Chatbot() {
     }
   };
 
-  if (!showButton || !isVisiblePath) return null;
+  if (!showButton || !isVisiblePath || userRole !== "student") {
+    return null;
+  }
 
   return (
     <div className="z-[9999]">

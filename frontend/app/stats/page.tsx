@@ -21,11 +21,11 @@ export default function StatsPage() {
   });
   const [loading, setLoading] = useState(true);
 
-  // [추가] 배경에 깔아둘 임시 그래프 데이터
-  const dummyTrend = [40, 70, 45, 90, 65, 80, 30];
-  // 실제 데이터가 모두 0이면 더미 데이터를 배경으로 사용
+  // 실제 데이터가 모두 0인지 확인
   const hasNoData = stats.weeklyTrend.every(val => val === 0);
-  const trendDisplayData = hasNoData ? dummyTrend : stats.weeklyTrend;
+  
+  // 그래프 막대 높이 계산을 위한 기준값 (최소 1로 설정하여 0 나누기 방지)
+  const maxTrendValue = Math.max(...stats.weeklyTrend, 1);
 
   useEffect(() => {
     async function fetchData() {
@@ -84,44 +84,50 @@ export default function StatsPage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#20385F]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-60"></div>
             </section>
 
-            {/* 2. 학습 추이 (준비중 오버레이 적용) */}
+            {/* 2. 학습 추이 (실제 데이터 연동 완료) */}
             <section className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 relative overflow-hidden">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-black text-[#20385F]">학습 추이</h2>
-                <div className="bg-gray-100 p-1 rounded-full flex text-[10px] font-bold opacity-50">
-                  <button className="bg-white text-[#20385F] px-3 py-1 rounded-full shadow-sm cursor-default">주간</button>
-                  <button className="text-gray-400 px-3 py-1 cursor-default">월간</button>
+                <div className="bg-gray-100 p-1 rounded-full flex text-[10px] font-bold">
+                  <button className="bg-white text-[#20385F] px-3 py-1 rounded-full shadow-sm">주간</button>
+                  <button className="text-gray-400 px-3 py-1 cursor-default opacity-50">월간</button>
                 </div>
               </div>
               
               <div className="relative h-40">
-                <div className="absolute inset-0 z-20 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-white/30 backdrop-blur-[2px] rounded-xl"></div>
-                  
-                  <div className="relative z-30 bg-white/95 px-6 py-3 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center gap-1.5 shadow-[#FF8C1A]/10">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-2.5 w-2.5 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF8C1A] opacity-50"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF8C1A]"></span>
-                      </span>
-                      <span className="text-[15px] font-black text-[#20385F] tracking-tight">통계 기능 준비 중</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Analysing Data Soon</p>
+                {/* 데이터가 아예 없을 때만 안내 표시 */}
+                {hasNoData && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center">
+                    <p className="text-xs text-gray-400 font-bold bg-white/90 px-4 py-2 rounded-full border border-gray-100 shadow-sm">
+                      이번 주 학습 기록이 없습니다.
+                    </p>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-end justify-between h-32 gap-3 px-2 opacity-60 pointer-events-none">
-                  {['월','화','수','목','금','토','일'].map((day, i) => (
-                    <div key={day} className="flex-1 flex flex-col items-center gap-2 h-full">
-                      <div className="w-full bg-gray-200 rounded-t-lg h-full flex items-end relative overflow-hidden">
-                        <div 
-                          style={{ height: `${trendDisplayData[i]}%` }} 
-                          className="w-full rounded-t-lg bg-[#20385F]/40"
-                        ></div>
+                <div className={`flex items-end justify-between h-32 gap-3 px-2 transition-all duration-500 ${hasNoData ? 'opacity-20' : 'opacity-100'}`}>
+                  {['월','화','수','목','금','토','일'].map((day, i) => {
+                    // 백엔드 데이터(stats.weeklyTrend) 기반 높이 계산
+                    const count = stats.weeklyTrend[i] || 0;
+                    const heightPercentage = (count / maxTrendValue) * 100;
+
+                    return (
+                      <div key={day} className="flex-1 flex flex-col items-center gap-2 h-full">
+                        <div className="w-full bg-gray-100 rounded-t-lg h-full flex items-end relative overflow-hidden">
+                          <div 
+                            style={{ height: `${heightPercentage}%` }} 
+                            className="w-full rounded-t-lg bg-[#20385F] transition-all duration-1000 ease-out"
+                          >
+                            {count > 0 && (
+                              <span className="absolute top-1 left-1/2 -translate-x-1/2 text-[8px] font-black text-white">
+                                {count}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-500">{day}</span>
                       </div>
-                      <span className="text-[10px] font-bold text-gray-500">{day}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </section>

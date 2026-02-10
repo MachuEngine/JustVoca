@@ -10,7 +10,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body className="bg-gray-100 min-h-screen flex justify-center font-sans antialiased">
+      {/* [수정] bg-gray-100 대신 bg-white를 사용하고, justify-center를 제거하여 유동적인 배치를 허용합니다. */}
+      <body className="bg-white min-h-screen font-sans antialiased">
         <LayoutShell>{children}</LayoutShell>
 
         <Chatbot />

@@ -43,26 +43,32 @@ export default function BottomNavBar() {
   }
 
   return (
-    <nav className="sticky bottom-0 w-full h-16 bg-white border-t border-gray-100 flex items-center justify-around px-2 z-50 flex-shrink-0">
-      {menuItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = pathname === item.href;
+    <nav className="sticky bottom-0 w-full h-16 bg-white border-t border-gray-100 z-50 flex-shrink-0">
+      {/* [가이드 반영] 
+          내부 컨테이너에 max-w-screen-xl mx-auto를 적용하여 
+          큰 화면에서 메뉴 아이콘들이 양 끝으로 너무 벌어지지 않게 조정합니다.
+      */}
+      <div className="flex items-center justify-around px-2 h-full max-w-screen-xl mx-auto w-full">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
 
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${
-              isActive ? "text-[#20385F]" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-            <span className="text-[11px] font-bold tracking-tighter">
-              {item.name}
-            </span>
-          </Link>
-        );
-      })}
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${
+                isActive ? "text-[#20385F]" : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-[11px] font-bold tracking-tighter">
+                {item.name}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     </nav>
   );
 }

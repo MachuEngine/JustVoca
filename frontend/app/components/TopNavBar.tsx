@@ -15,7 +15,7 @@ export default function TopNavBar() {
   const [userInfo, setUserInfo] = useState({
     nationalityEmoji: "🇰🇷",
     nationalityCode: "KR",
-    learningLevel: "초급 1", // ✅ 현재 레벨(진행도 기준)
+    learningLevel: "초급 1",
     topikLabel: "Topik I",
     teacherId: null as string | null,
   });
@@ -23,24 +23,19 @@ export default function TopNavBar() {
   const isTeacher = userRole === "teacher" || userRole === "admin";
 
   const normalizeLevel = (level: string) => {
-    const s = String(level || "").replace(/\s+/g, ""); // 공백 제거
-    // 혹시 "고급"만 오는 케이스 방어 (원하면 규칙 바꿀 수 있음)
+    const s = String(level || "").replace(/\s+/g, "");
     if (s === "고급") return "고급1";
     return s;
   };
 
   const topikLabelByLevel: Record<string, string> = {
-    "초급1": "Topik1",
-    "초급2": "Topik2",
-    "중급1": "Topik3",
-    "중급2": "Topik4",
-    "고급1": "Topik5",
-    "고급2": "Topik6",
+    "초급1": "Topik1", "초급2": "Topik2", "중급1": "Topik3",
+    "중급2": "Topik4", "고급1": "Topik5", "고급2": "Topik6",
   };
 
   const getTopikLabel = (level: string) => {
     const key = normalizeLevel(level);
-    return topikLabelByLevel[key] ?? "Topik1"; // 기본값
+    return topikLabelByLevel[key] ?? "Topik1";
   };
 
   const getFlagEmojiOnly = (countryCode: string) => {
@@ -53,17 +48,14 @@ export default function TopNavBar() {
   };
 
   const fetchNavBarData = async () => {
-    const userId =
-      typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-    const role =
-      typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
+    const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+    const role = typeof window !== "undefined" ? localStorage.getItem("userRole") : null;
 
     if (!userId) return;
     setUserRole(role);
 
     try {
       const profile = await getUserProfile(userId);
-
       let currentLevel = "초급 1";
       if (role !== "teacher" && role !== "admin") {
         const progress = await getUserProgress(userId);
@@ -71,13 +63,12 @@ export default function TopNavBar() {
       }
 
       const countryCode = profile?.country || "KR";
-
       const normalizedLevel = normalizeLevel(currentLevel);
 
       setUserInfo({
         nationalityEmoji: getFlagEmojiOnly(countryCode),
         nationalityCode: countryCode,
-        learningLevel: currentLevel, // ✅ 기존 로직 유지
+        learningLevel: currentLevel,
         topikLabel: getTopikLabel(normalizedLevel),
         teacherId: profile?.teacher_id || null,
       });
@@ -88,21 +79,13 @@ export default function TopNavBar() {
 
   useEffect(() => {
     fetchNavBarData();
-
     const handleProfileUpdate = () => fetchNavBarData();
     window.addEventListener("profileUpdated", handleProfileUpdate);
     return () => window.removeEventListener("profileUpdated", handleProfileUpdate);
   }, []);
 
-  // ✅ 뒤로가기 동작: 진입 경로에 따라 fallback
-  // 사용 방법(권장):
-  // - 홈에서 들어올 때: /vocabulary_study?...&from=home
-  // - 레벨선택에서 들어올 때: /vocabulary_study?...&from=level
   const handleBack = () => {
     const from = searchParams.get("from");
-
-    // 1) 우선 back 시도
-    // (히스토리 없는 direct 진입이면 fallback으로 이동)
     try {
       if (typeof window !== "undefined" && window.history.length > 1) {
         router.back();
@@ -110,7 +93,6 @@ export default function TopNavBar() {
       }
     } catch {}
 
-    // 2) fallback
     if (from === "level") {
       router.push("/level_select");
       return;
@@ -118,15 +100,12 @@ export default function TopNavBar() {
     router.push("/student_home");
   };
 
-  const showBack =
-    pathname?.includes("vocabulary");
-    //pathname?.includes("study") ||
-    //pathname?.includes("student");
+  const showBack = pathname?.includes("vocabulary");
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white">
-      <div className="h-14 flex items-center justify-between px-4 border-b border-gray-100">
-
+    <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-100">
+      {/* 가이드 반영: max-w-screen-xl mx-auto 적용 */}
+      <div className="h-14 flex items-center justify-between px-4 max-w-screen-xl mx-auto w-full">
         {/* LEFT: Back + Level */}
         <div className="flex items-center gap-2 min-w-0">
           {showBack && (
@@ -154,7 +133,6 @@ export default function TopNavBar() {
           )}
         </div>
 
-        {/* CENTER: 비움 (시안과 동일) */}
         <div className="flex-1" />
 
         {/* RIGHT: Profile */}

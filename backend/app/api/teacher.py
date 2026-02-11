@@ -25,7 +25,7 @@ def list_students(request: Request, session: Session = Depends(get_session)):
     # 1. 현재 로그인한 선생님 정보 가져오기
     teacher = _require_teacher(request, session)
     
-    # 2. [수정됨] 해당 선생님이 담당하는 학생만 조회 (User.teacher_id == teacher.uid)
+    # 2. 해당 선생님이 담당하는 학생만 조회 (User.teacher_id == teacher.uid)
     #    (관리자인 경우 모든 학생을 볼 수도 있겠지만, 여기선 엄격하게 자기 학생만 봅니다)
     query = select(User).where(User.role == "student")
     
@@ -85,7 +85,7 @@ async def send_notice(
         title=title, 
         content=content, 
         author=teacher.name,
-        teacher_id=teacher.uid, # [추가] 실제 선생님 ID
+        teacher_id=teacher.uid, # 실제 선생님 ID
         scheduled_at=dt_scheduled
     )
     session.add(new_notice)
@@ -96,7 +96,7 @@ async def send_notice(
 def get_student_detail(student_id: str, request: Request, session: Session = Depends(get_session)):
     teacher = _require_teacher(request, session)
     
-    # [수정] 상세 조회 시에도 내 학생인지 검증하는 것이 안전함
+    # 상세 조회 시에도 내 학생인지 검증하는 것이 안전함
     student = session.get(User, student_id)
     if not student:
         raise HTTPException(status_code=404, detail="학생을 찾을 수 없습니다.")

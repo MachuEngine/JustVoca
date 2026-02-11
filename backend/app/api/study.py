@@ -9,9 +9,9 @@ import json
 from typing import List, Optional, Dict
 import random
 from datetime import datetime, timedelta
-import unicodedata  # [추가] 한글 자소 분리 방지용
+import unicodedata  # 한글 자소 분리 방지용
 import math
-import calendar  # [추가] 이번 달 말일 계산용
+import calendar  # 이번 달 말일 계산용
 
 from app.core.database import get_session
 from app.models import StudyProgress, StudyLog, User
@@ -34,7 +34,7 @@ class WordSchema(BaseModel):
     eng_meaning: str
     example: str
     audio_path: str 
-    audio_example_path: str  # [추가] 예문 오디오 경로 필드
+    audio_example_path: str  # 예문 오디오 경로 필드
     image_path: str  # 이미지 경로 필드
 
 # 기본 매핑 (고정 컬럼)
@@ -122,14 +122,14 @@ def load_resource_map(level: str) -> Dict[str, Dict[str, str]]:
                 data = json.load(f)
                 items = data.get("items", [])
                 for item in items:
-                    # [수정] 정규화 적용하여 키 저장
+                    # 정규화 적용하여 키 저장
                     text_key = normalize_text(item.get("text", ""))
                     resources = item.get("resources", {})
                     
                     # 경로 추출 (JSON 구조: resources > image > file)
                     img_file = resources.get("image", {}).get("file", "")
                     aud_file = resources.get("audio_voca", {}).get("file", "")
-                    aud_ex_file = resources.get("audio_ex", {}).get("file", "") # [추가] 예문 오디오 추출
+                    aud_ex_file = resources.get("audio_ex", {}).get("file", "") # 예문 오디오 추출
                     
                     # 프론트엔드용 경로 보정 (/assets/ 추가)
                     if img_file and not img_file.startswith("/"):
@@ -142,7 +142,7 @@ def load_resource_map(level: str) -> Dict[str, Dict[str, str]]:
                     resource_map[text_key] = {
                         "image_path": img_file,
                         "audio_path": aud_file,
-                        "audio_example_path": aud_ex_file # [추가]
+                        "audio_example_path": aud_ex_file
                     }
         except Exception as e:
             print(f"[Warning] Failed to load JSON resources for {level}: {e}")
@@ -203,17 +203,14 @@ async def get_words(level: str = "초급1", user_id: Optional[str] = None, db: S
         
         for idx, item in enumerate(paged_df.to_dict(orient="records")):
             # 2단계: 매칭 기준을 word_text에서 파일명(audio_path)으로 변경
-            # 엑셀의 '파일 명' 혹은 'Audio_Voca' 컬럼 값이 이미 audio_path로 매핑되어 있습니다.
             file_id = str(item.get('audio_path', '')).strip()
             
             # ID(파일명)를 키로 사용하여 JSON에서 가져온 리소스를 찾습니다.
             res = resource_map.get(file_id, {})
             
-            # [안전장치] 만약 ID로 못 찾았을 경우에만 기존처럼 단어 텍스트로 시도 (선택 사항)
+            # [안전장치] 만약 ID로 못 찾았을 경우에만 기존처럼 단어 텍스트로 시도
             if not res:
                 word_text = normalize_text(item.get('word', ''))
-                # 이 경우를 위해 load_resource_map_by_id에서 텍스트 기반 맵도 같이 관리하면 좋으나,
-                # 파일명이 확실하다면 file_id만으로 충분합니다.
 
             data_list.append({
                 "id": start_idx + idx + 1,
@@ -280,7 +277,7 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
     level_completed = False # 졸업 여부 플래그
 
     if progress:
-        # 현재 보고 있는 페이지가 마지막 페이지(혹은 그 이상)라면 졸업!
+        # 현재 보고 있는 페이지가 마지막 페이지(혹은 그 이상)라면 졸업
         if progress.current_page >= total_pages:
             level_completed = True
         
@@ -290,7 +287,7 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
     else:
         new_progress = StudyProgress(user_id=user_id, level=level, current_page=2)
         db.add(new_progress)
-        # 만약 단어가 10개 이하라면 1페이지가 곧 마지막이므로 바로 졸업 처리 가능 (선택 사항)
+        # 만약 단어가 10개 이하라면 1페이지가 곧 마지막이므로 바로 졸업 처리 가능
         if total_pages <= 1:
             level_completed = True
 
@@ -300,7 +297,7 @@ async def complete_step(user_id: str = Form(...), level: str = Form(...), db: Se
 
     db.commit()
     
-    # [핵심] level_completed 필드를 프론트로 전달
+    # level_completed 필드를 프론트로 전달
     return {
         "status": "success", 
         "next_page": progress.current_page if progress else 2,
@@ -326,7 +323,7 @@ async def get_review_words(user_id: str, db: Session = Depends(get_session)):
         if len(unique_logs) >= 10: # 최종적으로 10개만 선택
             break
 
-    # 3. 엑셀 데이터 로드 및 매칭 (이후 로직은 동일)
+    # 3. 엑셀 데이터 로드 및 매칭
     xls = pd.ExcelFile(EXCEL_PATH, engine="openpyxl")
     all_df = pd.concat([pd.read_excel(xls, sheet_name=s) for s in xls.sheet_names], ignore_index=True)
     all_df = all_df.rename(columns=COLUMN_MAPPING)

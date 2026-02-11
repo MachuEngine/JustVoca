@@ -1,7 +1,7 @@
 # backend/app/api/auth.py
 from fastapi import APIRouter, HTTPException, Depends, Response
 from sqlmodel import Session
-from pydantic import BaseModel  # [추가] 요청 데이터 정의를 위해 필요
+from pydantic import BaseModel  # 요청 데이터 정의를 위해 필요
 from app.core.database import get_session
 from app.models import User
 from app.schemas import UserLogin, UserRegister
@@ -10,7 +10,7 @@ from app.core.config import settings
 
 router = APIRouter()
 
-# [신규 추가] 아이디 중복 확인용 요청 모델
+# 아이디 중복 확인용 요청 모델
 class IdCheckRequest(BaseModel):
     id: str
 
@@ -61,7 +61,7 @@ async def register(data: UserRegister, session: Session = Depends(get_session)):
     # 선생님은 승인 대기, 학생은 자동 승인
     is_approved = False if data.role == "teacher" else True
     
-    # [추가] 선생님 ID 유효성 검증 및 할당
+    # 선생님 ID 유효성 검증 및 할당
     valid_teacher_id = None
     if data.role == "student" and data.teacher_id:
         teacher = session.get(User, data.teacher_id)
@@ -87,7 +87,7 @@ async def register(data: UserRegister, session: Session = Depends(get_session)):
     
     return {"status": "ok"}
 
-# [신규 추가] 아이디 중복 확인 엔드포인트
+# 아이디 중복 확인 엔드포인트
 @router.post("/check-id")
 async def check_id(data: IdCheckRequest, session: Session = Depends(get_session)):
     """

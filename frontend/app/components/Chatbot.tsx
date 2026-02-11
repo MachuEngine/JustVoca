@@ -195,7 +195,7 @@ export default function Chatbot() {
         </div>
       </div>
 
-      {/* 2. 드래그 가능한 플로팅 버튼 [가이드 반영] */}
+      {/* 2. 드래그 가능한 플로팅 버튼 */}
       {!isOpen && (
         <button
           ref={buttonRef}

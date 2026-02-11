@@ -26,7 +26,6 @@ def _build_dummy_vocab() -> Dict[str, List[Dict[str, Any]]]:
             {
                 "word": f"테스트단어{i}",
                 "mean": "테스트 의미",
-                # ✅ 예문1 고정 + 기존 ex 호환
                 "예문1": ex1,
                 "ex": ex1,
                 "desc": "설명",
@@ -112,7 +111,7 @@ def load_vocab_data() -> Dict[str, List[Dict[str, Any]]]:
             sheet_str = str(sheet_name).strip()
             df = df.fillna("")
 
-            # ✅ 컬럼명 정규화 (예문1 인식 실패 방지)
+            # 컬럼명 정규화
             df.columns = [_normalize_col_name(c) for c in df.columns]
 
             log_write(f"[DEBUG] sheet={sheet_str} columns={list(df.columns)}")
@@ -132,7 +131,6 @@ def load_vocab_data() -> Dict[str, List[Dict[str, Any]]]:
             if not file_id_col:
                 log_write(f"Warning: Could not find 'File Name' column in sheet '{sheet_str}'")
 
-            # ✅ 예문은 오직 예문1만 사용 (고정)
             if "예문1" not in df.columns:
                 log_write(f"[WARN] sheet '{sheet_str}' has no '예문1' column. columns={list(df.columns)}")
 
@@ -149,7 +147,6 @@ def load_vocab_data() -> Dict[str, List[Dict[str, Any]]]:
 
                 mean = str(row.get("의미", row.get("뜻", row.get("mean", "")))).strip()
 
-                # ✅ 예문1만 고정 (다른 컬럼 fallback 금지)
                 ex1 = str(row.get("예문1", "")).strip()
 
                 desc = str(row.get("설명", row.get("주제", row.get("desc", "")))).strip()
@@ -173,7 +170,6 @@ def load_vocab_data() -> Dict[str, List[Dict[str, Any]]]:
                         "word": word,
                         "mean": mean,
 
-                        # ✅ 둘 다 저장: 예문1 고정 + 기존 ex 호환
                         "예문1": ex1,
                         "ex": ex1,
 

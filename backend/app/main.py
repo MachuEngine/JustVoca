@@ -9,7 +9,7 @@ from sqlmodel import Session, select
 from app.core.database import create_db_and_tables, engine
 from app.models import User
 
-# [수정] 모든 라우터 임포트 확인 (notice 포함)
+# 모든 라우터 임포트 확인 (notice 포함)
 from app.api import auth, study, user, teacher, admin, speech, notice, chat
 from app.core.config import settings
 
@@ -31,14 +31,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="JustVoca API", lifespan=lifespan)
 
-# [수정] 정적 파일 마운트 추가
+# 정적 파일 마운트 추가
 # 1. 파일 업로드용 임시 폴더
 os.makedirs(settings.TEMP_UPLOAD_DIR, exist_ok=True)
 app.mount("/files", StaticFiles(directory=settings.TEMP_UPLOAD_DIR), name="files")
 
-# 2. [추가됨] 학습용 에셋(이미지/오디오) 폴더 마운트
-# 실제 이미지가 저장된 폴더 경로를 지정해야 합니다. (예: backend/data/assets)
-# settings.DATA_DIR이 'backend/data'를 가리킨다고 가정합니다.
+# 2. 학습용 에셋(이미지/오디오) 폴더 마운트
 assets_path = os.path.join(settings.DATA_DIR, "assets") 
 
 # 폴더가 없으면 에러가 날 수 있으므로 체크 후 생성
@@ -46,7 +44,7 @@ os.makedirs(assets_path, exist_ok=True)
 
 app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
 
-# [수정] CORS 설정 강화: localhost와 127.0.0.1 모두 허용
+# CORS 설정 강화: localhost와 127.0.0.1 모두 허용
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -69,13 +67,10 @@ async def root():
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(study.router, prefix="/study", tags=["Study"])
 app.include_router(user.router, prefix="/user", tags=["User"])
-# [중요] teacher.py의 prefix와 중복되지 않도록 주의
 app.include_router(teacher.router, prefix="/api/teacher", tags=["Teacher"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(speech.router, prefix="/speech", tags=["Speech"]) 
-# [추가] 공지사항 라우터 등록
 app.include_router(notice.router, prefix="/api/notice", tags=["Notice"])
-# [추가] 챗봇 라우터 등록
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 
 os.makedirs(settings.TEMP_UPLOAD_DIR, exist_ok=True)
@@ -83,4 +78,4 @@ app.mount("/files", StaticFiles(directory=settings.TEMP_UPLOAD_DIR), name="files
 
 @app.on_event("startup")
 async def startup_event():
-    print("✅ 서버가 시작되었습니다.")
+    print("서버가 시작되었습니다.")

@@ -1,6 +1,6 @@
 // frontend/app/api.ts
 
-// [신규] 에러 처리를 위한 헬퍼 함수
+// 에러 처리를 위한 헬퍼 함수
 async function handleResponse(res: Response) {
   if (!res.ok) {
     let errorData = {};
@@ -25,14 +25,14 @@ async function handleResponse(res: Response) {
 
 export const api = {
   get: async (endpoint: string) => {
-    // ✅ [수정] 절대주소 제거 → 현재 오리진(프론트/ngrok) 기준 상대경로 호출
+    // 절대주소 제거 → 현재 오리진(프론트/ngrok) 기준 상대경로 호출
     const res = await fetch(endpoint, { credentials: "include" });
     return handleResponse(res);
   },
   post: async (endpoint: string, body: any) => {
     const isFormData = body instanceof FormData;
 
-    // ✅ [수정] 절대주소 제거 → 상대경로 호출
+    // 절대주소 제거 → 상대경로 호출
     const res = await fetch(endpoint, {
       method: "POST",
       body: isFormData ? body : JSON.stringify(body),
@@ -42,7 +42,7 @@ export const api = {
     return handleResponse(res);
   },
   put: async (endpoint: string, body: any) => {
-    // ✅ [수정] 절대주소 제거 → 상대경로 호출
+    // 절대주소 제거 → 상대경로 호출
     const res = await fetch(endpoint, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -97,15 +97,15 @@ export const sendNotice = (data: {
 export const getStudentDetail = (uid: string) => api.get(`/api/teacher/student/${uid}`);
 export const getStudentStats = (uid: string) => api.get(`/study/stats?user_id=${uid}`);
 
-// [신규] 관리자(Admin) 관련 함수
+// 관리자(Admin) 관련 함수
 export const getPendingTeachers = () => api.get("/admin/pending_teachers");
 export const approveTeacher = (uid: string) => api.post(`/admin/approve/${uid}`, {});
 
-// [신규] 챗봇 관련 함수 (히스토리 기능 추가)
+// 챗봇 관련 함수 (히스토리 기능 추가)
 export const sendChatMessage = async (
   message: string, 
   userId: string, 
-  history: { role: string; content: string }[] = [], // 추가됨: 대화 내역
+  history: { role: string; content: string }[] = [], // 대화 내역
   mode: string = "free_talk",
   userLevel: string = "Beginner"
 ) => {

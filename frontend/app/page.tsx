@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { BookOpen, ChevronDown } from 'lucide-react';
-// 👇 [1] 구글 폰트에서 'Outfit' (요즘 유행하는 깔끔한 폰트) 가져오기
+// 구글 폰트에서 'Outfit' 폰트 가져오기
 import { Outfit } from 'next/font/google';
 
-// 👇 [2] 폰트 설정 (굵은 웨이트 위주로 로드)
+// 폰트 설정 (굵은 웨이트 위주로 로드)
 const logoFont = Outfit({ 
   subsets: ['latin'],
   weight: ['700', '800'], // Bold, ExtraBold
@@ -21,7 +21,7 @@ export default function LandingPage() {
           
           {/* 로고 자리 (JustVoca) */}
           <div className="relative">
-              {/* 👇 [3] 폰트 적용: logoFont.className 추가 */}
+              {/* 폰트 적용: logoFont.className 추가 */}
               <span className={`text-[#20385F] text-6xl md:text-8xl font-extrabold tracking-tighter ${logoFont.className}`}>
                 JustVoca
               </span>

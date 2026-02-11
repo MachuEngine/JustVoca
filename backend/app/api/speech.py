@@ -3,10 +3,10 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 from sqlmodel import Session
 import os
 import uuid
-import re  # [필수 추가]
+import re
 from pathlib import Path
 
-# [추가] DB 관련 모듈 임포트
+# DB 관련 모듈 임포트
 from app.core.database import get_session
 from app.models import StudyLog
 from app.audio_convert import convert_to_wav
@@ -20,12 +20,12 @@ TMP_DIR = Path("/tmp")
 async def evaluate_speech(
     audio: UploadFile = File(...), 
     text: str = Form(...),
-    # [추가] DB 저장을 위해 누가(user_id), 무엇을(word) 공부했는지 받습니다.
+    # DB 저장을 위해 누가(user_id), 무엇을(word) 공부했는지 받습니다.
     user_id: str = Form(...),
     word: str = Form(...),
     session: Session = Depends(get_session)
 ):
-    # ✅ [수정] 엔진 전달용 텍스트 정규화
+    # 엔진 전달용 텍스트 정규화
     # 1. 마침표(.), 물음표(?), 느낌표(!), 쉼표(,) 등 문장 부호를 모두 제거하거나 공백으로 치환
     clean_text = re.sub(r'[.\?\!,]', ' ', text)
     # 2. 중복 공백 제거 및 앞뒤 공백 제거
@@ -40,13 +40,13 @@ async def evaluate_speech(
     wav_path: Path | None = None
 
     try:
-        # 1) 업로드 저장 (기존 로직 유지)
+        # 1) 업로드 저장
         content = await audio.read()
         with open(input_path, "wb") as f:
             f.write(content)
         print(f"[DEBUG] 1. 파일 저장 완료: {input_path}")
 
-        # 2) wav 변환 (기존 로직 유지)
+        # 2) wav 변환
         wav_path_str = convert_to_wav(input_path)
         print(f"[DEBUG] 2. 오디오 변환 완료: {wav_path_str}")
 
@@ -55,13 +55,13 @@ async def evaluate_speech(
 
         wav_path = Path(wav_path_str)
 
-        # 3) 엔진 호출 (기존 로직 유지)
+        # 3) 엔진 호출
         print("[DEBUG] 3. 엔진 호출 시작 (GTP -> Model -> Score)...")
         print(f"[DEBUG] 3. 엔진 호출 문장: '{clean_text}'")
         score, full_result = evaluate_pronunciation(clean_text, wav_path)
         print(f"[DEBUG] 4. 엔진 응답 수신 완료. 점수: {score}")
 
-        # ✅ 엔진 통신/응답 에러면 success False (기존 로직 유지)
+        # 엔진 통신/응답 에러면 success False
         if not full_result or (isinstance(full_result, dict) and full_result.get("error")):
             msg = (
                 full_result.get("error")
@@ -70,8 +70,7 @@ async def evaluate_speech(
             )
             return {"success": False, "error": msg}
 
-        # 4) [신규 추가] 결과가 정상이면 DB에 학습 로그 저장
-        # (기존 로직 흐름을 방해하지 않고, 마지막에 저장만 수행합니다)
+        # 4) 결과가 정상이면 DB에 학습 로그 저장
         if score is not None:
             try:
                 feedback_msg = "참 잘했어요!" if score >= 80 else "조금 더 연습해볼까요?"
@@ -88,7 +87,7 @@ async def evaluate_speech(
                 print(f"[Warning] DB 저장 실패 (평가는 정상 진행됨): {db_e}")
                 # DB 저장이 실패해도 사용자는 평가 결과를 볼 수 있어야 하므로 pass
 
-        # ✅ 정상일 때만 success True (기존 로직 유지)
+        # 정상일 때만 success True
         return {"success": True, "result": full_result, "score": score}
 
     except HTTPException:
@@ -97,7 +96,7 @@ async def evaluate_speech(
         print(f"[API Error] {e}")
         return {"success": False, "error": f"서버 내부 오류: {str(e)}"}
     finally:
-        # 리소스 정리 (기존 로직 유지)
+        # 리소스 정리
         try:
             if input_path.exists():
                 input_path.unlink()

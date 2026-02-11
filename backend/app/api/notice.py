@@ -9,14 +9,14 @@ from app.core.session import verify_session
 
 router = APIRouter()
 
-# [신규] 읽음 상태를 저장할 모델 (DB 테이블)
+# 읽음 상태를 저장할 모델 (DB 테이블)
 class NoticeRead(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     notice_id: int
     user_id: str
     read_at: datetime = Field(default_factory=datetime.now)
 
-# [신규] API 응답용 모델 (기존 Notice + read 필드)
+# API 응답용 모델 (기존 Notice + read 필드)
 class NoticeResponse(SQLModel):
     id: int
     title: str
@@ -82,7 +82,7 @@ def get_notice_list(request: Request, db: Session = Depends(get_session)):
     return result
 
 
-# [신규] 공지사항 읽음 처리 API
+# 공지사항 읽음 처리 API
 @router.post("/{notice_id}/read")
 def mark_notice_read(notice_id: int, request: Request, db: Session = Depends(get_session)):
     student = _get_current_student(request, db)

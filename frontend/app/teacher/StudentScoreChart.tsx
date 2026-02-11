@@ -12,7 +12,7 @@ export default function StudentScoreChart({ studentId }: { studentId: string }) 
 
   useEffect(() => {
     async function loadStats() {
-      // API로부터 최근 7일간의 점수 데이터를 가져옵니다.
+      // API로부터 최근 7일간의 점수 데이터
       const stats = await getStudentStats(studentId);
       setData(stats);
     }

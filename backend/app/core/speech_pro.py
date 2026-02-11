@@ -58,7 +58,7 @@ class SpeechProProvider:
             if gtp_res.get("error code", gtp_res.get("error_code", 0)) != 0: 
                 return {"error": "GTP_FAILED", "detail": gtp_res}
 
-            # [필독] 엔진 응답에서 데이터를 공백/언더바 구분 없이 가져옵니다.
+            # 엔진 응답에서 데이터를 공백/언더바 구분 없이 가져옵니다.
             syll_ltrs = gtp_res.get("syll ltrs") or gtp_res.get("syll_ltrs")
             syll_phns = gtp_res.get("syll phns") or gtp_res.get("syll_phns")
 
@@ -77,7 +77,7 @@ class SpeechProProvider:
             # 3단계: Score 호출 (최종 채점)
             wav_base64 = base64.b64encode(converted_wav).decode('utf-8')
             
-            # [핵심 수정] 명세서 규격과 참고 코드의 규격을 최대한 절충하여 구성합니다.
+            # 명세서 규격과 참고 코드의 규격을 최대한 절충하여 구성
             score_req = {
                 "id": request_id, 
                 "text": normalized_text,
@@ -86,9 +86,6 @@ class SpeechProProvider:
                 "fst": model_res.get("fst"),
                 "wav usr": wav_base64 # 명세서의 wav usr 필드
             }
-
-            # 로그 확인용 (디버그 시 활성화)
-            # print(f"--- [DEBUG] Score 요청 필드 확인: {list(score_req.keys())} ---")
 
             try:
                 # 연산 시간이 길어질 수 있으므로 timeout을 45초로 넉넉히 잡습니다.

@@ -29,7 +29,7 @@ export default function TeacherDash() {
       // 1. 학생 데이터 가져오기
       const response = await getStudents();
       
-      // [수정 핵심] 백엔드가 { ok: true, items: [...] } 형태로 주므로 items만 꺼내야 함
+      // 백엔드가 { ok: true, items: [...] } 형태로 주므로 items만 꺼내야 함
       if (response && response.items) {
         setStudents(response.items);
       } else if (Array.isArray(response)) {
@@ -69,14 +69,14 @@ export default function TeacherDash() {
     }
   };
 
-  // [추가] 진도 평균 계산 로직
+  // 진도 평균 계산 로직
   const averageProgress = students.length > 0
     ? Math.round(
         students.reduce((acc, curr) => acc + (curr.progress_rate || 0), 0) / students.length * 100
       )
     : 0;
 
-  // [추가] 준비중 배지 컴포넌트
+  // 준비중 배지 컴포넌트
   const ComingSoonBadge = () => (
     <span className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm text-gray-400 text-[10px] font-bold px-2 py-1 rounded-full border border-gray-100 flex items-center gap-1">
       <Lock size={8} /> 준비중
@@ -143,7 +143,6 @@ export default function TeacherDash() {
               </div>
             </div>
             <div className="space-y-3">
-              {/* 이제 students가 확실히 배열이므로 .filter 사용 가능 */}
               {Array.isArray(students) && students.filter(s => s.name && s.name.includes(searchTerm)).map((student) => (
                 <Link key={student.uid} href={`/teacher_student/${student.uid}`}>
                   <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-center hover:shadow-md transition-all active:scale-[0.99] mb-3">

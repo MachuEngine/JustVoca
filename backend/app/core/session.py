@@ -40,6 +40,6 @@ def verify_password(stored_pw: str, input_pw: str) -> Tuple[bool, bool]:
         
     # 2. 해시 비교 (정상적인 경우)
     if stored_pw == hash_password(input_pw):
-        return True, False # 일치하고 해시 상태도 최신임
+        return True, False # 일치하고 해시 상태도 최신
         
     return False, False

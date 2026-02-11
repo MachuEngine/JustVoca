@@ -48,7 +48,7 @@ const PronunciationResultOverlay = ({ evaluationData, onClose }) => {
           ))}
         </div>
 
-        {/* 하단: 유창성 정보 (image_ec94c7.png 에러 수정됨) */}
+        {/* 하단: 유창성 정보 */}
         <div style={styles.fluencyBox}>
           <span>말하기 속도: {evaluationData.fluency['speech rate'].toFixed(2)}</span>
           <span>정확도: {evaluationData.fluency['correct syllable count']}/{evaluationData.fluency['syllable count']}</span>

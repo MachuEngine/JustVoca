@@ -4,9 +4,11 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Layers, BarChart3, Settings } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function BottomNavBar() {
   const pathname = usePathname();
+  const { t } = useTranslation();
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -16,22 +18,22 @@ export default function BottomNavBar() {
 
   // 학생용 메뉴
   const studentMenuItems = [
-    { name: "홈", href: "/student_home", icon: Home },
-    { name: "레벨", href: "/levels", icon: Layers },
-    { name: "통계", href: "/stats", icon: BarChart3 },
-    { name: "설정", href: "/settings", icon: Settings },
+    { name: t('nav_home'), href: "/student_home", icon: Home },
+    { name: t('nav_level'), href: "/levels", icon: Layers },
+    { name: t('nav_stats'), href: "/stats", icon: BarChart3 },
+    { name: t('nav_settings'), href: "/settings", icon: Settings },
   ];
 
   // 선생님용 메뉴
   const teacherMenuItems = [
-    { name: "홈", href: "/teacher_dash", icon: Home },
-    { name: "설정", href: "/settings", icon: Settings },
+    { name: t('nav_home'), href: "/teacher_dash", icon: Home },
+    { name: t('nav_settings'), href: "/settings", icon: Settings },
   ];
 
-  // [신규] 관리자용 메뉴
+  // 관리자용 메뉴
   const adminMenuItems = [
-    { name: "홈", href: "/system_dash", icon: Home },
-    { name: "설정", href: "/settings", icon: Settings },
+    { name: t('nav_home'), href: "/system_dash", icon: Home },
+    { name: t('nav_settings'), href: "/settings", icon: Settings },
   ];
 
   // 역할에 따라 메뉴 결정
@@ -44,10 +46,6 @@ export default function BottomNavBar() {
 
   return (
     <nav className="sticky bottom-0 w-full h-16 bg-white border-t border-gray-100 z-50 flex-shrink-0">
-      {/* [가이드 반영] 
-          내부 컨테이너에 max-w-screen-xl mx-auto를 적용하여 
-          큰 화면에서 메뉴 아이콘들이 양 끝으로 너무 벌어지지 않게 조정합니다.
-      */}
       <div className="flex items-center justify-around px-2 h-full max-w-screen-xl mx-auto w-full">
         {menuItems.map((item) => {
           const Icon = item.icon;

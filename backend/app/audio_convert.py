@@ -5,7 +5,6 @@ import uuid  # 무작위 ID 생성을 위해 추가
 from pathlib import Path
 from typing import Union
 
-# app/audio_convert.py 수정 제안
 def convert_to_wav(input_path: Union[str, Path]) -> str:
     input_path = Path(input_path)
     out_wav_path = input_path.with_suffix(".wav")

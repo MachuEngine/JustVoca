@@ -3,20 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Play, MessageCircle, Loader2, ChevronRight, Bell } from 'lucide-react';
+import { Play, Loader2, ChevronRight, Bell } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import AuthGuard from '../components/AuthGuard';
-// [수정] getStudentStats 추가 임포트
 import { getUserProfile, getUserProgress, getStudentNotices, getStudentStats } from '../api';
 
 export default function StudentHomePage() {
   const router = useRouter();
-  const [userName, setUserName] = useState("학습자"); 
+  const { t } = useTranslation();
+  const [userName, setUserName] = useState(""); 
   const [progress, setProgress] = useState(0); 
-  const [userLevel, setUserLevel] = useState("초급 1");
+  const [userLevel, setUserLevel] = useState("level_beginner1"); 
   const [isNavigating, setIsNavigating] = useState(false);
   const [notices, setNotices] = useState<any[]>([]);
-  
-  // [추가] 주간 출석 데이터 상태 (월~일)
   const [weeklyAttendance, setWeeklyAttendance] = useState<number[]>([0,0,0,0,0,0,0]);
 
   useEffect(() => {
@@ -25,28 +24,36 @@ export default function StudentHomePage() {
 
     const fetchData = async () => {
       try {
-        // 1. 프로필
+        // 1. 프로필 조회
         const profile = await getUserProfile(storedUserId);
         if (profile?.name) setUserName(profile.name);
 
-        // 2. 진도율 (페이지 단위)
+        // 2. 진도율 및 레벨 매핑 (고급 1, 2 포함)
         const progressData = await getUserProgress(storedUserId);
         if (progressData) {
-          setUserLevel(progressData.level || "초급 1");
-          // 1페이지(0%) ~ 11페이지(100%) 기준 계산
+          const levelMap: { [key: string]: string } = {
+            "초급 1": "level_beginner1",
+            "초급 2": "level_beginner2",
+            "중급 1": "level_intermediate1",
+            "중급 2": "level_intermediate2",
+            "고급 1": "level_advanced1",
+            "고급 2": "level_advanced2",
+          };
+          setUserLevel(levelMap[progressData.level] || "level_beginner1");
+
           const current = progressData.current_page || 1;
           const calc = Math.min(100, Math.round(((current - 1) / 10) * 100));
           setProgress(calc);
         }
 
-        // 3. 공지사항
+        // 3. 공지사항 조회
         const noticeData = await getStudentNotices();
         setNotices(noticeData || []);
 
-        // 4. [추가] 통계 API를 호출하여 "실제 출석(학습) 여부" 가져오기
+        // 4. 주간 통계 조회
         const statsData = await getStudentStats(storedUserId);
         if (statsData && statsData.weeklyTrend) {
-          setWeeklyAttendance(statsData.weeklyTrend); // [0, 1, 0...] 형태의 학습 빈도 배열
+          setWeeklyAttendance(statsData.weeklyTrend);
         }
 
       } catch (error) {
@@ -55,28 +62,22 @@ export default function StudentHomePage() {
     };
     fetchData();
 
-    // ✅ [추가] 공지사항 페이지에서 읽고 돌아왔을 때, 상태를 갱신하기 위해 포커스 이벤트 감지
     const handleFocus = () => fetchData();
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-
   }, []);
 
   const hasUnread = Array.isArray(notices) && notices.some((n: any) => !n.read);
 
   const handleStartLearning = () => {
     setIsNavigating(true);
-    router.push(`/study/vocabulary?level=${encodeURIComponent(userLevel)}`);
+    // 학습 페이지 이동 시 번역된 레벨 텍스트 전달
+    router.push(`/study/vocabulary?level=${encodeURIComponent(t(userLevel))}`);
   };
 
-  // 이번 주 날짜 계산 (월요일 시작 ~ 일요일 끝)
+  // 주간 캘린더 날짜 계산 로직
   const today = new Date();
-  const currentDay = today.getDay(); // 0(일) ~ 6(토)
-  // 한국식 달력(월~일) 순서로 정렬하기 위한 로직
-  // getDay(): 일(0), 월(1), 화(2), 수(3), 목(4), 금(5), 토(6)
-  // 배열 인덱스: 월(0), 화(1), 수(2), 목(3), 금(4), 토(5), 일(6)
-  
-  // 오늘 날짜 기준으로 이번 주의 월요일 날짜 구하기
+  const currentDay = today.getDay();
   const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay; 
   const mondayDate = new Date(today);
   mondayDate.setDate(today.getDate() + mondayOffset);
@@ -88,23 +89,25 @@ export default function StudentHomePage() {
   });
 
   return (
-
     <AuthGuard allowedRoles={['student']}>
-
       <div className="flex flex-col min-h-full bg-white relative pb-24">
         
-        {/* 1. 인사말 및 공지 알림 */}
+        {/* 1. 상단 헤더 및 인사말 */}
         <div className="px-6 pt-8 mb-4 flex justify-between items-start">
           <div>
-            <p className="text-md text-gray-400">안녕하세요,</p>
-              <h2 className="text-md font-bold text-[#20385F]">{userName}님</h2>
+            <p className="text-md text-gray-400">
+              {/* "안녕하세요," 부분 분리 (welcome_back 키 활용) */}
+              {t('welcome_back', { name: '' }).split(',')[0]},
+            </p>
+            <h2 className="text-md font-bold text-[#20385F]">
+              {t('welcome_back', { name: userName || t('nav_profile') })}
+            </h2>
           </div>
           <button 
             onClick={() => router.push('/notices')}
             className="relative p-3 bg-gray-50 rounded-2xl border border-gray-100 active:scale-90 transition-transform"
           >
             <Bell size={24} className="text-[#20385F]" />
-            {/* ✅ [수정] hasUnread가 true일 때만 빨간 점 표시 */}
             {hasUnread && (
               <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
             )}
@@ -113,7 +116,6 @@ export default function StudentHomePage() {
 
         {/* 최신 공지 배너 */}
         {notices.length > 0 && (
-
           <section className="px-6 mb-6">
             <div 
               onClick={() => router.push('/notices')}
@@ -121,35 +123,33 @@ export default function StudentHomePage() {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-[#20385F] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Notice</span>
+                  <span className="bg-[#20385F] text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">{t('notice')}</span>
                 </div>
                 <p className="text-sm font-bold text-[#20385F] line-clamp-1">{notices[0].title}</p>
               </div>
               <ChevronRight size={18} className="text-[#20385F]/40 group-hover:translate-x-1 transition-transform" />
             </div>
           </section>
-
         )}
 
-        {/* 2. 주간 출석 체크 (실제 데이터 연동) */}
+        {/* 2. 주간 출석 체크 (다국어 날짜 적용) */}
         <section className="px-6 mb-8">
           <div className="bg-gray-50 rounded-3xl p-5 border border-gray-100">
             <div className="flex justify-between items-center mb-5 px-1">
               <h3 className="font-black text-gray-800 text-sm">
-                {today.getFullYear()}년 {today.getMonth() + 1}월
+                {today.getFullYear()}{t('year')} {today.getMonth() + 1}{t('month')}
               </h3>
-              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">weekly calendar</span>
+              <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{t('weekly_progress')}</span>
             </div>
             <div className="flex justify-between items-center">
               {weekDays.map((date, idx) => {
-                // weeklyAttendance[0] = 월요일 학습량, ... [6] = 일요일
-                // idx 0 = 월요일 ... idx 6 = 일요일
                 const count = weeklyAttendance[idx] || 0;
                 const isAttended = count > 0;
                 const isToday = date.getDate() === today.getDate();
                 
-                // 날짜 표시 (일, 월, 화...)
-                const dayName = ['일','월','화','수','목','금','토'][date.getDay()];
+                // 요일 다국어 키 배열
+                const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+                const dayName = t(dayKeys[date.getDay()]);
 
                 return (
                   <div key={idx} className="flex flex-col items-center gap-2">
@@ -157,13 +157,12 @@ export default function StudentHomePage() {
                     <div className={`
                       w-9 h-9 flex items-center justify-center rounded-full text-xs font-black transition-all relative
                       ${isAttended 
-                        ? 'bg-[#20385F] text-white shadow-md shadow-[#20385F]/30' // 출석함 (메인 컬러)
+                        ? 'bg-[#20385F] text-white shadow-md shadow-[#20385F]/30' 
                         : isToday 
-                          ? 'bg-white border-2 border-[#FF8C1A] text-[#FF8C1A]' // 오늘인데 아직 안함 (서브 컬러)
-                          : 'bg-gray-200 text-gray-400 opacity-50' // 결석/미래 (회색)
+                          ? 'bg-white border-2 border-[#FF8C1A] text-[#FF8C1A]' 
+                          : 'bg-gray-200 text-gray-400 opacity-50' 
                       }
                     `}>
-                      {/* 오늘 날짜 강조 효과 */}
                       {isToday && !isAttended && (
                         <div className="absolute inset-0 border-2 border-[#FF8C1A] rounded-full animate-ping opacity-20"></div>
                       )}
@@ -176,50 +175,51 @@ export default function StudentHomePage() {
           </div>
         </section>
 
-        {/* 3. 학습 카드 */}
+        {/* 3. 학습 카드 (번역된 레벨 및 문구 적용) */}
         <section className="px-6 mb-8">
           <div className="bg-white rounded-[2.0rem] p-6 shadow-xl border border-gray-50 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#20385F]/5 rounded-bl-full -mr-10 -mt-10"></div>
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-1">
-                <span className="text-[13px] font-black px-3 py-1 rounded-full uppercase text-[#20385F]">{userLevel}</span>
+                <span className="text-[13px] font-black px-3 py-1 rounded-full uppercase text-[#20385F]">{t(userLevel)}</span>
                 <div className="text-right">
                   <span className="text-2xl font-black text-gray-900">{progress}%</span>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Achievement</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{t('achievement_rate')}</p>
                 </div>
               </div>
-              <h4 className="text-lg font-black text-gray-900 mb-2">오늘의 단어 학습 시작</h4>
+              <h4 className="text-lg font-black text-gray-900 mb-2">{t('daily_goal')}</h4>
               <div className="w-full h-2 bg-gray-100 rounded-full mb-4 overflow-hidden">
                 <div className="h-full bg-[#FF8C1A] rounded-full transition-all duration-1000 ease-out" style={{ width: `${progress}%` }}></div>
               </div>
-              <button onClick={handleStartLearning} disabled={isNavigating} className="w-full h-12 bg-[#20385F] text-white font-black rounded-2xl text-lg flex items-center justify-center gap-3 active:scale-[0.97] transition-all shadow-lg disabled:opacity-70">
-                {isNavigating ? <Loader2 size={20} className="animate-spin" /> : <><Play size={20} fill="currentColor" /><span>학습 시작</span></>}
+              <button 
+                onClick={handleStartLearning} 
+                disabled={isNavigating} 
+                className="w-full h-12 bg-[#20385F] text-white font-black rounded-2xl text-lg flex items-center justify-center gap-3 active:scale-[0.97] transition-all shadow-lg disabled:opacity-70"
+              >
+                {isNavigating ? <Loader2 size={20} className="animate-spin" /> : <><Play size={20} fill="currentColor" /><span>{t('start_study_btn')}</span></>}
               </button>
             </div>
           </div>
         </section>
 
-        {/* 4. 광고 배너 */}
+        {/* 4. 광고 배너 (내부 문구 다국어화) */}
         <div className="px-6 mb-6">
-
           <a href="https://mediazen.ngrok.app/" target="_blank" rel="noopener noreferrer" className="block w-full max-w-xl mx-auto relative h-24 rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group active:scale-[0.98]">
-            <Image src="/assets/images/student_home_banner_onui.png" alt="오누이 한국어 광고" fill style={{ objectFit: 'cover' }} className="group-hover:scale-105 transition-transform duration-700" priority />
+            <Image src="/assets/images/student_home_banner_onui.png" alt="Ad Banner" fill style={{ objectFit: 'cover' }} className="group-hover:scale-105 transition-transform duration-700" priority />
             <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent"></div>
             <div className="absolute inset-0 px-5 flex items-center justify-between">
               <div className="flex flex-col gap-0.5">
                 <span className="bg-[#FF8C1A]/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded w-fit uppercase tracking-wider mb-1">AD</span>
                 <h3 className="text-white font-black text-lg leading-tight drop-shadow-md">오누이 한국어</h3>
-                <p className="text-white/80 text-[10px] font-medium drop-shadow-sm">재미있는 한국어 학습의 시작</p>
+                <p className="text-white/80 text-[10px] font-medium drop-shadow-sm">Learning Korean is fun</p>
               </div>
-              <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-[11px] font-black px-3 py-2 rounded-xl flex items-center gap-1 shadow-sm group-hover:bg-white transition-colors">바로가기 <ChevronRight size={12} strokeWidth={3} /></div>
+              <div className="bg-white/90 backdrop-blur-sm text-gray-900 text-[11px] font-black px-3 py-2 rounded-xl flex items-center gap-1 shadow-sm group-hover:bg-white transition-colors">
+                {t('next_step')} <ChevronRight size={12} strokeWidth={3} />
+              </div>
             </div>
           </a>
-
         </div>
       </div>
-
     </AuthGuard>
-
   );
-
 }

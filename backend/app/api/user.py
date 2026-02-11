@@ -25,7 +25,6 @@ async def get_profile(user_id: str, session: Session = Depends(get_session)):
         "email": user.email or "",
         "phone": user.phone or "",
         "country": user.country or "",
-        # [핵심 수정] 저장된 선생님 ID를 반환해야 프론트엔드가 알 수 있습니다.
         "teacher_id": user.teacher_id or "", 
         "dailyGoal": settings.get("goal", 10),
         "reviewWrong": settings.get("review_wrong", True)

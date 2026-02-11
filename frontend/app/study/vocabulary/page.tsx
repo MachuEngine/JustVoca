@@ -90,7 +90,7 @@ const getImageUrl = (path: string) => {
 
   const [imageError, setImageError] = useState(false); // 이미지 에러 상태
 
-  const [isGraduated, setIsGraduated] = useState(false); // [추가] 졸업 여부 상태
+  const [isGraduated, setIsGraduated] = useState(false); // 졸업 여부 상태
 
   // --- 레벨 폴더 매핑 (로컬 오디오 경로 안정화) ---
   const levelDirMap: Record<string, string> = {
@@ -102,7 +102,7 @@ const getImageUrl = (path: string) => {
   };
   const levelDir = levelDirMap[level] ?? "level1";
 
-  // 백엔드 주소 (환경 변수로 관리하면 더 좋습니다)
+  // 백엔드 주소
   const API_BASE_URL = "http://localhost:8000"; // 또는 http://127.0.0.1:8000
 
   // --- 초기 데이터 로드 ---
@@ -142,7 +142,7 @@ const getImageUrl = (path: string) => {
     fetchInitialData();
   }, [level, userId, mode]); // mode를 의존성 배열에 추가
 
-  // --- [추가] 화면 이탈 시 마이크 자동 종료 로직 ---
+  // --- 화면 이탈 시 마이크 자동 종료 로직 ---
   useEffect(() => {
     return () => {
       // 1. 녹음 중이면 중단
@@ -170,7 +170,7 @@ const mapWordData = (list: any[]) => {
     meaningEng: w.eng_meaning,
     example: w.example,
     audioKey: w.audio_path || "",               // 단어 오디오 경로
-    audioExamplePath: w.audio_example_path || "", // 예문 오디오 경로 (새로 추가)
+    audioExamplePath: w.audio_example_path || "", // 예문 오디오 경로
     imageKey: w.image_path || "",
   }));
 };
@@ -213,8 +213,6 @@ function buildAudioPath(params: {
 
   if (!audioKey) return "";
 
-  // 백엔드에서 이미 /assets/... 로 시작하는 완성된 경로를 보내주므로
-  // 별도의 조립 없이 그대로 반환합니다.
   if (audioKey.startsWith("/") || audioKey.startsWith("http")) {
     return audioKey;
   }
@@ -229,7 +227,6 @@ const playLocalAudio = (type: "voca" | "example", e: React.MouseEvent) => {
   if (!currentWord) return;
 
   // 1. 백엔드에서 준 경로 선택 (voca 또는 example)
-  // [주의] 백엔드에서 audio_example_path를 추가했다면 해당 필드를 사용하세요.
   const audioPath = type === "voca" 
     ? currentWord.audioKey 
     : (currentWord.audioExamplePath || currentWord.audioKey);
@@ -258,7 +255,7 @@ const goToQuiz = () => {
 
   const handleNext = async () => {
     if (phase === "learning") {
-      // 중간 응원 메시지 로직 (생략 가능)
+      // 중간 응원 메시지 로직
       if (currentIndex === 4 && !showEncouragement) {
         setShowEncouragement(true);
         resetCardState();
@@ -268,10 +265,10 @@ const goToQuiz = () => {
       if (currentIndex < wordData.length - 1) {
         setCurrentIndex((prev) => prev + 1);
       } else {
-        // 🟢 [수정 위치] 10개 학습이 끝났을 때
-        // 현재 학습한 10개 단어를 복습 데이터로 복제합니다.
+        // 10개 학습이 끝났을 때
+        // 현재 학습한 10개 단어를 복습 데이터로 복제
 
-        // 🟢 [수정] 10개 학습 완료 시 점수가 70점 미만인 단어만 필터링
+        // 10개 학습 완료 시 점수가 70점 미만인 단어만 필터링
         const failedWords = wordData.filter(w => w.score !== undefined && w.score < 70);
 
 
@@ -313,7 +310,7 @@ const goToQuiz = () => {
       // API 호출
       const response: any = await completeStudy(level, userId);
       
-      // [신규] 백엔드에서 졸업(마지막 페이지 완료) 신호를 줬는지 확인
+      // 백엔드에서 졸업(마지막 페이지 완료) 신호를 줬는지 확인
       if (response && response.level_completed) {
         setIsGraduated(true);
         triggerConfetti(); // 폭죽 발사!
@@ -325,7 +322,7 @@ const goToQuiz = () => {
     }
   };
 
-  // [신규] 폭죽 효과 함수
+  // 폭죽 효과 함수
   const triggerConfetti = () => {
     const duration = 3 * 1000;
     const animationEnd = Date.now() + duration;
@@ -341,7 +338,6 @@ const goToQuiz = () => {
       }
 
       const particleCount = 50 * (timeLeft / duration);
-      // 화면 양쪽에서 팡팡 터짐
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
       confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
     }, 250);
@@ -383,8 +379,8 @@ const goToQuiz = () => {
           preferredType || mediaRecorderRef.current?.mimeType || "audio/webm";
         const blob = new Blob(chunksRef.current, { type: mimeType });
 
-        // ✅ [추가] 너무 짧은 녹음 방지 (환경에 따라 숫자 조정)
-        const MIN_SIZE = 12000; // webm/opus 기준 경험값. 너무 엄격하면 8000으로 낮춰도 됨.
+        // 너무 짧은 녹음 방지 (환경에 따라 숫자 조정)
+        const MIN_SIZE = 12000; // webm/opus 기준 경험값.
         if (blob.size < MIN_SIZE) {
           alert("녹음이 너무 짧아요. 1초 이상 말해 주세요.");
           setRecordingStatus("idle");
@@ -447,7 +443,6 @@ const goToQuiz = () => {
       const response = await uploadRecord(formData);
       console.log("[UPLOAD] 6 response =", response);
 
-      // 🟢 [수정 및 추가 부분 시작] ---------------------------------------------
       if (response?.success === false) {
         const errorMsg = String(response?.error || "");
         
@@ -469,7 +464,6 @@ const goToQuiz = () => {
         setIsProcessing(false); 
         return;
       }
-      // 🟢 [수정 및 추가 부분 끝] -----------------------------------------------
 
       console.log("[UPLOAD] response JSON =", JSON.stringify(response));
 
@@ -515,7 +509,7 @@ const goToQuiz = () => {
         const roundedScore = Math.round(finalScore);
         setOverallScore(Math.round(finalScore));
 
-        // 🟢 [추가] 현재 단어의 점수를 wordData 리스트에 기록합니다.
+        // 현재 단어의 점수를 wordData 리스트에 기록
         setWordData(prev => prev.map((item, idx) => 
           idx === currentIndex ? { ...item, score: roundedScore } : item
         ));
@@ -523,12 +517,12 @@ const goToQuiz = () => {
       } else {
         console.error("서버 응답 데이터 구조 이상:", resultData);
         alert("평가 결과를 표시할 수 있는 데이터가 없습니다.");
-        // 🟢 결과가 없을 때도 버튼 리셋 추가
+        // 결과가 없을 때도 버튼 리셋 추가
         setRecordingStatus("idle");
         setRecordBlob(null);
       }
     } catch (error: any) {
-      // 🟢 [수정] 네트워크 에러 등 발생 시 안내 문구 변경
+      // 네트워크 에러 등 발생 시 안내 문구 변경
       alert("소리가 인식되지 않았습니다. 녹음 버튼을 눌러 다시 읽어보세요.");
       setRecordingStatus("idle");
       setRecordBlob(null);
@@ -588,7 +582,7 @@ const goToQuiz = () => {
               </div>
             </div>
           ) : (
-            // ✅ [기존 일반 완료 화면]
+            // [기존 일반 완료 화면]
             <div className="animate-in zoom-in duration-500 flex flex-col items-center z-10">
               <div className="w-24 h-24 bg-[#FF8C1A] rounded-full flex items-center justify-center mb-6">
                 <CheckCircle className="w-12 h-12 text-white" />
@@ -750,7 +744,7 @@ const goToQuiz = () => {
         </div>
 
         {/* --- [메인 콘텐츠 영역: 카드 + 버튼] --- */}
-        {/* ✅ 카드 “더 크게”: max-w-md -> max-w-lg */}
+        {/* 카드 “더 크게”: max-w-md -> max-w-lg */}
         <div className="flex-1 min-h-0 w-full flex items-start justify-center px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+84px)]">
           <div className="w-full max-w-[340px]">
             <div className="w-full">
@@ -841,7 +835,7 @@ const goToQuiz = () => {
                   <RotateCcw size={18} />
                 </button>
 
-                {/* ✅ 고정 레이아웃 (사양서처럼) */}
+                {/* 고정 레이아웃 (사양서처럼) */}
                 <div className="h-full px-6 pt-8 pb-6 flex flex-col">
                   {!isFlipped ? (
                     // =========================
@@ -885,7 +879,7 @@ const goToQuiz = () => {
                         )}
                       </div>
 
-                      {/* ✅ 하단 고정 */}
+                      {/* 하단 고정 */}
                       <button
                         onClick={(e) => playLocalAudio("voca", e)}
                         className="mt-auto w-full h-12 rounded-xl font-black text-white flex items-center justify-center gap-2 transition-transform duration-100 active:scale-95 hover:brightness-110"
@@ -914,12 +908,12 @@ const goToQuiz = () => {
                         예시 문장 듣기
                       </button>
 
-                      {/* ✅ 예문 영역만 스크롤 */}
+                      {/* 예문 영역만 스크롤 */}
                       <div className="mt-2 text-[13px] text-gray-700 leading-relaxed overflow-auto flex-1 min-h-0 pr-1">
                         {currentWord?.example}
                       </div>
 
-                      {/* ✅ 하단 액션 영역 고정 */}
+                      {/* 하단 액션 영역 고정 */}
                       <div className="mt-4 w-full" onClick={(e) => e.stopPropagation()}>
                         {recordingStatus === "idle" && (
                           <button
@@ -994,7 +988,6 @@ const goToQuiz = () => {
               onClick={() => setShowResultOverlay(false)}
             />
 
-            {/* ✅ 사양서 스타일: 한 화면에 모두 보이게(컴팩트) */}
             <div className="absolute inset-x-0 top-16 bottom-6 px-4 flex items-start justify-center">
               <div className="w-full max-w-[360px] bg-white rounded-[28px] shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
                 {/* Header */}
@@ -1009,7 +1002,7 @@ const goToQuiz = () => {
                   </button>
                 </div>
 
-                {/* ✅ Total Score (컴팩트) */}
+                {/* Total Score (컴팩트) */}
                 <div className="px-5 pb-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full border-2 border-emerald-500 flex items-center justify-center">
@@ -1024,7 +1017,7 @@ const goToQuiz = () => {
                   </div>
                 </div>
 
-                {/* ✅ 어절 리스트: 한 화면에 다 보이게 컴팩트(overflow 시에만 스크롤) */}
+                {/* 어절 리스트: 한 화면에 다 보이게 컴팩트(overflow 시에만 스크롤) */}
                 <div className="px-5 pb-4 flex-1 min-h-0">
                   <div className="space-y-2 overflow-y-auto pr-1 max-h-full">
                     {resultWords.map((wordObj: any, idx: number) => {
@@ -1055,7 +1048,7 @@ const goToQuiz = () => {
                             </span>
                           </button>
 
-                          {/* ✅ 음소별 점수: 클릭 시 유지 */}
+                          {/* 음소별 점수: 클릭 시 유지 */}
                           {isExpanded && (
                             <div className="px-4 pb-3 pt-1 bg-gray-50/30">
                               <div className="flex flex-wrap gap-2 mt-2">
@@ -1097,7 +1090,7 @@ const goToQuiz = () => {
                   </div>
                 </div>
 
-                {/* ✅ 하단 버튼: 다시 녹음 삭제 + 계속 학습하기 */}
+                {/* 하단 버튼: 다시 녹음 삭제 + 계속 학습하기 */}
                 <div className="px-5 pb-5">
                   <button
                     onClick={() => {

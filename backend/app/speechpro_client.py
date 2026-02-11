@@ -150,8 +150,7 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
             "syll phns": model_syll_phns,
             "fst": fst,
             "wav usr": wav_b64,
-
-            # ✅ 호환 키(엔진 구현별로 다름)
+            # 추가 키 (호환성 목적)
             "syll_ltrs": model_syll_ltrs,
             "syll_phns": model_syll_phns,
             "wav_usr": wav_b64,
@@ -172,14 +171,14 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
             headers=headers,
         )
 
-        # (선택) 디버그
+        # 디버그
         print("[DEBUG] SCOREJSON status=", r_score.status_code, "len(text)=", len(r_score.text or ""))
 
         if r_score.status_code != 200:
             body = (r_score.text or "").strip()
             print("[DEBUG] SCOREJSON error body repr =", repr(r_score.text))
 
-            # ✅ 엔진 특정 에러(짧은 발화/입력 없음으로 추정)를 사용자 안내로 변환
+            # 엔진 특정 에러(짧은 발화/입력 없음으로 추정)를 사용자 안내로 변환
             if (
                 "json.exception.parse_error.101" in body
                 and "empty input" in body
@@ -245,11 +244,11 @@ def call_speechpro_evaluation_scorejson(text: str, wav_path: str) -> Dict[str, A
 
 
 # ----------------------------------------------------------------------
-# [수정됨] 점수 추출 로직 개선 함수
+# 점수 추출 로직 개선 함수
 # ----------------------------------------------------------------------
 def evaluate_pronunciation(text: str, wav_path: Path) -> Tuple[float, Dict[str, Any]]:
     dur = wav_duration_seconds(str(wav_path))
-    if dur < 1.0:  # ✅ 기준: 0.8초 (원하면 1.0초로)
+    if dur < 1.0:  # 기준: 0.8초
         return 0.0, {
             "error": f"녹음이 너무 짧아 분석할 수 없습니다. 1초 이상 말해 주세요. (현재 {dur:.2f}초)"
         }
@@ -279,7 +278,6 @@ def evaluate_pronunciation(text: str, wav_path: Path) -> Tuple[float, Dict[str, 
                 score = float(q.get("score"))
             
             # 우선순위 3: sentences 배열에서 !SIL이 아닌 실제 문장 점수 찾기
-            # 로그에 따르면 !SIL은 점수가 높지만 실제 발음이 아님
             elif "sentences" in q and isinstance(q["sentences"], list):
                 # !SIL이 아니고 점수가 있는 문장만 필터링
                 valid_sentences = [

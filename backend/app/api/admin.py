@@ -30,5 +30,4 @@ async def approve(uid: str, session: Session = Depends(get_session)):
 
 @router.get("/system_settings")
 async def get_system_settings():
-    # 시스템 설정은 아직 파일로 관리하거나 간단히 리턴해도 무방함
     return {"default_goal": 10}

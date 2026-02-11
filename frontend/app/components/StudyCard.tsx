@@ -20,7 +20,7 @@ export default function StudyCard({
   const [imageError, setImageError] = useState(false);
   const imageUrl = word?.imageKey || "";
 
-  // 발음 텍스트 포맷팅 (데이터가 있으면 대괄호 추가)
+  // 발음 텍스트 포맷팅
   const pronText = word?.pronunciation
     ? word.pronunciation.startsWith("[")
       ? word.pronunciation

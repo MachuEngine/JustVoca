@@ -1,0 +1,21 @@
+# --- Web Framework & Server ---
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+python-multipart>=0.0.6    # api/study.py의 Form(...), UploadFile 처리에 필수
+
+# --- Database & ORM ---
+sqlmodel>=0.0.8            # app.models, app.core.database 등에서 사용 (SQLAlchemy 기반)
+
+# --- Security & Authentication ---
+passlib[bcrypt]>=1.7.4     # api/auth.py, core/session.py의 hash_password, verify_password에 필수
+
+# --- Data Processing (Excel) ---
+pandas>=2.0.0              # api/study.py의 단어장 엑셀 파싱 로직
+openpyxl>=3.1.2            # pandas에서 engine="openpyxl"로 .xlsx 파일을 읽기 위해 필수
+
+# --- External APIs & AI ---
+openai>=1.0.0              # api/chat.py의 OpenAI(gpt-3.5-turbo/gpt-4o) 챗봇 연동
+requests>=2.31.0           # core/speech_pro.py의 SpeechPro 엔진 TCP/HTTP 통신용
+
+# --- Environment & Config ---
+python-dotenv>=1.0.0       # api/chat.py 등에서 load_dotenv()로 .env(API_KEY) 로드용
